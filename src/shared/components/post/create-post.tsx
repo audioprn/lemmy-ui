@@ -55,7 +55,7 @@ import {
   loadCreatorStatus,
   subscribeCreatorStatus,
 } from "../../audioprn/creator-status";
-import { MAIN_COMMUNITY_NAME, SHOW_COMMUNITIES } from "../../audioprn/features";
+import { MAIN_COMMUNITY_NAME } from "../../audioprn/features";
 import { removeLocalStorageMarkdown } from "@components/common/markdown-textarea";
 
 export interface CreatePostProps {
@@ -164,17 +164,15 @@ export class CreatePost extends Component<
   }
 
   async fetchCommunity({ communityId }: CreatePostProps) {
-    // audioprn: while communities are hidden, posts always go to `main`.
-    if (communityId || !SHOW_COMMUNITIES) {
-      const res = await HttpService.client.getCommunity(
-        communityId ? { id: communityId } : { name: MAIN_COMMUNITY_NAME },
-      );
-      if (res.state === "success") {
-        this.setState({
-          selectedCommunity: res.data.community_view,
-          selectedCommunityIsNsfw: res.data.community_view.community.nsfw,
-        });
-      }
+    // audioprn: without a cummunity, posts go to `main`: the Content page only.
+    const res = await HttpService.client.getCommunity(
+      communityId ? { id: communityId } : { name: MAIN_COMMUNITY_NAME },
+    );
+    if (res.state === "success") {
+      this.setState({
+        selectedCommunity: res.data.community_view,
+        selectedCommunityIsNsfw: res.data.community_view.community.nsfw,
+      });
     }
   }
 
@@ -238,15 +236,12 @@ export class CreatePost extends Component<
         initialCommunitiesRes,
       });
 
+      // audioprn: no cummunity means `main` (the Content page only).
       if (
         communityId !== this.state.selectedCommunity?.community.id ||
-        !SHOW_COMMUNITIES
+        !communityId
       ) {
         await this.fetchCommunity({ communityId });
-      } else if (!communityId) {
-        this.setState({
-          selectedCommunity: undefined,
-        });
       }
 
       const locationState = this.props.history.location.state as
@@ -357,6 +352,9 @@ export class CreatePost extends Component<
                 handlePostCreate(this, form, bypassNav, afterCreate)
               }
               creatorPage={selectedCommunity?.community.name === "creators"}
+              contentPageOnly={
+                selectedCommunity?.community.name === MAIN_COMMUNITY_NAME
+              }
               params={params}
               enableNsfw={enableNsfw(siteRes)}
               showAdultConsentModal={showAdultConsentModal}
@@ -466,13 +464,11 @@ export class CreatePost extends Component<
       communityResponse: EMPTY_REQUEST,
     };
 
-    if (communityId || !SHOW_COMMUNITIES) {
-      const form: GetCommunity = communityId
-        ? { id: communityId }
-        : { name: MAIN_COMMUNITY_NAME };
-
-      data.communityResponse = await client.getCommunity(form);
-    }
+    // audioprn: no cummunity means `main` (the Content page only).
+    const form: GetCommunity = communityId
+      ? { id: communityId }
+      : { name: MAIN_COMMUNITY_NAME };
+    data.communityResponse = await client.getCommunity(form);
 
     return data;
   };

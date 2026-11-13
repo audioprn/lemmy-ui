@@ -79,7 +79,7 @@ import { communityTagName } from "@components/community/community-tag";
 import { FilterChipSelect } from "@components/common/filter-chip-select";
 import { PostName } from "./common";
 import { NoOptionI18nKeys } from "i18next";
-import { SHOW_COMMUNITIES } from "../../audioprn/features";
+import { MAIN_COMMUNITY_NAME, SHOW_COMMUNITIES } from "../../audioprn/features";
 import { RichTextEditor } from "../../audioprn/rich-text";
 import { createPostPoll } from "../../audioprn/post-poll";
 import {
@@ -136,6 +136,8 @@ interface PostFormProps {
   creatorPage?: boolean;
   /** audioprn: open this saved draft */
   draftId?: number;
+  /** audioprn: posting to `main`, the Content page only (no cummunity) */
+  contentPageOnly?: boolean;
   // audioprn: the result, so a refused edit can show an error
   onEdit?: (
     form: EditPost,
@@ -184,6 +186,8 @@ interface PostFormState {
   draftId?: number;
   draftLoading?: boolean;
   draftSaves?: number;
+  /** audioprn: show the cummunity picker instead of "Content page only" */
+  pickCummunity?: boolean;
   suggestedPostsRes: RequestState<PagedResponse<PostView>>;
   metadataRes: RequestState<GetSiteMetadataResponse>;
   imageLoading: boolean;
@@ -310,6 +314,10 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
     const creatorPage =
       this.props.creatorPage ||
       this.props.post_view?.community.name === "creators";
+    // Content page posts are always on the Content page.
+    const contentPageOnly = this.props.post_view
+      ? this.props.post_view.community.name === MAIN_COMMUNITY_NAME
+      : this.props.contentPageOnly;
     return (
       <>
         <div className="mb-3 row">
@@ -336,7 +344,7 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
             ))}
           </div>
         </div>
-        {!creatorPage && (
+        {!creatorPage && !contentPageOnly && (
           <div className="mb-3 row">
             <div className="col-sm-10 offset-sm-2">
               <div className="form-check">
@@ -882,30 +890,68 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
               onChange={val => handleLanguageChange(this, val)}
               myUserInfo={this.props.myUserInfo}
             />
-            {/* audioprn: no community picker while communities are hidden (posts go to `main`). */}
+            {/* audioprn: no community picker while communities are hidden (posts go to `main`).
+                New posts go to the Content page only, unless a cummunity is picked. */}
             {!this.props.post_view && SHOW_COMMUNITIES && (
               <div className="mb-3 row align-items-center">
                 <label
                   className="col-sm-2 col-form-label"
                   htmlFor="post-community"
                 >
-                  {I18NextService.i18n.t("community")}
+                  Post to
                 </label>
                 <div className="col-sm-10">
-                  <FilterChipSelect
-                    label={"select_a_community"}
-                    multiple={false}
-                    allOptions={this.state.communitySearchOptions}
-                    selectedOptions={
-                      this.state.form.community_id
-                        ? [this.state.form.community_id.toString()]
-                        : []
+                  {/* The picker stays mounted (hidden): its widget rearranges the page. */}
+                  {this.props.contentPageOnly && !this.state.pickCummunity && (
+                    <>
+                      <span className="me-3">Content page only</span>
+                      <button
+                        type="button"
+                        className="btn btn-link btn-sm p-0"
+                        onClick={() => this.setState({ pickCummunity: true })}
+                      >
+                        Post in a cummunity instead
+                      </button>
+                    </>
+                  )}
+                  <div
+                    className={
+                      this.props.contentPageOnly && !this.state.pickCummunity
+                        ? "d-none"
+                        : undefined
                     }
-                    onSearch={text => handleCommunitySearch(this, text)}
-                    onSelect={choices =>
-                      handleCommunitySelect(this, choices[0])
-                    }
-                  />
+                  >
+                    <FilterChipSelect
+                      label={"select_a_community"}
+                      multiple={false}
+                      allOptions={this.state.communitySearchOptions}
+                      selectedOptions={
+                        this.state.form.community_id &&
+                        !this.props.contentPageOnly
+                          ? [this.state.form.community_id.toString()]
+                          : []
+                      }
+                      onSearch={text => handleCommunitySearch(this, text)}
+                      onSelect={choices =>
+                        handleCommunitySelect(this, choices[0])
+                      }
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-link btn-sm p-0"
+                      onClick={() => {
+                        this.setState({ pickCummunity: false });
+                        updateUrl(this, () =>
+                          this.props.onSelectCommunity?.({
+                            value: "",
+                            label: "",
+                          }),
+                        );
+                      }}
+                    >
+                      Content page only instead
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
