@@ -60,6 +60,8 @@ import { removeLocalStorageMarkdown } from "@components/common/markdown-textarea
 
 export interface CreatePostProps {
   communityId?: number;
+  /** audioprn: open this saved draft */
+  draft?: number;
   url?: string;
   title?: string;
   body?: string;
@@ -78,6 +80,7 @@ export function getCreatePostQueryParams(source?: string): CreatePostProps {
   return getQueryParams<CreatePostProps>(
     {
       communityId: getIdFromString,
+      draft: getIdFromString, // audioprn
       url: (url?: string) => url,
       body: (body?: string) => body,
       languageId: getIdFromString,
@@ -347,6 +350,9 @@ export class CreatePost extends Component<
               </p>
             )}
             <PostForm
+              // audioprn: a new form for each draft opened
+              key={this.props.draft}
+              draftId={this.props.draft}
               onCreate={(form, bypassNav, afterCreate) =>
                 handlePostCreate(this, form, bypassNav, afterCreate)
               }
@@ -413,6 +419,7 @@ export class CreatePost extends Component<
     const {
       body,
       communityId,
+      draft,
       customThumbnailUrl,
       languageId,
       nsfw,
@@ -427,6 +434,7 @@ export class CreatePost extends Component<
     const createPostQueryParams: QueryParams<CreatePostProps> = {
       body: stringAsQueryParam(body),
       communityId: communityId?.toString(),
+      draft: draft?.toString(), // audioprn: keep the open draft
       customThumbnailUrl: stringAsQueryParam(customThumbnailUrl),
       languageId: languageId?.toString(),
       title: stringAsQueryParam(title),

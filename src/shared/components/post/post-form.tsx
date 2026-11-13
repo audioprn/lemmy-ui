@@ -43,6 +43,12 @@ import {
 } from "lemmy-js-client";
 import { backendErrorPopup, errorPopup } from "../../audioprn/error-popup";
 import {
+  deleteDraft,
+  getDraft,
+  PostDrafts,
+  saveDraft,
+} from "../../audioprn/post-drafts";
+import {
   archiveTodayUrl,
   ghostArchiveUrl,
   postMarkdownFieldCharacterLimit,
@@ -128,6 +134,8 @@ interface PostFormProps {
   ) => void;
   /** audioprn: posting to the creator's page (never on Content) */
   creatorPage?: boolean;
+  /** audioprn: open this saved draft */
+  draftId?: number;
   // audioprn: the result, so a refused edit can show an error
   onEdit?: (
     form: EditPost,
@@ -172,6 +180,10 @@ interface PostFormState {
   poll?: { question: string; options: string[]; ends: string };
   /** audioprn: the script on a new Script Offer post */
   script?: ScriptInput;
+  /** audioprn: the open draft, while its saved copy loads, and how often it was saved */
+  draftId?: number;
+  draftLoading?: boolean;
+  draftSaves?: number;
   suggestedPostsRes: RequestState<PagedResponse<PostView>>;
   metadataRes: RequestState<GetSiteMetadataResponse>;
   imageLoading: boolean;
@@ -253,6 +265,8 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
         },
       };
     }
+    // audioprn: the form shows once the draft has loaded (the editors read it when they appear)
+    this.state.draftLoading = !!this.props.draftId;
   }
 
   async componentWillMount() {
@@ -264,6 +278,9 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
   async componentDidMount() {
     if (this.postTitleRef.current) {
       autosize(this.postTitleRef.current);
+    }
+    if (this.props.draftId) {
+      await loadDraft(this, this.props.draftId); // audioprn
     }
     // audioprn: load the post's credits when editing.
     const pv = this.props.post_view;
@@ -568,6 +585,10 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
     const url = this.state.form.url;
     const imageUploadDisabled = this.props.localSite.image_upload_disabled;
 
+    if (this.state.draftLoading) {
+      return <Spinner large />; // audioprn
+    }
+
     return (
       <form className="post-form" onSubmit={e => handlePostSubmit(this, e)}>
         <Prompt
@@ -580,6 +601,16 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
             ) && !this.state.bypassNavWarning
           }
         />
+        {/* audioprn: the user's drafts, when making a new post */}
+        {!this.props.post_view && (
+          <PostDrafts
+            key={this.state.draftSaves}
+            current={this.state.draftId}
+            onDelete={id =>
+              id === this.state.draftId && this.setState({ draftId: undefined })
+            }
+          />
+        )}
         {/* Show an un-editable title for mod edits */}
         {this.editorType === "mod_or_admin" && this.props.post_view && (
           <div className="mb-3">
@@ -964,6 +995,17 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
                 capitalizeFirstLetter(I18NextService.i18n.t("create"))
               )}
             </button>
+            {/* audioprn: keep a new post as a draft to finish later */}
+            {!this.props.post_view && (
+              <button
+                type="button"
+                className="btn btn-light border-light-subtle me-2"
+                disabled={this.props.loading}
+                onClick={() => handleSaveDraft(this)}
+              >
+                Save draft
+              </button>
+            )}
             {this.props.post_view && (
               <button
                 type="button"
@@ -1217,6 +1259,10 @@ function handlePostSubmit(i: PostForm, event: FormEvent<HTMLFormElement>) {
               ),
           ])
         ).find((r): r is PromiseRejectedResult => r.status === "rejected");
+        // audioprn: the draft is now a post
+        if (i.state.draftId) {
+          await deleteDraft(i.state.draftId).catch(() => {});
+        }
         if (failed) {
           throw new Error(
             `Your post was created, but part of it wasn't saved: ${failed.reason.message}`,
@@ -1226,6 +1272,56 @@ function handlePostSubmit(i: PostForm, event: FormEvent<HTMLFormElement>) {
     );
   }
 }
+// audioprn: save the whole form as a draft (JSON), or update the open draft.
+async function handleSaveDraft(i: PostForm) {
+  const { form, credits, offContent, richText, poll, script } = i.state;
+  try {
+    const { id } = await saveDraft(
+      i.state.draftId,
+      form.name ?? "",
+      JSON.stringify({
+        form: { ...form, honeypot: undefined },
+        credits,
+        offContent,
+        richText,
+        poll,
+        script,
+      }),
+    );
+    i.setState(s => ({ draftId: id, draftSaves: (s.draftSaves ?? 0) + 1 }));
+    toast("Draft saved.");
+  } catch (e) {
+    errorPopup((e as Error).message);
+  }
+}
+
+// audioprn: open a saved draft; switch to its community if the page is on another one.
+async function loadDraft(i: PostForm, id: number) {
+  try {
+    const saved: Pick<
+      PostFormState,
+      "form" | "credits" | "offContent" | "richText" | "poll" | "script"
+    > = JSON.parse((await getDraft(id)).data);
+    i.setState(s => ({
+      ...saved,
+      form: { ...s.form, ...saved.form },
+      draftId: id,
+    }));
+    const community = saved.form.community_id;
+    if (
+      community &&
+      community !== getIdFromString(i.props.selectedCommunityChoice?.value)
+    ) {
+      updateUrl(i, () =>
+        i.props.onSelectCommunity?.({ value: String(community), label: "" }),
+      );
+    }
+  } catch (e) {
+    errorPopup((e as Error).message);
+  }
+  i.setState({ draftLoading: false });
+}
+
 function handlePostBodyChange(i: PostForm, val: string) {
   i.setState(s => ((s.form.body = val), s));
 }

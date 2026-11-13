@@ -62,6 +62,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   no_awards_left:
     "You have no awards left. You get one each week you post or comment.",
   cant_award_post: "You can't award your own post, or one you already awarded.",
+  invalid_draft: "This draft is too long to save.",
+  too_many_drafts: "You have 50 drafts. Delete some to save new ones.",
   invalid_creator_pin:
     "The pinned post can have up to 20 social links and 5,000 characters per section.",
 };
