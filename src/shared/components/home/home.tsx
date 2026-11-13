@@ -120,6 +120,19 @@ import { PostListingModeDropdown } from "@components/common/post-listing-mode-dr
 import { MultiCommunityLink } from "@components/multi-community/multi-community-link";
 import { ListingTypeDropdown } from "@components/common/listing-type-dropdown";
 import {
+  SHOW_COMMUNITIES,
+  SHOW_MULTI_COMMUNITIES,
+} from "../../audioprn/features";
+import { ContentFilters, savedFilters } from "../../audioprn/content-filters";
+import {
+  getFeedPosts,
+  MY_FEED,
+  MY_SAVED,
+  MyFeedPrefs,
+} from "../../audioprn/my-feed";
+import { NewsFeed } from "../../audioprn/news-feed";
+import { GuideLinks } from "../../audioprn/guides";
+import {
   ExpandChipCheckbox,
   FilterChipCheckbox,
 } from "@components/common/filter-chip-checkbox";
@@ -162,6 +175,9 @@ interface HomeProps {
   showRead?: boolean;
   hidePostsWithMedia?: boolean;
   cursor?: PaginationCursor;
+  // audioprn: left column search and content filters
+  q?: string;
+  filters?: string;
 }
 
 type HomeData = RouteDataResponse<{
@@ -265,14 +281,18 @@ export function getHomeQueryParams(
       showHidden: getShowHiddenFromQuery,
       showRead: getShowReadFromQuery,
       hidePostsWithMedia: getHidePostsWithMediaFromQuery,
+      q: (q?: string) => q,
+      filters: (filters?: string) => filters,
     },
     source,
     {
       sort:
         local_user?.default_post_sort_type ?? local_site.default_post_sort_type,
-      listingType:
-        local_user?.default_listing_type ??
-        local_site.default_post_listing_type,
+      // audioprn: one community, so always the local feed while communities are hidden.
+      listingType: SHOW_COMMUNITIES
+        ? (local_user?.default_listing_type ??
+          local_site.default_post_listing_type)
+        : "local",
       time:
         secondsToLargestInterval(local_user?.default_post_time_range_seconds) ??
         ALL_TIME_INTERVAL,
@@ -350,6 +370,14 @@ export class Home extends Component<HomeRouteProps, HomeState> {
     }
   }
 
+  componentDidMount() {
+    // audioprn: bring back the viewer's last content filters.
+    const saved = savedFilters();
+    if (!this.props.filters && saved) {
+      this.updateUrl({ filters: saved });
+    }
+  }
+
   async componentWillReceiveProps(
     nextProps: HomeRouteProps & { children?: InfernoNode },
   ) {
@@ -366,6 +394,8 @@ export class Home extends Component<HomeRouteProps, HomeState> {
       showHidden,
       showRead,
       hidePostsWithMedia,
+      q,
+      filters,
     },
     headers,
   }: InitialFetchRequest<HomePathProps, HomeProps>): Promise<HomeData> => {
@@ -387,9 +417,11 @@ export class Home extends Component<HomeRouteProps, HomeState> {
         show_hidden: showHidden,
         show_read: showRead,
         hide_posts_with_media: hidePostsWithMedia,
+        search_term: q,
       };
 
-      postsFetch = client.getPosts(getPostsForm);
+      // audioprn: Content filters, or My audioprn
+      postsFetch = getFeedPosts(client, getPostsForm, filters);
     } else {
       const getCommentsForm: GetComments = {
         sort: mixedToCommentSortType(sort),
@@ -437,7 +469,30 @@ export class Home extends Component<HomeRouteProps, HomeState> {
       <div className="home container-lg">
         {site_setup && (
           <div className="row">
-            <div className="col-12 col-md-8 col-lg-9">
+            {/* audioprn: search and content filters on the left */}
+            <aside className="col-12 col-md-3">
+              {/* audioprn: news, then filters or My audioprn, then the guides */}
+              <NewsFeed />
+              {this.props.filters === MY_FEED ||
+              this.props.filters === MY_SAVED ? (
+                <MyFeedPrefs
+                  saved={this.props.filters === MY_SAVED}
+                  onSaved={() => this.fetchData(this.props)}
+                />
+              ) : (
+                <ContentFilters
+                  key={this.props.q}
+                  filters={this.props.filters}
+                  q={this.props.q}
+                  showFollowList={!!myUserInfo}
+                  onChange={change =>
+                    this.updateUrl({ ...change, cursor: undefined })
+                  }
+                />
+              )}
+              <GuideLinks />
+            </aside>
+            <div className="col-12 col-md-6">
               <DonationDialog
                 myUserInfo={myUserInfo}
                 onHideDialog={() => handleHideDonationDialog(myUserInfo)}
@@ -458,7 +513,7 @@ export class Home extends Component<HomeRouteProps, HomeState> {
               {this.posts}
             </div>
             {/* Only show the sidebar on md or larger */}
-            <aside className="d-none d-md-block col-md-4 col-lg-3">
+            <aside className="d-none d-md-block col-md-3">
               {this.mySidebar}
             </aside>
           </div>
@@ -469,12 +524,14 @@ export class Home extends Component<HomeRouteProps, HomeState> {
 
   get hasFollows(): boolean {
     const mui = this.isoData.myUserInfo;
-    return !!mui && mui.follows.length > 0;
+    return SHOW_COMMUNITIES && !!mui && mui.follows.length > 0;
   }
 
   get hasMultiFollows(): boolean {
     const mui = this.isoData.myUserInfo;
-    return !!mui && mui.multi_community_follows.length > 0;
+    return (
+      SHOW_MULTI_COMMUNITIES && !!mui && mui.multi_community_follows.length > 0
+    );
   }
 
   get mobileSidebarAndSubscribed() {
@@ -698,6 +755,8 @@ export class Home extends Component<HomeRouteProps, HomeState> {
       showHidden,
       showRead,
       hidePostsWithMedia,
+      q,
+      filters,
     } = {
       ...this.props,
       ...props,
@@ -711,10 +770,19 @@ export class Home extends Component<HomeRouteProps, HomeState> {
       showHidden: showHidden?.toString(),
       showRead: showRead?.toString(),
       hidePostsWithMedia: hidePostsWithMedia?.toString(),
+      q,
+      filters:
+        filters === MY_FEED || filters === MY_SAVED ? undefined : filters,
     };
 
     this.props.history.push({
-      pathname: "/",
+      // audioprn: the feed lives at /content (`/` is the landing page), My audioprn at /my
+      pathname:
+        filters === MY_FEED
+          ? "/my"
+          : filters === MY_SAVED
+            ? "/my/saved"
+            : "/content",
       search: getQueryString(queryParams),
     });
   }
@@ -953,24 +1021,26 @@ export class Home extends Component<HomeRouteProps, HomeState> {
             </div>
           )}
           {/** TODO add show read posts also **/}
-          <div className="col">
-            <ListingTypeDropdown
-              currentOption={
-                listingType ??
-                this.state.siteRes.site_view.local_site
-                  .default_post_listing_type
-              }
-              showLocal={showLocal(this.isoData)}
-              showSubscribed
-              showSuggested={
-                !!this.isoData.siteRes.site_view.local_site
-                  .suggested_multi_community_id
-              }
-              showLabel
-              myUserInfo={myUserInfo}
-              onSelect={val => handleListingTypeChange(this, val)}
-            />
-          </div>
+          {SHOW_COMMUNITIES && (
+            <div className="col">
+              <ListingTypeDropdown
+                currentOption={
+                  listingType ??
+                  this.state.siteRes.site_view.local_site
+                    .default_post_listing_type
+                }
+                showLocal={showLocal(this.isoData)}
+                showSubscribed
+                showSuggested={
+                  !!this.isoData.siteRes.site_view.local_site
+                    .suggested_multi_community_id
+                }
+                showLabel
+                myUserInfo={myUserInfo}
+                onSelect={val => handleListingTypeChange(this, val)}
+              />
+            </div>
+          )}
           <div className="col">
             <PostListingModeDropdown
               currentOption={this.state.postListingMode}
@@ -1059,19 +1129,27 @@ export class Home extends Component<HomeRouteProps, HomeState> {
     showHidden,
     showRead,
     hidePostsWithMedia,
+    q,
+    filters,
   }: HomeProps) {
     const token = (this.fetchDataToken = Symbol());
     if (postOrCommentType === "post") {
       this.setState({ postsRes: LOADING_REQUEST, commentsRes: EMPTY_REQUEST });
-      const postsRes = await HttpService.client.getPosts({
-        page_cursor: cursor,
-        sort: mixedToPostSortType(sort),
-        time_range_seconds: intervalToSeconds(time),
-        type_: listingType,
-        show_hidden: showHidden,
-        show_read: showRead,
-        hide_posts_with_media: hidePostsWithMedia,
-      });
+      // audioprn: Content filters, or My audioprn
+      const postsRes = await getFeedPosts(
+        HttpService.client,
+        {
+          page_cursor: cursor,
+          sort: mixedToPostSortType(sort),
+          time_range_seconds: intervalToSeconds(time),
+          type_: listingType,
+          show_hidden: showHidden,
+          show_read: showRead,
+          hide_posts_with_media: hidePostsWithMedia,
+          search_term: q,
+        },
+        filters,
+      );
       if (token === this.fetchDataToken) {
         this.setState({ postsRes });
       }

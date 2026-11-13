@@ -53,6 +53,9 @@ import { MomentTime } from "../common/moment-time";
 import { UserBadges } from "../common/user-badges";
 import { VoteButtonsCompact } from "../common/vote-buttons";
 import { CommunityLink } from "../community/community-link";
+import { SHOW_COMMUNITIES } from "../../audioprn/features";
+import { removeProfileComment } from "../../audioprn/my-feed";
+import { toast } from "@utils/app";
 import { PersonListing } from "../person/person-listing";
 import { CommentForm } from "./comment-form";
 import { CommentNodes } from "./comment-nodes";
@@ -371,6 +374,24 @@ export class CommentNode extends Component<CommentNodeProps, CommentNodeState> {
                             disabled={!this.enableCommentForm}
                           />
                         </div>
+                        {/* audioprn: the post's creator deletes comments on their profile posts,
+                            or asks the moderators to delete one on any other post. */}
+                        {this.postCreatorId ===
+                          this.props.myUserInfo?.local_user_view.person.id &&
+                          this.commentView.comment.creator_id !==
+                            this.postCreatorId &&
+                          !this.commentView.comment.removed && (
+                            <div className="col">
+                              <ActionButton
+                                onClick={() => handleCreatorDelete(this)}
+                                icon="trash"
+                                iconClass="text-muted"
+                                inline
+                                label="Delete"
+                                noLoading
+                              />
+                            </div>
+                          )}
                         <div className="col">
                           <CommentActionDropdown
                             commentView={this.commentView}
@@ -708,6 +729,22 @@ function handleBanFromSite(i: CommentNode, form: BanUpdateForm) {
   });
 }
 
+// audioprn: see the Delete button for post creators.
+async function handleCreatorDelete(i: CommentNode) {
+  if (i.community.name === "creators") {
+    if (!confirm("Delete this comment from your post?")) return;
+    try {
+      await removeProfileComment(i.commentId, true);
+      i.commentView.comment.removed = true;
+      i.forceUpdate();
+    } catch (e) {
+      toast((e as Error).message, "danger");
+    }
+  } else if (confirm("Ask the moderators to delete this comment?")) {
+    handleReportComment(i, "Deletion requested by the post's creator");
+  }
+}
+
 function handleReportComment(i: CommentNode, reason: string) {
   i.props.onCommentReport({
     comment_id: i.commentId,
@@ -834,12 +871,16 @@ function CommentHeader({
     <>
       {showCommunity && isCommentNodeFull(node) && (
         <>
-          <CommunityLink
-            community={node.view.comment_view.community}
-            myUserInfo={myUserInfo}
-            muted={muteCommunityName}
-          />
-          <span className="mx-2">•</span>
+          {SHOW_COMMUNITIES && (
+            <>
+              <CommunityLink
+                community={node.view.comment_view.community}
+                myUserInfo={myUserInfo}
+                muted={muteCommunityName}
+              />
+              <span className="mx-2">•</span>
+            </>
+          )}
           <Link
             className={classNames("me-1", {
               "text-muted": muteCommunityName,
@@ -933,7 +974,7 @@ function CommentContent({
           dangerouslySetInnerHTML={
             hideImages
               ? mdToHtmlNoImages(commentUnlessRemoved, () => {})
-              : mdToHtml(commentUnlessRemoved, () => {})
+              : mdToHtml(commentUnlessRemoved, () => {}, true) // audioprn: GIFs
           }
         />
       )}

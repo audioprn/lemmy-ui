@@ -8,6 +8,11 @@ import { CommunityView, LocalSite, MyUserInfo } from "lemmy-js-client";
 import { canCreateCommunity } from "@utils/roles";
 import classNames from "classnames";
 import { userNotLoggedInOrBanned } from "@utils/app";
+import { CreatorOnly } from "../../../audioprn/creator-status";
+import {
+  SHOW_COMMUNITIES,
+  SHOW_MULTI_COMMUNITIES,
+} from "../../../audioprn/features";
 
 export function CrossPostButton(props: CrossPostParams): InfernoNode {
   const label = I18NextService.i18n.t("cross_post");
@@ -51,10 +56,13 @@ export function CreatePostButton({
       getQueryString({ communityId: communityView.community.id.toString() })
     : "/create_post";
 
+  // audioprn: only verified creators and admins see this button.
   return (
-    <Link className={classes} to={link}>
-      {I18NextService.i18n.t("create_post")}
-    </Link>
+    <CreatorOnly>
+      <Link className={classes} to={link}>
+        {I18NextService.i18n.t("create_post")}
+      </Link>
+    </CreatorOnly>
   );
 }
 
@@ -68,6 +76,9 @@ export function CreateCommunityButton({
   myUserInfo,
   blockButton,
 }: CreateCommunityButtonProps) {
+  if (!SHOW_COMMUNITIES) {
+    return null;
+  }
   const classes = classNames({
     "no-click": !(localSite && canCreateCommunity(localSite, myUserInfo)),
     "btn btn-light border-light-subtle d-block w-100": blockButton,
@@ -89,6 +100,9 @@ export function CreateMultiCommunityButton({
   myUserInfo,
   blockButton,
 }: CreateMultiCommunityButtonProps) {
+  if (!SHOW_MULTI_COMMUNITIES) {
+    return null;
+  }
   const classes = classNames({
     "no-click": userNotLoggedInOrBanned(myUserInfo),
     "btn btn-light border-light-subtle d-block w-100": blockButton,

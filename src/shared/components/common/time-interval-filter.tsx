@@ -42,18 +42,18 @@ type State = { customInterval?: Interval };
 
 export const ALL_TIME_INTERVAL: Interval = { unit: "days", num: 0 };
 
+// audioprn: the spec's ranges: today, past week, past month, all time.
 const TIME_RANGE_PRESETS: Interval[] = [
-  { ...ALL_TIME_INTERVAL },
-  { num: 1, unit: "hours" },
-  { num: 6, unit: "hours" },
-  { num: 12, unit: "hours" },
   { num: 1, unit: "days" },
   { num: 1, unit: "weeks" },
   { num: 1, unit: "months" },
-  { num: 3, unit: "months" },
-  { num: 6, unit: "months" },
-  { num: 1, unit: "years" },
+  { ...ALL_TIME_INTERVAL },
 ];
+const PRESET_LABELS: Record<string, string> = {
+  "1days": "Today",
+  "1weeks": "Past week",
+  "1months": "Past month",
+};
 
 const TIME_RANGE_CONVERSIONS: Interval[] = [
   { num: 1, unit: "seconds" },
@@ -72,6 +72,8 @@ const TIME_RANGE_UNIT_OPTIONS: FilterOption<IntervalUnit>[] =
   TIME_RANGE_UNITS.map(u => ({ value: u, i18n: u }));
 
 function presetLabel(interval: Interval): string {
+  const label = PRESET_LABELS[intervalToQuery(interval)];
+  if (label) return label;
   return interval.num === 0
     ? I18NextService.i18n.t("all_time")
     : I18NextService.i18n.t(`n_${interval.unit}`, {

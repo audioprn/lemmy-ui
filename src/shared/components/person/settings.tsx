@@ -70,6 +70,9 @@ import PasswordInput from "../common/password-input";
 import { PostSortDropdown, CommentSortDropdown } from "../common/sort-dropdown";
 import Tabs from "../common/tabs";
 import { CommunityLink } from "../community/community-link";
+import { SHOW_COMMUNITIES } from "../../audioprn/features";
+import { CreatorOnly } from "../../audioprn/creator-status";
+import { CreatorFooterSettings } from "../../audioprn/post-footer";
 import { PersonListing } from "./person-listing";
 import { Invites } from "./invites";
 import { InitialFetchRequest } from "@utils/types";
@@ -98,7 +101,6 @@ import { NoOptionI18nKeys } from "i18next";
 import { PostListingModeDropdown } from "@components/common/post-listing-mode-dropdown";
 import { ListingTypeDropdown } from "@components/common/listing-type-dropdown";
 import { VoteShowDropdown } from "@components/common/vote-show-dropdown";
-import { InterfaceLanguageDropdown } from "@components/common/interface-language-dropdown";
 import { ThemeDropdown } from "@components/common/theme-dropdown";
 import { FilterChipCheckbox } from "@components/common/filter-chip-checkbox";
 import { FilterChipSelect } from "@components/common/filter-chip-select";
@@ -955,21 +957,30 @@ export class Settings extends Component<SettingsRouteProps, SettingsState> {
             />
           </div>
         </div>
-        <div className="mb-3 row">
-          <label className="col-sm-3 col-form-label">
-            {I18NextService.i18n.t("banner")}
-          </label>
-          <div className="col-sm-9">
-            <ImageUploadForm
-              uploadTitle={I18NextService.i18n.t("upload_banner")}
-              uploadKey="uploadUserBanner"
-              removeKey="deleteUserBanner"
-              onImageChange={url => handleBannerChange(this, myUserInfo, url)}
-              imageSrc={this.state.banner}
-              disabled={!myUserInfo}
-            />
-          </div>
-        </div>
+        {/* audioprn: only creators have a banner */}
+        <CreatorOnly>
+          <>
+            <div className="mb-3 row">
+              <label className="col-sm-3 col-form-label">
+                {I18NextService.i18n.t("banner")}
+              </label>
+              <div className="col-sm-9">
+                <ImageUploadForm
+                  uploadTitle={I18NextService.i18n.t("upload_banner")}
+                  uploadKey="uploadUserBanner"
+                  removeKey="deleteUserBanner"
+                  onImageChange={url =>
+                    handleBannerChange(this, myUserInfo, url)
+                  }
+                  imageSrc={this.state.banner}
+                  disabled={!myUserInfo}
+                />
+              </div>
+            </div>
+            {/* audioprn: the creator's footer under each of their posts */}
+            <CreatorFooterSettings />
+          </>
+        </CreatorOnly>
         <div className="row mb-3">
           <div className="col">
             <FilterChipCheckbox
@@ -991,19 +1002,7 @@ export class Settings extends Component<SettingsRouteProps, SettingsState> {
     return (
       <>
         <h5 className="card-title">{I18NextService.i18n.t("content")}</h5>
-        <div className="mb-3 row">
-          <label className="col-sm-3 form-label" htmlFor="user-language">
-            {I18NextService.i18n.t("interface_language")}
-          </label>
-          <div className="col-sm-9">
-            <InterfaceLanguageDropdown
-              currentOption={
-                this.state.saveUserSettingsForm.interface_language ?? "browser"
-              }
-              onSelect={val => handleInterfaceLangChange(this, val)}
-            />
-          </div>
-        </div>
+        {/* audioprn: interface language picker removed, the site is English-only. */}
         <details
           className="col-form-label mb-3"
           onToggle={async () => await masonryUpdate("settings-grid")}
@@ -1062,28 +1061,7 @@ export class Settings extends Component<SettingsRouteProps, SettingsState> {
             />
           </div>
         </div>
-        <div className="row mb-3">
-          <div className="col">
-            <FilterChipCheckbox
-              option={"show_nsfw"}
-              isChecked={this.state.saveUserSettingsForm.show_nsfw ?? false}
-              onCheck={val => handleShowNsfwChange(this, val)}
-            />
-          </div>
-        </div>
-        <div className="row mb-3">
-          <div className="col">
-            <FilterChipCheckbox
-              option={"blur_nsfw"}
-              isChecked={
-                (this.state.saveUserSettingsForm.blur_nsfw ?? false) &&
-                (this.state.saveUserSettingsForm.show_nsfw ?? false)
-              }
-              onCheck={val => handleBlurNsfwChange(this, val)}
-              disabled={!this.state.saveUserSettingsForm.show_nsfw}
-            />
-          </div>
-        </div>
+        {/* audioprn: no "Show NSFW" / "Blur NSFW" settings, the whole site is adult content. */}
         <div className="row mb-3">
           <div className="col">
             <FilterChipCheckbox
@@ -1223,27 +1201,30 @@ export class Settings extends Component<SettingsRouteProps, SettingsState> {
         <h5 className="card-title">
           {I18NextService.i18n.t("sorting_and_filtering")}
         </h5>
-        <div className="mb-3 row align-items-center">
-          <label className="col-sm-3 col-form-label">
-            {I18NextService.i18n.t("type")}
-          </label>
-          <div className="col-sm-9">
-            <ListingTypeDropdown
-              currentOption={
-                this.state.saveUserSettingsForm.default_listing_type ?? "local"
-              }
-              showLocal={showLocal(this.isoData)}
-              showSubscribed
-              showSuggested={
-                !!this.isoData.siteRes.site_view.local_site
-                  .suggested_multi_community_id
-              }
-              myUserInfo={myUserInfo}
-              showLabel={false}
-              onSelect={val => handleListingTypeChange(this, val)}
-            />
+        {SHOW_COMMUNITIES && (
+          <div className="mb-3 row align-items-center">
+            <label className="col-sm-3 col-form-label">
+              {I18NextService.i18n.t("type")}
+            </label>
+            <div className="col-sm-9">
+              <ListingTypeDropdown
+                currentOption={
+                  this.state.saveUserSettingsForm.default_listing_type ??
+                  "local"
+                }
+                showLocal={showLocal(this.isoData)}
+                showSubscribed
+                showSuggested={
+                  !!this.isoData.siteRes.site_view.local_site
+                    .suggested_multi_community_id
+                }
+                myUserInfo={myUserInfo}
+                showLabel={false}
+                onSelect={val => handleListingTypeChange(this, val)}
+              />
+            </div>
           </div>
-        </div>
+        )}
         <div className="mb-3 row align-items-center">
           <label className="col-sm-3 col-form-label">
             {I18NextService.i18n.t("post_sort_type")}
@@ -1351,17 +1332,7 @@ export class Settings extends Component<SettingsRouteProps, SettingsState> {
             />
           </div>
         </div>
-        <div className="row mb-3">
-          <div className="col">
-            <FilterChipCheckbox
-              option={"show_user_vote_totals"}
-              isChecked={
-                this.state.saveUserSettingsForm.show_person_votes ?? false
-              }
-              onCheck={val => handleShowPersonVotesChange(this, val)}
-            />
-          </div>
-        </div>
+        {/* audioprn: no vote totals for users, so no setting for them */}
         <div className="mb-3 row align-items-center">
           <label className="col-sm-3 col-form-label">
             {I18NextService.i18n.t("show_downvotes")}
@@ -1812,14 +1783,6 @@ async function handleUnblockInstancePersons(
   }
 }
 
-function handleShowNsfwChange(i: Settings, val: boolean) {
-  i.setState(s => ((s.saveUserSettingsForm.show_nsfw = val), s));
-}
-
-function handleBlurNsfwChange(i: Settings, val: boolean) {
-  i.setState(s => ((s.saveUserSettingsForm.blur_nsfw = val), s));
-}
-
 function handleShowAvatarsChange(
   i: Settings,
   val: boolean,
@@ -1934,10 +1897,6 @@ function handleShowUpvotePercentageChange(
   i.setState(s => ((s.saveUserSettingsForm.show_upvote_percentage = val), s));
 }
 
-function handleShowPersonVotesChange(i: Settings, val: boolean) {
-  i.setState(s => ((s.saveUserSettingsForm.show_person_votes = val), s));
-}
-
 function handleCollapseBotCommentsChange(i: Settings, val: boolean) {
   i.setState(s => ((s.saveUserSettingsForm.collapse_bot_comments = val), s));
 }
@@ -1951,12 +1910,6 @@ function handleSendNotificationsToEmailChange(i: Settings, val: boolean) {
 function handleThemeChange(i: Settings, theme: string) {
   i.setState(s => ((s.saveUserSettingsForm.theme = theme), s));
   setThemeOverride(theme);
-}
-
-async function handleInterfaceLangChange(i: Settings, newLang: string) {
-  await I18NextService.reconfigure(navigator.languages, newLang);
-
-  i.setState(s => ((s.saveUserSettingsForm.interface_language = newLang), s));
 }
 
 function handleDiscussionLanguageChange(i: Settings, val: number[]) {

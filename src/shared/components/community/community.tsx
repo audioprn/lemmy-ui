@@ -116,6 +116,7 @@ import {
   PostsLoadingSkeleton,
 } from "../common/loading-skeleton";
 import { CommunitySidebar } from "./community-sidebar";
+import { NewsFeed } from "../../audioprn/news-feed";
 import { IRoutePropsWithFetch } from "@utils/routes";
 import { isBrowser } from "@utils/browser";
 import { CommunityHeader } from "./community-header";
@@ -635,6 +636,11 @@ export class Community extends Component<CommunityRouteProps, State> {
 
     return (
       <>
+        {/* audioprn: the community mods' news, at the top of the sidebar */}
+        <NewsFeed
+          key={res.community_view.community.id}
+          communityId={res.community_view.community.id}
+        />
         <CommunitySidebar
           communityView={res.community_view}
           moderators={res.moderators}

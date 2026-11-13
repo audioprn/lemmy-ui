@@ -70,6 +70,7 @@ import { MultiCommunityLink } from "./multi-community/multi-community-link";
 import { Action } from "history";
 import { ListingTypeDropdown } from "./common/listing-type-dropdown";
 import { SearchTypeDropdown } from "./common/search-type-dropdown";
+import { SHOW_COMMUNITIES } from "../audioprn/features";
 import { FilterChipCheckbox } from "./common/filter-chip-checkbox";
 import { NoOptionI18nKeys } from "i18next";
 import { FilterChipSelect } from "./common/filter-chip-select";
@@ -790,20 +791,22 @@ export class Search extends Component<SearchRouteProps, SearchState> {
               onSelect={val => handleTypeChange(this, val)}
             />
           </div>
-          <div className="col">
-            <ListingTypeDropdown
-              currentOption={listingType}
-              showLocal={showLocal(this.isoData)}
-              showSubscribed
-              showSuggested={
-                !!this.isoData.siteRes.site_view.local_site
-                  .suggested_multi_community_id
-              }
-              onSelect={type => handleListingTypeChange(this, type)}
-              myUserInfo={this.isoData.myUserInfo}
-              showLabel
-            />
-          </div>
+          {SHOW_COMMUNITIES && (
+            <div className="col">
+              <ListingTypeDropdown
+                currentOption={listingType}
+                showLocal={showLocal(this.isoData)}
+                showSubscribed
+                showSuggested={
+                  !!this.isoData.siteRes.site_view.local_site
+                    .suggested_multi_community_id
+                }
+                onSelect={type => handleListingTypeChange(this, type)}
+                myUserInfo={this.isoData.myUserInfo}
+                showLabel
+              />
+            </div>
+          )}
           {(type === "all" || type === "posts") && (
             <>
               <div className="col">
@@ -822,15 +825,17 @@ export class Search extends Component<SearchRouteProps, SearchState> {
               </div>
             </>
           )}
-          <div className="col">
-            <Filter
-              title="all_communities"
-              onChange={choices => handleCommunityFilterChange(this, choices)}
-              onSearch={text => handleCommunitySearch(this, text)}
-              options={communitySearchOptions}
-              value={communityId}
-            />
-          </div>
+          {SHOW_COMMUNITIES && (
+            <div className="col">
+              <Filter
+                title="all_communities"
+                onChange={choices => handleCommunityFilterChange(this, choices)}
+                onSearch={text => handleCommunitySearch(this, text)}
+                options={communitySearchOptions}
+                value={communityId}
+              />
+            </div>
+          )}
           <div className="col">
             <Filter
               title="all_creators"

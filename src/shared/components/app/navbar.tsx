@@ -21,6 +21,10 @@ import { Subscription } from "rxjs";
 import { tippyMixin } from "../mixins/tippy-mixin";
 import { RouterContext } from "inferno-router";
 import { NoOptionI18nKeys } from "i18next";
+import {
+  SHOW_COMMUNITIES,
+  SHOW_MULTI_COMMUNITIES,
+} from "../../audioprn/features";
 
 interface NavbarProps {
   siteRes?: GetSiteResponse;
@@ -130,6 +134,22 @@ export class Navbar extends Component<NavbarProps, NavbarState> {
               )}
             {siteView?.site.name}
           </NavLink>
+          {/* audioprn: search Content, next to the site name */}
+          <form
+            className="d-flex flex-shrink-1 me-2"
+            action="/content"
+            method="get"
+            role="search"
+          >
+            <input
+              type="search"
+              name="q"
+              className="form-control form-control-sm"
+              style="max-width: 14rem"
+              placeholder="Search content"
+              aria-label="Search content"
+            />
+          </form>
           {person && (
             <ul className="navbar-nav d-flex flex-row ms-auto d-md-none">
               {/* Always show the notif button on mobile, but hide the others if the counts are 0. */}
@@ -224,22 +244,56 @@ export class Navbar extends Component<NavbarProps, NavbarState> {
             <ul id="navbarLinks" className="me-auto navbar-nav">
               <li className="nav-item">
                 <NavLink
-                  to="/communities"
+                  to="/content"
                   className="nav-link"
-                  title={I18NextService.i18n.t("communities")}
                   onMouseUp={() => handleCollapseClick(this)}
                 >
-                  {I18NextService.i18n.t("communities")}
+                  Content
                 </NavLink>
               </li>
+              {SHOW_COMMUNITIES && (
+                <>
+                  <li className="nav-item">
+                    <NavLink
+                      to="/communities"
+                      className="nav-link"
+                      title={I18NextService.i18n.t("communities")}
+                      onMouseUp={() => handleCollapseClick(this)}
+                    >
+                      {I18NextService.i18n.t("communities")}
+                    </NavLink>
+                  </li>
+                  {SHOW_MULTI_COMMUNITIES && (
+                    <li className="nav-item">
+                      <NavLink
+                        to="/multi_communities"
+                        className="nav-link"
+                        title={I18NextService.i18n.t("multi_communities")}
+                        onMouseUp={() => handleCollapseClick(this)}
+                      >
+                        {I18NextService.i18n.t("multi_communities")}
+                      </NavLink>
+                    </li>
+                  )}
+                </>
+              )}
               <li className="nav-item">
                 <NavLink
-                  to="/multi_communities"
+                  to="/creators"
                   className="nav-link"
-                  title={I18NextService.i18n.t("multi_communities")}
                   onMouseUp={() => handleCollapseClick(this)}
                 >
-                  {I18NextService.i18n.t("multi_communities")}
+                  Creators
+                </NavLink>
+              </li>
+              {/* audioprn: the user's own feed (guests go to the login page) */}
+              <li className="nav-item">
+                <NavLink
+                  to={this.props.myUserInfo ? "/my" : "/login"}
+                  className="nav-link"
+                  onMouseUp={() => handleCollapseClick(this)}
+                >
+                  My audioprn
                 </NavLink>
               </li>
               <li className="nav-item">
@@ -412,6 +466,20 @@ export class Navbar extends Component<NavbarProps, NavbarState> {
                             icon="clipboard"
                             label="registration_applications"
                           />
+                        )}
+                        {/* audioprn: creator verification */}
+                        {amAdmin(this.props.myUserInfo) && (
+                          <li>
+                            <NavLink
+                              to="/creator_applications"
+                              className="dropdown-item px-2"
+                              title="Creator applications"
+                              onClick={() => handleCollapseClick(this)}
+                            >
+                              <Icon icon="check" classes="me-1" />
+                              Creator applications
+                            </NavLink>
+                          </li>
                         )}
                         {moderatesPrivateCommunity(this.props.myUserInfo) && (
                           <MyNavLink

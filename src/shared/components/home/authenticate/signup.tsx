@@ -6,8 +6,15 @@ import {
   CaptchaResponse,
   GetCaptchaResponse,
   LoginResponse,
+  Register,
   SiteView,
 } from "lemmy-js-client";
+import {
+  CONTENT_LINKS_REQUIRED,
+  MAX_SOCIAL_LINKS,
+  creatorErrorMessage,
+  registerErrorMessage,
+} from "../../../audioprn/creator-api";
 import { validActorRegexPattern } from "@utils/config";
 import { NoOptionI18nKeys } from "i18next";
 import { I18NextService } from "@services/I18NextService";
@@ -24,7 +31,7 @@ import { Icon, Spinner } from "../../common/icon";
 import PasswordInput from "../../common/password-input";
 import { scrollMixin } from "@components/mixins/scroll-mixin";
 import { RouteData } from "@utils/types";
-import { RouteComponentProps, RouterContext } from "inferno-router";
+import { Link, RouteComponentProps, RouterContext } from "inferno-router";
 import { IRoutePropsWithFetch } from "@utils/routes";
 import { OAuthLogin } from "../oauth/oauth-login";
 import { RegistrationApplicationInput } from "./registration-application-input";
@@ -47,9 +54,15 @@ interface State {
     answer?: string;
     stay_logged_in: boolean;
     token?: string;
+    // audioprn: creator signup only
+    content_links: string[];
+    social_links: string[];
   };
   captchaPlaying: boolean;
 }
+
+// audioprn: the creator signup form lives at /signup/creator.
+const CREATOR_SIGNUP_PATH = "/signup/creator";
 
 type SignupRouteProps = RouteComponentProps<Record<string, never>> & WithHead;
 export type SignupFetchConfig = IRoutePropsWithFetch<
@@ -67,11 +80,18 @@ export class Signup extends Component<SignupRouteProps, State> {
     registerRes: EMPTY_REQUEST,
     captchaRes: EMPTY_REQUEST,
     form: {
-      show_nsfw: !!this.isoData.siteRes?.site_view.site.content_warning,
+      // audioprn: adult-only site, so NSFW is always shown (the checkbox is removed).
+      show_nsfw: true,
       stay_logged_in: false,
+      content_links: Array(CONTENT_LINKS_REQUIRED).fill(""),
+      social_links: [""], // one to start; "Add another link" adds more
     },
     captchaPlaying: false,
   };
+
+  get isCreator(): boolean {
+    return this.props.location.pathname.startsWith(CREATOR_SIGNUP_PATH);
+  }
 
   loadingSettled() {
     return (
@@ -105,7 +125,108 @@ export class Signup extends Component<SignupRouteProps, State> {
 
   get documentTitle(): string {
     const siteView = this.isoData.siteRes?.site_view;
-    return `${signupTitleName(siteView)} - ${siteView?.site.name}`;
+    return `${this.titleName} - ${siteView?.site.name}`;
+  }
+
+  get titleName(): string {
+    return this.isCreator
+      ? "Sign up as a creator"
+      : signupTitleName(this.isoData.siteRes?.site_view);
+  }
+
+  // audioprn: listener signup links to the creator form, and back.
+  creatorSwitch() {
+    return this.isCreator ? (
+      <p className="mb-4">
+        Just here to listen and read?{" "}
+        <Link to="/signup">Sign up as a listener</Link>
+      </p>
+    ) : (
+      <p className="mb-4">
+        Do you make audios or write scripts?{" "}
+        <Link to={CREATOR_SIGNUP_PATH}>Sign up as a creator</Link>
+      </p>
+    );
+  }
+
+  // audioprn: 3 required content links + up to 3 optional social links.
+  creatorLinks() {
+    const { content_links, social_links } = this.state.form;
+    return (
+      <>
+        <fieldset className="mb-3">
+          <legend className="h6">Your work</legend>
+          <p className="text-muted small">
+            Link to 3 of your audios or scripts on the sites where they're
+            hosted. An admin checks them before you can post.
+          </p>
+          {content_links.map((link, idx) => (
+            <div className="mb-2" key={`content-${idx}`}>
+              <label
+                className="form-label small mb-1"
+                htmlFor={`creator-content-${idx}`}
+              >
+                Link {idx + 1}
+              </label>
+              <input
+                type="url"
+                id={`creator-content-${idx}`}
+                className="form-control"
+                placeholder="https://"
+                value={link}
+                required
+                maxLength={512}
+                onInput={e => handleContentLinkChange(this, idx, e)}
+              />
+            </div>
+          ))}
+        </fieldset>
+        <fieldset className="mb-3">
+          <legend className="h6">
+            Social media <span className="text-muted small">(optional)</span>
+          </legend>
+          <p className="text-muted small">
+            Links to your profiles, for example on X, Reddit or Bluesky. Add as
+            many as you like.
+          </p>
+          {social_links.map((link, idx) => (
+            <div className="input-group mb-2" key={`social-${idx}`}>
+              <input
+                type="url"
+                id={`creator-social-${idx}`}
+                className="form-control"
+                placeholder="https://"
+                aria-label={`Social media link ${idx + 1}`}
+                value={link}
+                maxLength={512}
+                onInput={e => handleSocialLinkChange(this, idx, e)}
+              />
+              {social_links.length > 1 && (
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  aria-label={`Remove social media link ${idx + 1}`}
+                  title="Remove"
+                  onClick={() => handleRemoveSocialLink(this, idx)}
+                >
+                  <Icon icon="x" classes="icon-inline" />
+                </button>
+              )}
+            </div>
+          ))}
+          {social_links.length < MAX_SOCIAL_LINKS && (
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-secondary"
+              onClick={() => handleAddSocialLink(this)}
+            >
+              <Icon icon="add" classes="icon-inline me-1" />
+              Add another link
+            </button>
+          )}
+        </fieldset>
+      </>
+    );
   }
 
   render() {
@@ -134,7 +255,8 @@ export class Signup extends Component<SignupRouteProps, State> {
         className="was-validated"
         onSubmit={e => handleRegisterSubmit(this, e)}
       >
-        <h1 className="h4 mb-4">{signupTitleName(siteView)}</h1>
+        <h1 className="h4 mb-2">{this.titleName}</h1>
+        {this.creatorSwitch()}
 
         <div className="mb-3 row">
           <label
@@ -209,6 +331,7 @@ export class Signup extends Component<SignupRouteProps, State> {
           />
         </div>
 
+        {this.isCreator && this.creatorLinks()}
         <RegistrationApplicationInput
           getSiteRes={this.isoData.siteRes}
           onAnswerChange={answer => handleAnswerChange(this, answer)}
@@ -351,6 +474,26 @@ async function handleRegisterSubmit(
     stay_logged_in,
   } = i.state.form;
 
+  // audioprn: creator signup sends the links along, after a quick check here.
+  const creatorFields = i.isCreator
+    ? {
+        creator_content_links: i.state.form.content_links.map(l => l.trim()),
+        creator_social_links: i.state.form.social_links
+          .map(l => l.trim())
+          .filter(l => l !== ""),
+      }
+    : {};
+  if (
+    i.isCreator &&
+    new Set(creatorFields.creator_content_links).size !== CONTENT_LINKS_REQUIRED
+  ) {
+    toast(
+      creatorErrorMessage("creator_content_links_must_be_different"),
+      "danger",
+    );
+    return;
+  }
+
   // normal registration
   if (username && password && password_verify) {
     i.setState({ registerRes: LOADING_REQUEST });
@@ -367,11 +510,14 @@ async function handleRegisterSubmit(
       answer,
       stay_logged_in,
       token: i.state.form.token,
-    });
+      // Not in lemmy-js-client's Register type, but sent as JSON all the same.
+      ...creatorFields,
+    } as Register);
     switch (registerRes.state) {
       case "failed": {
         toast(
-          I18NextService.i18n.t(registerRes.err.name as NoOptionI18nKeys),
+          registerErrorMessage(registerRes.err) ??
+            I18NextService.i18n.t(registerRes.err.name as NoOptionI18nKeys),
           "danger",
         );
         i.setState({ registerRes: EMPTY_REQUEST });
@@ -397,10 +543,16 @@ async function handleRegisterSubmit(
             );
           }
 
-          i.props.history.replace("/communities");
+          // audioprn: communities are hidden, so new users land on the home page.
+          i.props.history.replace("/");
         } else {
           if (data.verify_email_sent) {
             toast(I18NextService.i18n.t("verify_email_sent"));
+          }
+          if (i.isCreator) {
+            toast(
+              "Your creator application was sent. An admin will review your links.",
+            );
           }
           if (data.registration_created) {
             toast(I18NextService.i18n.t("registration_application_sent"));
@@ -520,6 +672,36 @@ export function signupTitleName(siteView?: SiteView): string {
   return I18NextService.i18n.t(
     siteView?.local_site.private_instance ? "apply_to_join" : "sign_up",
   );
+}
+
+function handleContentLinkChange(
+  i: Signup,
+  idx: number,
+  event: FormEvent<HTMLInputElement>,
+) {
+  i.state.form.content_links[idx] = event.target.value;
+  i.setState(i.state);
+}
+
+function handleSocialLinkChange(
+  i: Signup,
+  idx: number,
+  event: FormEvent<HTMLInputElement>,
+) {
+  i.state.form.social_links[idx] = event.target.value;
+  i.setState(i.state);
+}
+
+function handleAddSocialLink(i: Signup) {
+  if (i.state.form.social_links.length < MAX_SOCIAL_LINKS) {
+    i.state.form.social_links.push("");
+    i.setState(i.state);
+  }
+}
+
+function handleRemoveSocialLink(i: Signup, idx: number) {
+  i.state.form.social_links.splice(idx, 1);
+  i.setState(i.state);
 }
 
 function extractInviteToken(i: Signup) {

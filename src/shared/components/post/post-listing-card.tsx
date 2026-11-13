@@ -43,6 +43,11 @@ import {
 } from "./common";
 import { CrossPosts } from "./cross-posts";
 import { PostActionBar } from "./post-action-bar";
+import { PostReactions } from "../../audioprn/post-reactions";
+import { PostPoll } from "../../audioprn/post-poll";
+import { PostTools } from "../../audioprn/post-tools";
+import { PostFooter } from "../../audioprn/post-footer";
+import { ScriptBox } from "../../audioprn/post-script";
 import { PostThumbnail } from "./post-thumbnail";
 import classNames from "classnames";
 import { MetadataCard } from "./metadata-card";
@@ -151,7 +156,10 @@ export class PostListingCard extends Component<
             <div className="col flex-grow-1">
               <PostName post={p.postView.post} showBody={p.showBody} />
               <div className="small">
-                <UrlLine postView={p.postView} myUserInfo={p.myUserInfo} />
+                {/* audioprn: the link only shows once the post is opened */}
+                {p.showBody === "full" && (
+                  <UrlLine postView={p.postView} myUserInfo={p.myUserInfo} />
+                )}
                 <span> </span>
                 <PostBadges
                   post={p.postView.post}
@@ -173,7 +181,8 @@ export class PostListingCard extends Component<
           {!p.smallCard && isImagePost && (
             <PostImg
               postView={p.postView}
-              hideImage={p.hideImage}
+              // audioprn: image links aren't shown as images
+              hideImage
               myUserInfo={p.myUserInfo}
               showAdultConsentModal={p.showAdultConsentModal}
             />
@@ -186,6 +195,19 @@ export class PostListingCard extends Component<
                 viewSource={this.state.viewSource}
               />
             )}
+          </div>
+          {/* audioprn: the script (Script Offer posts) and the creator's footer on the post page */}
+          {p.showBody === "full" && <ScriptBox postView={p.postView} />}
+          {p.showBody === "full" && (
+            <PostFooter creatorId={p.postView.creator.id} />
+          )}
+          {/* audioprn: poll (creator page posts), then emoji reactions instead of votes */}
+          {p.postView.community.name === "creators" && (
+            <PostPoll postId={p.postView.post.id} />
+          )}
+          <div className="mb-2 d-flex flex-wrap gap-2">
+            <PostReactions postId={p.postView.post.id} />
+            <PostTools postView={p.postView} />
           </div>
           <PostActionBar
             postView={p.postView}

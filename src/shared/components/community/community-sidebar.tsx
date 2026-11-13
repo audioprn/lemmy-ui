@@ -32,6 +32,7 @@ import { CreatePostButton } from "@components/common/content-actions/create-item
 import ModActionFormModal from "@components/common/modal/mod-action-form-modal";
 import { Link } from "inferno-router";
 import { RouterContext } from "inferno-router";
+import { SHOW_COMMUNITIES } from "../../audioprn/features";
 
 interface SidebarProps {
   communityView: CommunityView;
@@ -97,7 +98,8 @@ export class CommunitySidebar extends Component<SidebarProps, SidebarState> {
       <div className="community-sidebar">
         <aside className="mb-3">
           <div id="sidebarContainer">
-            {!this.props.hideButtons && (
+            {/* audioprn: no community title, subscribe, block or report while communities are hidden. */}
+            {!this.props.hideButtons && SHOW_COMMUNITIES && (
               <section id="sidebarMain" className="card mb-3">
                 <div className="card-body d-flex flex-column gap-2">
                   {this.communityTitle()}
@@ -269,24 +271,28 @@ export class CommunitySidebar extends Component<SidebarProps, SidebarState> {
                   </div>
                 )}
                 {this.sidebarMarkdown()}
-                <div className="d-flex flex-column gap-1">
-                  <div className="fw-semibold">
-                    <span className="align-middle">
-                      {I18NextService.i18n.t("community_visibility")}:&nbsp;
-                    </span>
-                    <span className="fs-5 fw-medium align-middle">
-                      {I18NextService.i18n.t(visibilityLabel)}
-                    </span>
+                {SHOW_COMMUNITIES && (
+                  <div className="d-flex flex-column gap-1">
+                    <div className="fw-semibold">
+                      <span className="align-middle">
+                        {I18NextService.i18n.t("community_visibility")}:&nbsp;
+                      </span>
+                      <span className="fs-5 fw-medium align-middle">
+                        {I18NextService.i18n.t(visibilityLabel)}
+                      </span>
+                    </div>
+                    <p className="mb-0">
+                      {I18NextService.i18n.t(visibilityDescription)}
+                    </p>
                   </div>
-                  <p className="mb-0">
-                    {I18NextService.i18n.t(visibilityDescription)}
-                  </p>
-                </div>
+                )}
                 <LanguageList
                   allLanguages={this.props.allLanguages}
                   languageIds={this.props.siteLanguages}
                 />
-                <CommunityBadges community={communityView.community} />
+                {SHOW_COMMUNITIES && (
+                  <CommunityBadges community={communityView.community} />
+                )}
                 {this.mods()}
               </div>
             </section>
@@ -323,11 +329,7 @@ export class CommunitySidebar extends Component<SidebarProps, SidebarState> {
               {I18NextService.i18n.t("deleted")}
             </small>
           )}
-          {community.nsfw && (
-            <small className="me-2 text-muted fst-italic">
-              {I18NextService.i18n.t("nsfw")}
-            </small>
-          )}
+          {/* audioprn: no NSFW label, the whole site is adult content. */}
         </h2>
         <CommunityLink
           community={community}

@@ -13,6 +13,7 @@ import { mdToHtmlInline } from "@utils/markdown";
 import { ShowCrossPostsType } from "@utils/types";
 import { Link } from "inferno-router";
 import { PostView, MyUserInfo } from "lemmy-js-client";
+import { SHOW_COMMUNITIES } from "../../audioprn/features";
 
 type CrossPostsProps = {
   crossPosts?: PostView[];
@@ -20,6 +21,10 @@ type CrossPostsProps = {
   myUserInfo: MyUserInfo | undefined;
 };
 export function CrossPosts({ crossPosts, type_, myUserInfo }: CrossPostsProps) {
+  // audioprn: one community, so no cross-posts.
+  if (!SHOW_COMMUNITIES) {
+    return <></>;
+  }
   switch (type_) {
     case "small":
       return <SmallCrossPosts crossPosts={crossPosts} />;

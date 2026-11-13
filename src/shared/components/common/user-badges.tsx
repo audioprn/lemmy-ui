@@ -63,17 +63,7 @@ export class UserBadges extends Component<UserBadgesProps> {
     const isNewAccount = !isWeekOld(new Date(this.props.creator.published_at));
     const showCounts = this.props.showCounts ?? false;
 
-    const localUserView = this.props.myUserInfo?.local_user_view;
-    // Only show the person votes if:
-    const showPersonVotes =
-      // the setting is turned on,
-      localUserView?.local_user.show_person_votes &&
-      // for other users,
-      localUserView.person?.id !== this.props.creator?.id &&
-      // and theres at least one up or downvote
-      (this.props.personActions?.upvotes !== 0 ||
-        this.props.personActions?.downvotes !== 0);
-
+    // audioprn: no "+0 -0" vote totals for users.
     const personNote = this.props.personActions?.note;
 
     return (
@@ -85,7 +75,6 @@ export class UserBadges extends Component<UserBadgesProps> {
         isBot ||
         isNewAccount ||
         showCounts ||
-        showPersonVotes ||
         personNote) && (
         <span
           className={classNames(
@@ -146,14 +135,6 @@ export class UserBadges extends Component<UserBadgesProps> {
               />
             </span>
           )}
-          {showPersonVotes && (
-            <span className="col-auto">
-              <RoleLabelPill
-                label={personVotesLabel(this.props.personActions)}
-                tooltip={I18NextService.i18n.t("vote_totals_for_user")}
-              />
-            </span>
-          )}
           {personNote && (
             <span className="col">
               <RoleLabelPill
@@ -198,10 +179,4 @@ export class UserBadges extends Component<UserBadgesProps> {
       )
     );
   }
-}
-
-function personVotesLabel(personActions?: PersonActions): string {
-  const upvotes = personActions?.upvotes ?? 0;
-  const downvotes = personActions?.downvotes ?? 0;
-  return `+${upvotes} -${downvotes}`;
 }

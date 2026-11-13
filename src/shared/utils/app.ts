@@ -310,8 +310,10 @@ export function editCommentsSlimLocked(
   );
 }
 
-export function enableNsfw(siteRes?: GetSiteResponse): boolean {
-  return !siteRes?.site_view.local_site.nsfw_content_disallowed;
+// audioprn: the whole site is adult content, so there's no NSFW marking anywhere.
+// Returning false hides every NSFW checkbox (post form, community form).
+export function enableNsfw(_siteRes?: GetSiteResponse): boolean {
+  return false;
 }
 
 export async function searchCommunities(search_term: string) {
@@ -481,13 +483,12 @@ export function newVoteIsUpvote(
   }
 }
 
+// audioprn: adult-only site, so content is never hidden for being NSFW.
 export function nsfwCheck(
-  pv: PostView,
-  myUserInfo: MyUserInfo | undefined,
+  _pv: PostView,
+  _myUserInfo: MyUserInfo | undefined,
 ): boolean {
-  const nsfw = pv.post.nsfw || pv.community.nsfw;
-  const myShowNsfw = myUserInfo?.local_user_view.local_user.show_nsfw ?? false;
-  return !nsfw || (nsfw && myShowNsfw);
+  return true;
 }
 
 export async function personSearch(text: string): Promise<PersonTribute[]> {

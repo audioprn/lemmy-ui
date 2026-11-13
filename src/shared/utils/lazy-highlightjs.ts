@@ -94,12 +94,13 @@ class LazyHighlightjs implements HLJSPlugin {
     md: MarkdownIt,
     text: string,
     shouldRerender: () => void,
+    env?: object, // audioprn: markdown-it env, e.g. { gifs: true } for comments
   ): string {
     if (this.current) throw Error("no nesting");
     if (shouldRerender) {
       this.current = { callback: shouldRerender, pending: new Set() };
     }
-    const result = md.render(text);
+    const result = md.render(text, env);
     this.current = undefined;
     return result;
   }

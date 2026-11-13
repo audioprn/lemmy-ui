@@ -16,16 +16,11 @@ type SortDropdownProps<T extends string> = {
   className?: string;
 };
 
+// audioprn: only New and Engagement. Engagement is Lemmy's "top" sort; the backend keeps
+// post.score = reactions + 5 × comments.
 const postSortOptions: FilterOption<PostSortType>[] = [
-  { i18n: "active", value: "active" },
-  { i18n: "hot", value: "hot" },
-  { i18n: "scaled", value: "scaled" },
   { i18n: "new", value: "new" },
-  { i18n: "old", value: "old" },
-  { i18n: "top", value: "top" },
-  { i18n: "most_comments", value: "most_comments" },
-  { i18n: "new_comments", value: "new_comments" },
-  { i18n: "controversial", value: "controversial" },
+  { noI18n: "Engagement", value: "top" },
 ];
 
 export function PostSortDropdown({
@@ -43,7 +38,6 @@ export function PostSortDropdown({
         onSelect={onSelect}
         className={className}
       />
-      <SortingHelp />
     </div>
   );
 }

@@ -1,3 +1,4 @@
+// audioprn: the hard-coded "community" texts below read "cummunity".
 import {
   communityToChoice,
   searchCommunities,
@@ -198,7 +199,7 @@ export function processModlogEntry(
         moderator,
         data: (
           <>
-            <span>Purged a Community</span>
+            <span>Purged a Cummunity</span>
             {reason && (
               <span>
                 <div>reason: {reason}</div>
@@ -284,7 +285,7 @@ export function processModlogEntry(
                 muted={false}
               />
             </span>
-            <span> as a mod to the community </span>
+            <span> as a mod to the cummunity </span>
             <span>
               <CommunityLink
                 community={target_community}
@@ -349,7 +350,7 @@ export function processModlogEntry(
                 muted={false}
               />
             </span>
-            <span> from the community </span>
+            <span> from the cummunity </span>
             <span>
               <CommunityLink
                 community={target_community}
@@ -409,7 +410,7 @@ export function processModlogEntry(
               Post{" "}
               <Link to={`/post/${target_post?.id}`}>{target_post?.name}</Link>
             </span>
-            <span>" in community "</span>
+            <span>" in cummunity "</span>
             <CommunityLink
               community={target_community}
               myUserInfo={myUserInfo}

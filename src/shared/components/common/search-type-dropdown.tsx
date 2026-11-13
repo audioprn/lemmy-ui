@@ -1,5 +1,9 @@
 import { SearchType } from "lemmy-js-client";
 import { FilterChipDropdown, FilterOption } from "./filter-chip-dropdown";
+import {
+  SHOW_COMMUNITIES,
+  SHOW_MULTI_COMMUNITIES,
+} from "../../audioprn/features";
 
 const options: FilterOption<SearchType>[] = [
   { value: "all", i18n: "all" },
@@ -8,7 +12,12 @@ const options: FilterOption<SearchType>[] = [
   { value: "communities", i18n: "communities" },
   { value: "users", i18n: "users" },
   { value: "multi_communities", i18n: "multi_communities" },
-];
+].filter(
+  // audioprn: no search for hidden communities / multi-communities.
+  o =>
+    (SHOW_COMMUNITIES || o.value !== "communities") &&
+    (SHOW_MULTI_COMMUNITIES || o.value !== "multi_communities"),
+) as FilterOption<SearchType>[];
 
 type SearchTypeDropdownProps = {
   currentOption: SearchType;

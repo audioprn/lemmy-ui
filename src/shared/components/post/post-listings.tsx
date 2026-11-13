@@ -36,6 +36,7 @@ import {
 import { I18NextService } from "../../services";
 import { PostListing } from "./post-listing";
 import { ShowCrossPostsType, ShowMarkReadType } from "@utils/types";
+import { SHOW_COMMUNITIES } from "../../audioprn/features";
 
 interface PostListingsProps {
   posts: PostView[];
@@ -156,11 +157,13 @@ export class PostListings extends Component<PostListingsProps, never> {
         ) : (
           <>
             <div>{I18NextService.i18n.t("no_posts")}</div>
-            {this.props.showCommunity && !this.props.multiCommunity && (
-              <T i18nKey="subscribe_to_communities">
-                #<Link to="/communities">#</Link>
-              </T>
-            )}
+            {SHOW_COMMUNITIES &&
+              this.props.showCommunity &&
+              !this.props.multiCommunity && (
+                <T i18nKey="subscribe_to_communities">
+                  #<Link to="/communities">#</Link>
+                </T>
+              )}
           </>
         )}
       </div>

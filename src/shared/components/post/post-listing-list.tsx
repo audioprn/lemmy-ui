@@ -11,6 +11,8 @@ import { PostThumbnail } from "./post-thumbnail";
 import { PostCreatedLine, PostName } from "./common";
 import { CrossPosts } from "./cross-posts";
 import { CommentsButton } from "./post-action-bar";
+import { PostReactions } from "../../audioprn/post-reactions";
+import { PostTools } from "../../audioprn/post-tools";
 
 type Props = {
   postView: PostView;
@@ -69,7 +71,7 @@ export function PostListingList({
             postView={postView}
             showCommunity={showCommunity}
             showPublishedTime
-            showUrlLine
+            showUrlLine={false} // audioprn: the link shows once the post is opened
             showPostBadges
             allLanguages={allLanguages}
             myUserInfo={myUserInfo}
@@ -82,6 +84,11 @@ export function PostListingList({
             type_="text"
             onScrollIntoCommentsClick={onScrollIntoCommentsClick}
           />
+          {/* audioprn: emoji reactions instead of votes, then Save and Share */}
+          <div className="d-flex flex-wrap gap-2">
+            <PostReactions postId={postView.post.id} />
+            <PostTools postView={postView} />
+          </div>
         </div>
         <div className="col-auto">
           <PostThumbnail

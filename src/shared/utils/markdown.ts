@@ -48,8 +48,9 @@ export let customEmojisLookup: Map<string, CustomEmojiView> = new Map<
   CustomEmojiView
 >();
 
-export function mdToHtml(text: string, rerender: () => void) {
-  return { __html: lazyHighlightjs.render(md, text, rerender) };
+/** audioprn: `gifs` shows GIF links as images (comments only). */
+export function mdToHtml(text: string, rerender: () => void, gifs = false) {
+  return { __html: lazyHighlightjs.render(md, text, rerender, { gifs }) };
 }
 
 export function mdToHtmlNoImages(text: string, rerender: () => void) {
@@ -184,7 +185,7 @@ export function setupMarkdown() {
     .use(markdown_it_sub as PluginSimple)
     .use(markdown_it_sup as PluginSimple)
     .use(markdown_it_footnote as PluginSimple)
-    .use(html5Media as PluginSimple, html5EmbedConfig)
+    // audioprn: no embedded video/audio players (html5Media); ![](x.mp4) shows as a link.
     .use(markdown_it_container, "spoiler", spoilerConfig)
     .use(markdown_it_highlightjs as PluginSimple, highlightjsConfig)
     .use(markdown_it_ruby as PluginSimple)
@@ -215,11 +216,18 @@ export function setupMarkdown() {
     tokens: Token[],
     idx: number,
     options: MarkdownItOptions,
-    env: never,
+    env: { gifs?: boolean } | undefined,
     self: Renderer,
   ) {
     // Provide custom renderer for our emojis to allow us to add a css class and force size dimensions on them.
     const item = tokens[idx];
+
+    // audioprn: no images except GIF links in comments; anything else shows as a link.
+    const href = item.attrGet("src") ?? "";
+    if (!(env?.gifs && /\.gif([?#]|$)/i.test(href))) {
+      const text = self.renderInlineAsText(item.children ?? [], options, env);
+      return `<a href="${md.utils.escapeHtml(href)}" rel="${relTags}">${md.utils.escapeHtml(text || href)}</a>`;
+    }
 
     // Make any pictrs images a smaller size
     const src = item.attrGet("src");

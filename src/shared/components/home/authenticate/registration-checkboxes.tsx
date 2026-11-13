@@ -11,28 +11,15 @@ type RegistrationCheckboxesProps = {
   onHoneyPotChange?: (value: string) => void;
 };
 
+// audioprn: no "Show NSFW content" checkbox. The whole site is adult content,
+// so new accounts are always registered with show_nsfw = true (see signup.tsx).
 export function RegistrationCheckboxes({
-  onRegisterShowNsfwChange,
   onHoneyPotChange,
   onStayLoggedInChange,
-  form: { show_nsfw, honeypot, stay_logged_in },
+  form: { honeypot, stay_logged_in },
 }: RegistrationCheckboxesProps) {
   return (
     <>
-      <div className="mb-3">
-        <div className="form-check">
-          <input
-            className="form-check-input"
-            id="register-show-nsfw"
-            type="checkbox"
-            checked={show_nsfw}
-            onChange={e => onRegisterShowNsfwChange(e.target.checked)}
-          />
-          <label className="form-check-label" htmlFor="register-show-nsfw">
-            {I18NextService.i18n.t("show_nsfw")}
-          </label>
-        </div>
-      </div>
       <input
         tabIndex={-1}
         autoComplete="false"

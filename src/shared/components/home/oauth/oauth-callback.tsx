@@ -60,7 +60,7 @@ export class OAuthCallback extends Component<OAuthCallbackRouteProps, State> {
   state: State = {
     siteRes: this.isoData.siteRes,
     username_required: false,
-    show_nsfw: false,
+    show_nsfw: true, // audioprn: adult-only site
     stay_logged_in: false,
   };
 

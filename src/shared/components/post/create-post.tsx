@@ -19,7 +19,7 @@ import {
   StringBoolean,
 } from "@utils/types";
 import { InfernoNode, Component } from "inferno";
-import { RouteComponentProps, RouterContext } from "inferno-router";
+import { Link, RouteComponentProps, RouterContext } from "inferno-router";
 import {
   CommunityView,
   CreatePost as CreatePostI,
@@ -44,11 +44,18 @@ import { PostForm } from "./post-form";
 import { getHttpBaseInternal } from "../../utils/env";
 import { IRoutePropsWithFetch } from "@utils/routes";
 import { simpleScrollMixin } from "../mixins/scroll-mixin";
-import { toast } from "@utils/app";
+
 import { isBrowser } from "@utils/browser";
-import { NoOptionI18nKeys } from "i18next";
+import { backendErrorPopup, errorPopup } from "../../audioprn/error-popup";
 import { CommunitySidebar } from "@components/community/community-sidebar";
-import { Icon } from "@components/common/icon";
+import { Icon, Spinner } from "@components/common/icon";
+import {
+  canPost,
+  creatorStatus,
+  loadCreatorStatus,
+  subscribeCreatorStatus,
+} from "../../audioprn/creator-status";
+import { MAIN_COMMUNITY_NAME, SHOW_COMMUNITIES } from "../../audioprn/features";
 import { removeLocalStorageMarkdown } from "@components/common/markdown-textarea";
 
 export interface CreatePostProps {
@@ -154,10 +161,11 @@ export class CreatePost extends Component<
   }
 
   async fetchCommunity({ communityId }: CreatePostProps) {
-    if (communityId) {
-      const res = await HttpService.client.getCommunity({
-        id: communityId,
-      });
+    // audioprn: while communities are hidden, posts always go to `main`.
+    if (communityId || !SHOW_COMMUNITIES) {
+      const res = await HttpService.client.getCommunity(
+        communityId ? { id: communityId } : { name: MAIN_COMMUNITY_NAME },
+      );
       if (res.state === "success") {
         this.setState({
           selectedCommunity: res.data.community_view,
@@ -165,6 +173,53 @@ export class CreatePost extends Component<
         });
       }
     }
+  }
+
+  // audioprn: only verified creators and admins get the form.
+  private unsubscribeCreatorStatus?: () => void;
+
+  componentDidMount() {
+    this.unsubscribeCreatorStatus = subscribeCreatorStatus(() =>
+      this.forceUpdate(),
+    );
+    loadCreatorStatus(this.isoData.myUserInfo);
+  }
+
+  componentWillUnmount() {
+    this.unsubscribeCreatorStatus?.();
+  }
+
+  notACreator() {
+    const myUserInfo = this.isoData.myUserInfo;
+    const status = creatorStatus(myUserInfo);
+    return (
+      <div className="create-post container-lg">
+        <div className="col-12 col-lg-6 offset-lg-2 mb-4">
+          <h1 className="h4 mb-3">{I18NextService.i18n.t("create_post")}</h1>
+          {!myUserInfo ? (
+            <p>
+              Only verified creators can post. <Link to="/login">Log in</Link>{" "}
+              or <Link to="/signup/creator">sign up as a creator</Link>.
+            </p>
+          ) : status === "pending" ? (
+            <p>
+              Only verified creators can post. Your creator application is
+              waiting for an admin to review it.
+            </p>
+          ) : status === "denied" ? (
+            <p>
+              Only verified creators can post. Your creator application wasn't
+              approved. Contact an admin if you think this is a mistake.
+            </p>
+          ) : (
+            <p>
+              Only verified creators can post. You can still comment on posts
+              and follow creators.
+            </p>
+          )}
+        </div>
+      </div>
+    );
   }
 
   async componentWillMount() {
@@ -180,7 +235,10 @@ export class CreatePost extends Component<
         initialCommunitiesRes,
       });
 
-      if (communityId !== this.state.selectedCommunity?.community.id) {
+      if (
+        communityId !== this.state.selectedCommunity?.community.id ||
+        !SHOW_COMMUNITIES
+      ) {
         await this.fetchCommunity({ communityId });
       } else if (!communityId) {
         this.setState({
@@ -244,7 +302,8 @@ export class CreatePost extends Component<
       name: title,
       url,
       body,
-      community_id: communityId,
+      // audioprn: fall back to `main` (loaded when there's no community in the URL).
+      community_id: communityId ?? this.state.selectedCommunity?.community.id,
       custom_thumbnail: customThumbnailUrl,
       language_id: languageId,
       nsfw: nsfw === "true",
@@ -252,6 +311,19 @@ export class CreatePost extends Component<
     };
 
     const { siteRes, myUserInfo, showAdultConsentModal } = this.isoData;
+
+    // audioprn: not allowed to post: explain instead of showing the form.
+    const allowed = canPost(myUserInfo);
+    if (allowed === false) {
+      return this.notACreator();
+    }
+    if (allowed === undefined) {
+      return (
+        <div className="text-center my-5">
+          <Spinner large />
+        </div>
+      );
+    }
 
     const selectedCommunityChoice = selectedCommunity
       ? communityToChoice(selectedCommunity)
@@ -268,10 +340,17 @@ export class CreatePost extends Component<
         <div className="row">
           <div id="createPostForm" className="col-12 col-lg-6 offset-lg-2 mb-4">
             <h1 className="h4 mb-4">{I18NextService.i18n.t("create_post")}</h1>
+            {/* audioprn: creator page posts go to `creators`, not Content */}
+            {selectedCommunity?.community.name === "creators" && (
+              <p className="text-muted">
+                This post goes on your creator page, not on Content.
+              </p>
+            )}
             <PostForm
-              onCreate={(form, bypassNav) =>
-                handlePostCreate(this, form, bypassNav)
+              onCreate={(form, bypassNav, afterCreate) =>
+                handlePostCreate(this, form, bypassNav, afterCreate)
               }
+              creatorPage={selectedCommunity?.community.name === "creators"}
               params={params}
               enableNsfw={enableNsfw(siteRes)}
               showAdultConsentModal={showAdultConsentModal}
@@ -379,10 +458,10 @@ export class CreatePost extends Component<
       communityResponse: EMPTY_REQUEST,
     };
 
-    if (communityId) {
-      const form: GetCommunity = {
-        id: communityId,
-      };
+    if (communityId || !SHOW_COMMUNITIES) {
+      const form: GetCommunity = communityId
+        ? { id: communityId }
+        : { name: MAIN_COMMUNITY_NAME };
 
       data.communityResponse = await client.getCommunity(form);
     }
@@ -475,6 +554,7 @@ async function handlePostCreate(
   i: CreatePost,
   form: CreatePostI,
   bypassNavWarning: () => void,
+  afterCreate: (postId: number) => Promise<void>,
 ) {
   i.setState({ createPostRes: LOADING_REQUEST });
   const res = await HttpService.client.createPost(form);
@@ -482,11 +562,13 @@ async function handlePostCreate(
 
   if (res.state === "success") {
     const postId = res.data.post_view.post.id;
+    // audioprn: save the credits and Content option now that the post exists.
+    await afterCreate(postId).catch(e => errorPopup(e.message));
     bypassNavWarning();
     removeLocalStorageMarkdown();
     i.props.history.replace(`/post/${postId}`);
   } else if (res.state === "failed") {
-    toast(I18NextService.i18n.t(res.err.name as NoOptionI18nKeys), "danger");
+    backendErrorPopup(res.err); // audioprn: a clear popup
   }
 }
 

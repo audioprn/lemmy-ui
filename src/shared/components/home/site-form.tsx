@@ -294,15 +294,8 @@ export class SiteForm extends Component<SiteFormProps, SiteFormState> {
             description="private_instance_description"
           />
         </div>
-        <div className="row mb-3">
-          <div className="col">
-            <FilterChipCheckbox
-              option={"disallow_nsfw_content"}
-              isChecked={this.state.siteForm.nsfw_content_disallowed ?? false}
-              onCheck={val => handleSiteEnableNsfwChange(this, val)}
-            />
-          </div>
-        </div>
+        {/* audioprn: no "Disallow NSFW content" switch, the whole site is adult content.
+            The content warning (18+ popup) editor below stays. */}
         {!this.state.siteForm.nsfw_content_disallowed && (
           <div className="mb-3 row">
             <div className="col">
@@ -922,15 +915,6 @@ function handleSiteSummaryChange(
   event: FormEvent<HTMLInputElement>,
 ) {
   i.setState(s => ((s.siteForm.summary = event.target.value), s));
-}
-
-function handleSiteEnableNsfwChange(i: SiteForm, val: boolean) {
-  const newState = i.state;
-  newState.siteForm.nsfw_content_disallowed = val;
-  if (val) {
-    newState.siteForm.content_warning = "";
-  }
-  i.setState(newState);
 }
 
 function handleMaxInvitesPerUserChange(i: SiteForm, val: string) {

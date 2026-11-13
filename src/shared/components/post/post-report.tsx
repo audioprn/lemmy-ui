@@ -183,11 +183,35 @@ export class PostReport extends Component<PostReportProps, PostReportState> {
               iconClass={`text-${resolved ? "success" : "danger"}`}
             />
           </div>
+          {/* audioprn: under review = open report. Approve unhides and closes it,
+              Delete hides and closes it; Hide/Unhide leaves it open. */}
+          {!resolved && (
+            <>
+              <div className="col">
+                <ActionButton
+                  label="Approve"
+                  icon="check"
+                  noLoading
+                  inlineWithText
+                  onClick={() => handleReview(this, false)}
+                  iconClass="text-success"
+                />
+              </div>
+              <div className="col">
+                <ActionButton
+                  label="Delete"
+                  icon="trash"
+                  noLoading
+                  inlineWithText
+                  onClick={() => handleReview(this, true)}
+                  iconClass="text-danger"
+                />
+              </div>
+            </>
+          )}
           <div className="col">
             <ActionButton
-              label={I18NextService.i18n.t(
-                pv.post.removed ? "restore_post" : "remove_post",
-              )}
+              label={pv.post.removed ? "Unhide" : "Hide while reviewing"}
               icon={pv.post.removed ? "restore" : "x"}
               noLoading
               inlineWithText
@@ -255,6 +279,19 @@ function handleRemovePost(i: PostReport, reason: string) {
     reason,
   });
   i.setState({ showRemovePostDialog: false });
+}
+
+// audioprn: approve (remove = false) or delete (remove = true), then close the report.
+function handleReview(i: PostReport, remove: boolean) {
+  const { post, post_report } = i.props.report;
+  if (post.removed !== remove) {
+    i.props.onRemovePost({
+      post_id: post.id,
+      removed: remove,
+      reason: remove ? "Deleted after review" : "Approved after review",
+    });
+  }
+  i.props.onResolveReport({ report_id: post_report.id, resolved: true });
 }
 
 function handleModBanFromCommunity(i: PostReport) {

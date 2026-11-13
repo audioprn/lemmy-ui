@@ -107,6 +107,12 @@ import { Icon, Spinner } from "../common/icon";
 import { MomentTime } from "../common/moment-time";
 import { UserBadges } from "../common/user-badges";
 import { CommunityLink } from "../community/community-link";
+import {
+  SHOW_COMMUNITIES,
+  SHOW_MULTI_COMMUNITIES,
+} from "../../audioprn/features";
+import { CreatorPageActions, CreditedOn } from "../../audioprn/creators";
+import { CreatorPin, CreatorStats } from "../../audioprn/creator-page";
 import { PersonDetails } from "./person-details";
 import { PersonListing } from "./person-listing";
 import { getHttpBaseInternal } from "@utils/env";
@@ -687,6 +693,11 @@ export class Profile extends Component<ProfileRouteProps, ProfileState> {
           <div className="row">
             <div className="col-12 col-md-8">
               {this.userInfo(personRes.person_view)}
+              {/* audioprn: the creator's pinned post */}
+              <CreatorPin
+                key={personRes.person_view.person.id}
+                personId={personRes.person_view.person.id}
+              />
               {this.selects}
               {isUpload && this.renderUploadsRes()}
               {!isUpload &&
@@ -773,17 +784,31 @@ export class Profile extends Component<ProfileRouteProps, ProfileState> {
             </div>
 
             <div className="col-12 col-md-4">
-              <Moderates
-                moderates={personRes.moderates}
-                myUserInfo={this.isoData.myUserInfo}
+              {/* audioprn: the creator's own stats, only for them */}
+              {this.amCurrentUser && <CreatorStats />}
+              {/* audioprn: posts by others that credit this person */}
+              <CreditedOn
+                key={personRes.person_view.person.id}
+                personId={personRes.person_view.person.id}
               />
-              {this.amCurrentUser && (
-                <Follows myUserInfo={this.isoData.myUserInfo} />
+              {/* audioprn: no community lists while communities are hidden. */}
+              {SHOW_COMMUNITIES && (
+                <>
+                  <Moderates
+                    moderates={personRes.moderates}
+                    myUserInfo={this.isoData.myUserInfo}
+                  />
+                  {this.amCurrentUser && (
+                    <Follows myUserInfo={this.isoData.myUserInfo} />
+                  )}
+                  {SHOW_MULTI_COMMUNITIES && (
+                    <MultiCommunities
+                      multis={personRes.multi_communities_created}
+                      myUserInfo={this.isoData.myUserInfo}
+                    />
+                  )}
+                </>
               )}
-              <MultiCommunities
-                multis={personRes.multi_communities_created}
-                myUserInfo={this.isoData.myUserInfo}
-              />
             </div>
           </div>
         );
@@ -926,6 +951,11 @@ export class Profile extends Component<ProfileRouteProps, ProfileState> {
                 </div>
                 {this.banDialog(pv)}
                 <div className="flex-grow-1 unselectable pointer mx-2"></div>
+                {/* audioprn: Follow, or "Post on my page" for the creator */}
+                <CreatorPageActions
+                  key={pv.person.id}
+                  personId={pv.person.id}
+                />
                 {!this.amCurrentUser && this.isoData.myUserInfo && (
                   <>
                     {amAdmin(this.isoData.myUserInfo) && (

@@ -39,7 +39,9 @@ import {
   UploadImageResponse,
   ModEditPost,
   PagedResponse,
+  PostResponse,
 } from "lemmy-js-client";
+import { backendErrorPopup, errorPopup } from "../../audioprn/error-popup";
 import {
   archiveTodayUrl,
   ghostArchiveUrl,
@@ -71,8 +73,35 @@ import { communityTagName } from "@components/community/community-tag";
 import { FilterChipSelect } from "@components/common/filter-chip-select";
 import { PostName } from "./common";
 import { NoOptionI18nKeys } from "i18next";
+import { SHOW_COMMUNITIES } from "../../audioprn/features";
+import { RichTextEditor } from "../../audioprn/rich-text";
+import { createPostPoll } from "../../audioprn/post-poll";
+import {
+  NO_SCRIPT,
+  ScriptFields,
+  ScriptInput,
+  savePostScript,
+} from "../../audioprn/post-script";
+import { amAdmin } from "@utils/roles";
+import {
+  CREDIT_ROLES,
+  CreditRole,
+  creditsText,
+  getPostCredits,
+  parseCredits,
+  savePostCredits,
+} from "../../audioprn/post-credits";
 
-const MAX_POST_TITLE_LENGTH = 200;
+const MAX_POST_TITLE_LENGTH = 300; // audioprn: spec allows 300 characters
+
+// audioprn: a new poll, ending a week from now (as a datetime-local value).
+const NEW_POLL = { question: "", options: ["", ""] };
+function inAWeek() {
+  const d = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 16);
+}
 
 interface PostFormProps {
   post_view?: PostView; // If a post is given, that means this is an edit
@@ -91,8 +120,19 @@ interface PostFormProps {
   localSite: LocalSite;
   admins: PersonView[];
   onCancel?: () => void;
-  onCreate?: (form: CreatePost, bypassNavWarning: () => void) => void;
-  onEdit?: (form: EditPost, bypassNavWarning: () => void) => void;
+  onCreate?: (
+    form: CreatePost,
+    bypassNavWarning: () => void,
+    // audioprn: saves credits and the Content option once the post exists
+    afterCreate: (postId: number) => Promise<void>,
+  ) => void;
+  /** audioprn: posting to the creator's page (never on Content) */
+  creatorPage?: boolean;
+  // audioprn: the result, so a refused edit can show an error
+  onEdit?: (
+    form: EditPost,
+    bypassNavWarning: () => void,
+  ) => void | Promise<RequestState<PostResponse>>;
   onModEdit?: (form: ModEditPost, bypassNavWarning: () => void) => void;
   onSelectCommunity?: (choice: Choice) => void;
   onTitleBlur?: (title: string) => void;
@@ -120,6 +160,18 @@ interface PostFormState {
     // Javascript treats this field as a string, that can't have timezone info.
     scheduled_publish_time_at?: string;
   };
+  /** audioprn: comma-separated names per credit role */
+  credits: Partial<Record<CreditRole, string>>;
+  /** audioprn: keep the post off the Content page */
+  offContent?: boolean;
+  /** audioprn: the post's credits were loaded, so saving an edit may replace them */
+  creditsLoaded?: boolean;
+  /** audioprn: rich text mode for the body */
+  richText?: boolean;
+  /** audioprn: an optional poll (creator page posts); `ends` is a datetime-local value */
+  poll?: { question: string; options: string[]; ends: string };
+  /** audioprn: the script on a new Script Offer post */
+  script?: ScriptInput;
   suggestedPostsRes: RequestState<PagedResponse<PostView>>;
   metadataRes: RequestState<GetSiteMetadataResponse>;
   imageLoading: boolean;
@@ -137,6 +189,7 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
     suggestedPostsRes: EMPTY_REQUEST,
     metadataRes: EMPTY_REQUEST,
     form: {},
+    credits: {},
     imageLoading: false,
     uploadedImage: undefined,
     communitySearchLoading: false,
@@ -208,10 +261,239 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
     }
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     if (this.postTitleRef.current) {
       autosize(this.postTitleRef.current);
     }
+    // audioprn: load the post's credits when editing.
+    const pv = this.props.post_view;
+    if (pv) {
+      const { credits, off_content } = await getPostCredits(pv.post.id);
+      this.setState({
+        credits: Object.fromEntries(
+          CREDIT_ROLES.map(({ role }) => [role, creditsText(credits, role)]),
+        ),
+        offContent: off_content.includes(pv.post.id),
+        creditsLoaded: true,
+      });
+    }
+  }
+
+  /** audioprn: every post needs exactly one flair (admins' mod posts are exempt). */
+  get missingFlair(): boolean {
+    return (
+      !amAdmin(this.props.myUserInfo) &&
+      !!this.props.selectedCommunityTags?.some(t => !t.deleted) &&
+      this.state.form.tags?.length !== 1
+    );
+  }
+
+  /** audioprn: credits inputs, below the title, and the Content page option. */
+  creditsInputs() {
+    const creatorPage =
+      this.props.creatorPage ||
+      this.props.post_view?.community.name === "creators";
+    return (
+      <>
+        <div className="mb-3 row">
+          <div className="col-sm-2 col-form-label">Credits</div>
+          <div className="col-sm-10">
+            {CREDIT_ROLES.map(({ role, emoji, label }) => (
+              <div className="input-group mb-2">
+                <span className="input-group-text">
+                  {emoji} {label}
+                </span>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="u/username or name, comma-separated"
+                  aria-label={label}
+                  value={this.state.credits[role] ?? ""}
+                  onInput={e =>
+                    this.setState(s => ({
+                      credits: { ...s.credits, [role]: e.target.value },
+                    }))
+                  }
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+        {!creatorPage && (
+          <div className="mb-3 row">
+            <div className="col-sm-10 offset-sm-2">
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="post-on-content"
+                  checked={!this.state.offContent}
+                  onChange={() =>
+                    this.setState(s => ({ offContent: !s.offContent }))
+                  }
+                />
+                <label className="form-check-label" htmlFor="post-on-content">
+                  Show on the Content page (untick to show it only in its
+                  cummunity)
+                </label>
+              </div>
+            </div>
+          </div>
+        )}
+        {creatorPage && !this.props.post_view && this.pollInputs()}
+        {/* audioprn: the script, on new Script Offer posts (later: "Update script" on the post) */}
+        {!this.props.post_view && this.scriptOffer && (
+          <div className="mb-3 row">
+            <div className="col-sm-2 col-form-label">Script</div>
+            <div className="col-sm-10">
+              <ScriptFields
+                value={this.state.script ?? NO_SCRIPT}
+                onChange={script => this.setState({ script })}
+              />
+              <div className="small text-muted mt-1">
+                Only logged-in members can read the script here.
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  /** audioprn: what's wrong with the post, shown as a popup when it's sent. */
+  get formError(): string | undefined {
+    if (!this.state.form.community_id) return "Choose a cummunity.";
+    if (this.missingFlair) {
+      return "Choose one flair for your post (e.g. Audio: OC or Script Offer).";
+    }
+    if (this.titleTagError) return this.titleTagError;
+    if (this.pollIncomplete) {
+      return "The poll needs a question, at least 2 options and an end date in the future.";
+    }
+    return undefined;
+  }
+
+  /**
+   * audioprn: Content and community titles start with a gender tag ([F4M], [M4F4M], [TF4A]…:
+   * F, M, A, TF, TM, NB joined by 4) and have at most 7 other [tags]. Creator page posts and admins
+   * are exempt. The backend checks the same.
+   */
+  get titleTagError(): string | undefined {
+    if (
+      this.props.creatorPage ||
+      this.props.post_view?.community.name === "creators" ||
+      amAdmin(this.props.myUserInfo)
+    ) {
+      return undefined;
+    }
+    const title = (this.state.form.name ?? "").trimStart();
+    const gender = /^\[((TF|TM|NB|F|M|A)+4)+(TF|TM|NB|F|M|A)+\]$/i;
+    const tags = title.match(/\[[^[\]]{1,40}\]/g) ?? [];
+    const first = tags[0] ?? "";
+    if (!first || !title.startsWith(first) || !gender.test(first)) {
+      return "Start the title with a gender tag like [F4M], [M4F] or [F4A].";
+    }
+    if (tags.filter(t => !gender.test(t)).length > 7) {
+      return "Use at most 7 [tags] in the title, not counting gender tags.";
+    }
+    return undefined;
+  }
+
+  /** audioprn: the Script Offer flair is chosen. */
+  get scriptOffer(): boolean {
+    return !!this.state.form.tags?.some(
+      id =>
+        this.props.selectedCommunityTags?.find(t => t.id === id)?.name ===
+        "script_offer",
+    );
+  }
+
+  /** audioprn: a poll needs a question, 2 options and an end date in the future. */
+  get pollIncomplete(): boolean {
+    const poll = this.state.poll;
+    return (
+      !!poll &&
+      (!poll.question.trim() ||
+        poll.options.filter(o => o.trim()).length < 2 ||
+        !(new Date(poll.ends) > new Date()))
+    );
+  }
+
+  /** audioprn: an optional poll on creator page posts (added when the post is created). */
+  pollInputs() {
+    const poll = this.state.poll;
+    const setPoll = (change: Partial<NonNullable<PostFormState["poll"]>>) =>
+      this.setState(s => ({ poll: s.poll && { ...s.poll, ...change } }));
+    return (
+      <div className="mb-3 row">
+        <div className="col-sm-2 col-form-label">Poll</div>
+        <div className="col-sm-10">
+          <div className="form-check mb-2">
+            <input
+              className="form-check-input"
+              type="checkbox"
+              id="post-add-poll"
+              checked={!!poll}
+              onChange={() =>
+                this.setState({
+                  poll: poll ? undefined : { ...NEW_POLL, ends: inAWeek() },
+                })
+              }
+            />
+            <label className="form-check-label" htmlFor="post-add-poll">
+              Add a poll (one choice per vote, votes can't be changed)
+            </label>
+          </div>
+          {poll && (
+            <>
+              <input
+                className="form-control mb-2"
+                placeholder="Question"
+                aria-label="Poll question"
+                maxLength={200}
+                value={poll.question}
+                onInput={e => setPoll({ question: e.target.value })}
+              />
+              {poll.options.map((option, i) => (
+                <input
+                  className="form-control mb-2"
+                  placeholder={`Option ${i + 1}`}
+                  aria-label={`Poll option ${i + 1}`}
+                  maxLength={100}
+                  value={option}
+                  onInput={e =>
+                    setPoll({
+                      options: poll.options.map((o, j) =>
+                        j === i ? e.target.value : o,
+                      ),
+                    })
+                  }
+                />
+              ))}
+              {poll.options.length < 6 && (
+                <button
+                  type="button"
+                  className="btn btn-sm btn-light border-light-subtle mb-2"
+                  onClick={() => setPoll({ options: [...poll.options, ""] })}
+                >
+                  Add option
+                </button>
+              )}
+              <label className="form-label d-block" htmlFor="post-poll-ends">
+                Poll ends
+              </label>
+              <input
+                type="datetime-local"
+                className="form-control"
+                id="post-poll-ends"
+                value={poll.ends}
+                onInput={e => setPoll({ ends: e.target.value })}
+              />
+            </>
+          )}
+        </div>
+      </div>
+    );
   }
 
   componentWillReceiveProps(
@@ -329,9 +611,18 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
                     {I18NextService.i18n.t("invalid_post_title")}
                   </div>
                 )}
+                {/* audioprn: gender tag first, at most 7 other tags */}
+                {this.titleTagError && (
+                  <div
+                    className={`small ${this.state.form.name ? "text-danger" : "text-muted"}`}
+                  >
+                    {this.titleTagError}
+                  </div>
+                )}
                 {this.renderSuggestedPosts()}
               </div>
             </div>
+            {this.creditsInputs()}
             <div className="mb-3 row">
               <label className="col-sm-2 col-form-label" htmlFor="post-url">
                 {I18NextService.i18n.t("url")}
@@ -491,43 +782,65 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
                 </div>
               </div>
             )}
-            {!isImage(url || "") && (
-              <div className="mb-3 row">
-                <label
-                  className="col-sm-2 col-form-label"
-                  htmlFor="post-custom-thumbnail"
-                >
-                  {I18NextService.i18n.t("custom_thumbnail_url")}
-                </label>
-                <div className="col-sm-10">
-                  <input
-                    type="url"
-                    id="post-custom-thumbnail"
-                    placeholder={I18NextService.i18n.t("optional")}
-                    className="form-control mb-3"
-                    value={this.state.form.custom_thumbnail}
-                    onInput={e => handleCustomThumbnailChange(this, e)}
-                  />
+            {/* audioprn: no thumbnails while image uploads are off */}
+            {!isImage(url || "") &&
+              !this.props.localSite.image_upload_disabled && (
+                <div className="mb-3 row">
+                  <label
+                    className="col-sm-2 col-form-label"
+                    htmlFor="post-custom-thumbnail"
+                  >
+                    {I18NextService.i18n.t("custom_thumbnail_url")}
+                  </label>
+                  <div className="col-sm-10">
+                    <input
+                      type="url"
+                      id="post-custom-thumbnail"
+                      placeholder={I18NextService.i18n.t("optional")}
+                      className="form-control mb-3"
+                      value={this.state.form.custom_thumbnail}
+                      onInput={e => handleCustomThumbnailChange(this, e)}
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
             <div className="mb-3 row">
               <label className="col-sm-2 col-form-label">
                 {I18NextService.i18n.t("body")}
               </label>
               <div className="col-sm-10">
-                <MarkdownTextArea
-                  initialContent={this.state.form.body}
-                  placeholder={I18NextService.i18n.t("optional")}
-                  onContentChange={val => handlePostBodyChange(this, val)}
-                  onContentBlur={val => handlePostBodyBlur(this, val)}
-                  allLanguages={this.props.allLanguages}
-                  siteLanguages={this.props.siteLanguages}
-                  hideNavigationWarnings
-                  maxLength={postMarkdownFieldCharacterLimit}
-                  myUserInfo={this.props.myUserInfo}
-                  imageUploadDisabled={imageUploadDisabled}
-                />
+                {/* audioprn: markdown or rich text mode, both store markdown */}
+                <div className="btn-group btn-group-sm mb-2" role="group">
+                  {[false, true].map(rich => (
+                    <button
+                      type="button"
+                      className={`btn ${!!this.state.richText === rich ? "btn-secondary" : "btn-outline-secondary"}`}
+                      aria-pressed={!!this.state.richText === rich}
+                      onClick={() => this.setState({ richText: rich })}
+                    >
+                      {rich ? "Rich text" : "Markdown"}
+                    </button>
+                  ))}
+                </div>
+                {this.state.richText ? (
+                  <RichTextEditor
+                    initialMarkdown={this.state.form.body ?? ""}
+                    onChange={val => handlePostBodyChange(this, val)}
+                  />
+                ) : (
+                  <MarkdownTextArea
+                    initialContent={this.state.form.body}
+                    placeholder={I18NextService.i18n.t("optional")}
+                    onContentChange={val => handlePostBodyChange(this, val)}
+                    onContentBlur={val => handlePostBodyBlur(this, val)}
+                    allLanguages={this.props.allLanguages}
+                    siteLanguages={this.props.siteLanguages}
+                    hideNavigationWarnings
+                    maxLength={postMarkdownFieldCharacterLimit}
+                    myUserInfo={this.props.myUserInfo}
+                    imageUploadDisabled={imageUploadDisabled}
+                  />
+                )}
               </div>
             </div>
             <LanguageSelect
@@ -538,7 +851,8 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
               onChange={val => handleLanguageChange(this, val)}
               myUserInfo={this.props.myUserInfo}
             />
-            {!this.props.post_view && (
+            {/* audioprn: no community picker while communities are hidden (posts go to `main`). */}
+            {!this.props.post_view && SHOW_COMMUNITIES && (
               <div className="mb-3 row align-items-center">
                 <label
                   className="col-sm-2 col-form-label"
@@ -601,12 +915,13 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
           this.props.selectedCommunityTags.length > 0 && (
             <div className="mb-3 row">
               <label className="col-sm-2 col-form-label" htmlFor="post-tags">
-                {I18NextService.i18n.t("tags")}
+                Flair
               </label>
               <div className="col-sm-10">
+                {/* audioprn: exactly one flair per post */}
                 <FilterChipSelect
                   label={"tags"}
-                  multiple
+                  multiple={false}
                   allOptions={this.props.selectedCommunityTags
                     .filter(t => !t.deleted)
                     .map(tag => {
@@ -636,7 +951,8 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
         <div className="mb-3 row">
           <div className="col-sm-10">
             <button
-              disabled={!this.state.form.community_id || this.props.loading}
+              // audioprn: mistakes show as a popup when clicked (see formError)
+              disabled={this.props.loading}
               type="submit"
               className="btn btn-light border-light-subtle me-2"
             >
@@ -804,32 +1120,53 @@ function updateUrl(i: PostForm, update: () => void) {
 
 function handlePostSubmit(i: PostForm, event: FormEvent<HTMLFormElement>) {
   event.preventDefault();
+  // audioprn: say clearly what's wrong
+  const error = i.formError;
+  if (error) {
+    errorPopup(error);
+    return;
+  }
 
   const pForm = i.state.form;
   const pv = i.props.post_view;
   const scheduled_publish_time_at = getUnixTimeLemmy(
     pForm.scheduled_publish_time_at,
   );
+  // audioprn: credits from the three inputs
+  const credits = CREDIT_ROLES.flatMap(({ role }) =>
+    parseCredits(role, i.state.credits[role] ?? ""),
+  );
 
   if (pv) {
     if (i.editorType === "creator") {
-      i.props.onEdit?.(
-        {
-          post_id: pv.post.id,
-          name: pForm.name,
-          url: pForm.url,
-          body: pForm.body,
-          nsfw: pForm.nsfw,
-          language_id: pForm.language_id,
-          custom_thumbnail: pForm.custom_thumbnail,
-          alt_text: pForm.alt_text,
-          tags: pForm.tags,
-          scheduled_publish_time_at,
-        },
-        () => {
-          i.setState({ bypassNavWarning: true });
-        },
-      );
+      Promise.resolve(
+        i.props.onEdit?.(
+          {
+            post_id: pv.post.id,
+            name: pForm.name,
+            url: pForm.url,
+            body: pForm.body,
+            nsfw: pForm.nsfw,
+            language_id: pForm.language_id,
+            custom_thumbnail: pForm.custom_thumbnail,
+            alt_text: pForm.alt_text,
+            tags: pForm.tags,
+            scheduled_publish_time_at,
+          },
+          () => {
+            i.setState({ bypassNavWarning: true });
+          },
+        ),
+      ).then(res => {
+        if (res?.state === "failed") {
+          backendErrorPopup(res.err);
+        } else if (i.state.creditsLoaded) {
+          // Only once the edit went through, and never over credits that didn't load.
+          savePostCredits(pv.post.id, credits, !!i.state.offContent).catch(e =>
+            toast(e.message, "danger"),
+          );
+        }
+      });
     } else if (i.editorType === "mod_or_admin") {
       i.props.onModEdit?.(
         {
@@ -859,6 +1196,32 @@ function handlePostSubmit(i: PostForm, event: FormEvent<HTMLFormElement>) {
       },
       () => {
         i.setState({ bypassNavWarning: true });
+      },
+      async postId => {
+        const script = i.state.script;
+        const poll = i.state.poll;
+        // Each part is saved on its own, so one failing doesn't lose the others.
+        const failed = (
+          await Promise.allSettled([
+            savePostCredits(postId, credits, !!i.state.offContent),
+            i.scriptOffer &&
+              script &&
+              (script.body.trim() || script.link.trim()) &&
+              savePostScript(postId, script),
+            poll &&
+              createPostPoll(
+                postId,
+                poll.question,
+                poll.options,
+                new Date(poll.ends),
+              ),
+          ])
+        ).find((r): r is PromiseRejectedResult => r.status === "rejected");
+        if (failed) {
+          throw new Error(
+            `Your post was created, but part of it wasn't saved: ${failed.reason.message}`,
+          );
+        }
       },
     );
   }

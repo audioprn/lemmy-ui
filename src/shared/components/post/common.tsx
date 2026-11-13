@@ -2,6 +2,8 @@ import { Icon } from "@components/common/icon";
 import { MomentTime } from "@components/common/moment-time";
 import { UserBadges } from "@components/common/user-badges";
 import { CommunityLink } from "@components/community/community-link";
+import { SHOW_COMMUNITIES } from "../../audioprn/features";
+import { PostCredits } from "../../audioprn/post-credits";
 import { PersonListing } from "@components/person/person-listing";
 import { I18NextService } from "@services/index";
 import { linkTarget, setIsoData } from "@utils/app";
@@ -32,23 +34,27 @@ export function PostName({ post, showBody }: PostNameProps) {
   const url = post.url;
 
   return (
-    <h1 className="post-name h5 d-inline text-break">
-      {showBody === "full" ? (
-        <a
-          className={
-            !post.featured_community && !post.featured_local
-              ? "text-body"
-              : "link-primary"
-          }
-          href={url}
-          title={url}
-          rel={relTags}
-          dangerouslySetInnerHTML={mdToHtmlInline(post.name)}
-        ></a>
-      ) : (
-        <PostLink post={post} />
-      )}
-    </h1>
+    <>
+      <h1 className="post-name h5 d-inline text-break">
+        {showBody === "full" ? (
+          <a
+            className={
+              !post.featured_community && !post.featured_local
+                ? "text-body"
+                : "link-primary"
+            }
+            href={url}
+            title={url}
+            rel={relTags}
+            dangerouslySetInnerHTML={mdToHtmlInline(post.name)}
+          ></a>
+        ) : (
+          <PostLink post={post} />
+        )}
+      </h1>
+      {/* audioprn: credits under the title */}
+      <PostCredits postId={post.id} creatorId={post.creator_id} />
+    </>
   );
 }
 
@@ -116,11 +122,7 @@ export function PostBadges({ post, tags, allLanguages }: PostBadgesProps) {
           <Icon icon="pin" classes="icon-inline text-secondary" />
         </small>
       )}
-      {post.nsfw && (
-        <small className="badge text-bg-danger">
-          {I18NextService.i18n.t("nsfw")}
-        </small>
-      )}
+      {/* audioprn: no NSFW badge, the whole site is adult content. */}
     </span>
   );
 }
@@ -151,7 +153,7 @@ export function PostCreatedLine({
 }: PostCreatedLineProps) {
   return (
     <div className="small mb-1 mb-md-0">
-      {showCommunity && (
+      {SHOW_COMMUNITIES && showCommunity && (
         <>
           <CommunityLink
             community={postView.community}

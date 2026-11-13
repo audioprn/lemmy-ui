@@ -86,12 +86,11 @@ export class PictrsImage extends Component<Props, State> {
   }
 
   render() {
-    const { type, nsfw, imageDetails } = this.props;
+    const { type, imageDetails } = this.props;
 
-    const blurImage =
-      nsfw &&
-      (this.isoData.myUserInfo?.local_user_view.local_user.blur_nsfw ??
-        !this.isoData.siteRes.site_view.site.content_warning);
+    // audioprn: adult-only site, so images are never blurred for being NSFW.
+    const nsfw = false;
+    const blurImage = false;
 
     const [width, height] = this.widthAndHeight();
 

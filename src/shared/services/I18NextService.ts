@@ -5,6 +5,21 @@ import { Locale, setDefaultOptions } from "date-fns";
 import { isBrowser } from "@utils/browser";
 import { toast } from "@utils/app";
 
+// audioprn: the site says "cummunity" for "community" (English text, not {{placeholders}}).
+function cummunity<T>(value: T): T {
+  if (typeof value === "string") {
+    return value.replace(/(\{\{)?([Cc])ommunit/g, (match, brace, c) =>
+      brace ? match : `${c}ummunit`,
+    ) as T;
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, v]) => [key, cummunity(v)]),
+    ) as T;
+  }
+  return value;
+}
+
 export type TranslationDesc = {
   // Name of the translation file in `lemmy-translations`
   resource: string;
@@ -169,10 +184,17 @@ export async function verifyDateFnsImports(): Promise<ImportReport> {
  * Translations and date-fns *
  *****************************/
 
+// audioprn: the site is English-only. Ignore the browser's languages and the
+// user's interface_language setting so every visitor gets English.
+const ENGLISH_ONLY = true;
+
 export function findLanguageDescs(
   languages: readonly string[], // readonly because navigator.languages is too
   interfaceLanguage: string = "browser",
 ): FoundTranslation {
+  if (ENGLISH_ONLY) {
+    return [languageByCode["en"]];
+  }
   const langList =
     interfaceLanguage === "browser"
       ? [...languages]
@@ -216,7 +238,7 @@ export async function loadLanguageInstances(
     load: "all",
     initImmediate: false,
     fallbackLng: "en",
-    resources: { en },
+    resources: { en: cummunity(en) }, // audioprn
     interpolation: { format },
     saveMissing: process.env["NODE_ENV"] === "development",
     saveMissingPlurals: process.env["NODE_ENV"] === "development", // only works with v4 plurals

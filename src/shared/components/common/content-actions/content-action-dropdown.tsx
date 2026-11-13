@@ -2,6 +2,8 @@ import { Component } from "inferno";
 import { I18NextService } from "../../../services";
 import { Icon } from "../icon";
 import { CrossPostButton } from "./create-item-buttons";
+import { CreatorOnly } from "../../../audioprn/creator-status";
+import { SHOW_COMMUNITIES } from "../../../audioprn/features";
 import {
   CommentSlimView,
   CommentView,
@@ -328,9 +330,14 @@ export default class ContentActionDropdown extends Component<
                     this.props.viewOnly,
                   ) && (
                     <>
-                      <li>
-                        <CrossPostButton {...this.props.crossPostParams} />
-                      </li>
+                      {/* audioprn: cross-posting needs other communities, so it's off while they're hidden. */}
+                      {SHOW_COMMUNITIES && (
+                        <CreatorOnly>
+                          <li>
+                            <CrossPostButton {...this.props.crossPostParams} />
+                          </li>
+                        </CreatorOnly>
+                      )}
                       {this.props.showMarkRead === "dropdown" && (
                         <li>
                           <ActionButton

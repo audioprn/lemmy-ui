@@ -1,4 +1,9 @@
 import { IRouteProps, RouteComponentProps } from "inferno-router";
+import { CreatorApplications } from "../audioprn/creator-applications";
+import { Landing } from "../audioprn/landing";
+import { Creators } from "../audioprn/creators";
+import { Guide } from "../audioprn/guides";
+import { MY_FEED, MY_SAVED } from "../audioprn/my-feed";
 import {
   Communities,
   CommunitiesFetchConfig,
@@ -144,13 +149,41 @@ export const routes: IRoutePropsWithFetch<
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   any
 >[] = [
+  // audioprn: landing page at `/`, the post feed (Content) at `/content`.
+  { path: `/`, component: Landing, exact: true },
+  { path: `/creators`, component: Creators },
+  { path: `/guides/:name`, component: Guide },
   {
-    path: `/`,
+    path: `/content`,
     component: Home,
     fetchInitialData: Home.fetchInitialData,
     exact: true,
     getQueryParams: getHomeQueryParams,
     mountedSameRouteNavKey: "home",
+  } as HomeFetchConfig,
+  // audioprn: My audioprn, the user's own feed (the Content page in "my" mode)
+  {
+    path: `/my`,
+    component: Home,
+    fetchInitialData: Home.fetchInitialData,
+    exact: true,
+    getQueryParams: (source, siteRes, myUserInfo) => ({
+      ...getHomeQueryParams(source, siteRes, myUserInfo),
+      filters: MY_FEED,
+    }),
+    mountedSameRouteNavKey: "my",
+  } as HomeFetchConfig,
+  // audioprn: My audioprn's saved posts
+  {
+    path: `/my/saved`,
+    component: Home,
+    fetchInitialData: Home.fetchInitialData,
+    exact: true,
+    getQueryParams: (source, siteRes, myUserInfo) => ({
+      ...getHomeQueryParams(source, siteRes, myUserInfo),
+      filters: MY_SAVED,
+    }),
+    mountedSameRouteNavKey: "my_saved",
   } as HomeFetchConfig,
   {
     path: `/login`,
@@ -161,6 +194,11 @@ export const routes: IRoutePropsWithFetch<
     path: `/login_reset`,
     component: LoginReset,
   },
+  // audioprn: creator signup (same form plus 3 content links and social links)
+  {
+    path: `/signup/creator`,
+    component: Signup,
+  } as SignupFetchConfig,
   {
     path: `/signup`,
     component: Signup,
@@ -281,6 +319,11 @@ export const routes: IRoutePropsWithFetch<
     fetchInitialData: RegistrationApplications.fetchInitialData,
     getQueryParams: getRegistrationApplicationQueryParams,
   } as RegistrationApplicationsFetchConfig,
+  // audioprn: admin review of creator applications
+  {
+    path: `/creator_applications`,
+    component: CreatorApplications,
+  },
   {
     path: `/pending_follows`,
     component: PendingFollows,
