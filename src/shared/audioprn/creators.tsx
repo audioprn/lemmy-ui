@@ -135,6 +135,23 @@ export class Creators extends Component<WithHead, CreatorsState> {
   }
 }
 
+/**
+ * Lemmy has no person reports, so a creator report is filed against the `creators` community,
+ * which only admins see. Shows whether it went through.
+ */
+export async function reportCreator(name: string, reason: string) {
+  const res = await HttpService.client.getCommunity({ name: "creators" });
+  if (res.state !== "success") {
+    return toast("Couldn't send the report.", "danger");
+  }
+  reportToast(
+    await HttpService.client.createCommunityReport({
+      community_id: res.data.community_view.community.id,
+      reason: `Creator @${name} (/u/${name}): ${reason.trim()}`,
+    }),
+  );
+}
+
 interface ActionsState {
   creator?: Creator;
   pageCommunityId?: number;
@@ -253,21 +270,9 @@ export class CreatorPageActions extends Component<
     );
   }
 
-  // Lemmy has no person reports, so a creator report is filed against the
-  // `creators` community, which only admins see.
   async report(creator: Creator) {
     const reason = window.prompt(`Why are you reporting @${creator.name}?`);
-    if (!reason?.trim()) return;
-    const res = await HttpService.client.getCommunity({ name: "creators" });
-    if (res.state !== "success") {
-      return toast("Couldn't send the report.", "danger");
-    }
-    reportToast(
-      await HttpService.client.createCommunityReport({
-        community_id: res.data.community_view.community.id,
-        reason: `Creator @${creator.name} (/u/${creator.name}): ${reason.trim()}`,
-      }),
-    );
+    if (reason?.trim()) await reportCreator(creator.name, reason);
   }
 
   render() {

@@ -2,6 +2,7 @@ import { IRouteProps, RouteComponentProps } from "inferno-router";
 import { CreatorApplications } from "../audioprn/creator-applications";
 import { Landing } from "../audioprn/landing";
 import { Creators } from "../audioprn/creators";
+import { ReportPage } from "../audioprn/report-page";
 import { Guide } from "../audioprn/guides";
 import { RedditImport } from "../audioprn/reddit-import";
 import { MasterlistEditor } from "../audioprn/masterlist";
@@ -157,6 +158,7 @@ export const routes: IRoutePropsWithFetch<
   { path: `/creators`, component: Creators },
   { path: `/guides/:name`, component: Guide },
   { path: `/reddit_import`, component: RedditImport },
+  { path: `/report`, component: ReportPage },
   { path: `/masterlist/edit`, component: MasterlistEditor },
   // Before /u/:username, which would match it too.
   { path: `/u/:username/masterlist`, component: MasterlistPage },
