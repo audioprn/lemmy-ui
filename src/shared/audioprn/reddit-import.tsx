@@ -11,7 +11,7 @@ import { HttpService } from "@services/index";
 import { Component } from "inferno";
 import { RouteComponentProps, RouterContext } from "inferno-router";
 import { CommunityView } from "lemmy-js-client";
-import { call } from "./creator-api";
+import { call, CreatorApiError } from "./creator-api";
 import { CreatorOnly } from "./creator-status";
 import { shortLink } from "./news-feed";
 
@@ -278,26 +278,33 @@ export class RedditImport extends Component<Props, State> {
       const flair = community.tags.find(
         t => t.name === current.flair && !t.deleted,
       );
-      let status: string;
-      try {
-        await call("POST", "/reddit_import", {
-          reddit_id: current.id,
-          date: current.date,
-          credits: [
-            ...toCredits("writer", current.writers),
-            ...toCredits("editor", current.editors),
-          ],
-          post: {
-            name: current.title,
-            community_id: community.community.id,
-            url: current.url,
-            body: importBody(current),
-            tags: flair ? [flair.id] : undefined,
-          },
-        });
-        status = "imported";
-      } catch (e) {
-        status = (e as Error).message;
+      let status: string | undefined;
+      while (!status) {
+        try {
+          await call("POST", "/reddit_import", {
+            reddit_id: current.id,
+            date: current.date,
+            credits: [
+              ...toCredits("writer", current.writers),
+              ...toCredits("editor", current.editors),
+            ],
+            post: {
+              name: current.title,
+              community_id: community.community.id,
+              url: current.url,
+              body: importBody(current),
+              tags: flair ? [flair.id] : undefined,
+            },
+          });
+          status = "imported";
+        } catch (e) {
+          if ((e as CreatorApiError).status === 429) {
+            // Over the site's requests-a-minute limit: wait, then try again.
+            await new Promise(r => setTimeout(r, 60_000));
+          } else {
+            status = (e as Error).message;
+          }
+        }
       }
       this.setState(s => ({
         rows: s.rows.map(r =>

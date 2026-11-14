@@ -77,7 +77,14 @@ export function creatorErrorMessage(code?: string): string {
   );
 }
 
-export class CreatorApiError extends Error {}
+export class CreatorApiError extends Error {
+  constructor(
+    message: string,
+    readonly status?: number,
+  ) {
+    super(message);
+  }
+}
 
 export async function call<T>(
   method: "GET" | "POST" | "PUT" | "DELETE",
@@ -100,7 +107,7 @@ export async function call<T>(
   if (!res.ok) {
     // Errors look like {"error":"unknown","message":"<code>"} or {"error":"<code>"}.
     const code = json.error === "unknown" ? json.message : json.error;
-    throw new CreatorApiError(creatorErrorMessage(code));
+    throw new CreatorApiError(creatorErrorMessage(code), res.status);
   }
   return json as T;
 }
