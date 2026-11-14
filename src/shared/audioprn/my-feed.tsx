@@ -13,6 +13,12 @@ import { AwardSettings, awardRulesText } from "./awards-admin";
 export const MY_FEED = "my";
 /** My audioprn's saved posts (/my/saved). */
 export const MY_SAVED = "my_saved";
+/** My audioprn's favourite posts (/my/favourites). */
+export const MY_FAVOURITES = "my_favourites";
+
+/** My audioprn's lists: its feed, saved posts, favourites. */
+export const isMyAudioprn = (filters?: string) =>
+  filters === MY_FEED || filters === MY_SAVED || filters === MY_FAVOURITES;
 
 /**
  * Posts for the Content page, or for My audioprn: its first page starts with followed creators'
@@ -30,6 +36,9 @@ export async function getFeedPosts(
   };
   if (filters === MY_SAVED) {
     return feed("saved");
+  }
+  if (filters === MY_FAVOURITES) {
+    return feed("favourites");
   }
   if (filters !== MY_FEED) {
     return client.getPosts({ ...form, ...contentFilters(filters) });
@@ -67,9 +76,10 @@ const CHECKBOXES: { name: keyof Prefs; label: string }[] = [
 const tagsText = (tags: string[]) => tags.map(t => `[${t}]`).join(", ");
 const textTags = (text: string) => text.split(",");
 
-/** The left column of My audioprn: tag preferences, saved posts and own comments. */
+/** The left column of My audioprn: tag preferences, favourites, saved posts and own comments. */
 export class MyFeedPrefs extends Component<
-  { onSaved: () => void; saved?: boolean },
+  /** list: which of My audioprn's lists is shown (MY_FEED, MY_SAVED or MY_FAVOURITES). */
+  { onSaved: () => void; list?: string },
   {
     prefs?: Prefs;
     favourite: string;
@@ -128,7 +138,11 @@ export class MyFeedPrefs extends Component<
     const me = this.isoData.myUserInfo?.local_user_view.person.name;
     return (
       <div className="mb-3">
-        <h1 className="h5">My audioprn{this.props.saved && ": saved posts"}</h1>
+        <h1 className="h5">
+          My audioprn
+          {this.props.list === MY_SAVED && ": saved posts"}
+          {this.props.list === MY_FAVOURITES && ": favourites"}
+        </h1>
         <p className="small text-muted">
           New posts from creators you follow come first, then posts that match
           your tags.
@@ -189,13 +203,21 @@ export class MyFeedPrefs extends Component<
         )}
         {me && (
           <ul className="list-unstyled mt-3">
-            <li>
-              {this.props.saved ? (
+            {this.props.list !== MY_FEED && (
+              <li>
                 <Link to="/my">My feed</Link>
-              ) : (
+              </li>
+            )}
+            {this.props.list !== MY_FAVOURITES && (
+              <li>
+                <Link to="/my/favourites">♥ Favourites</Link>
+              </li>
+            )}
+            {this.props.list !== MY_SAVED && (
+              <li>
                 <Link to="/my/saved">🔖 Saved posts</Link>
-              )}
-            </li>
+              </li>
+            )}
             <li>
               <Link to={`/u/${me}?contentType=comments`}>My comments</Link>
             </li>

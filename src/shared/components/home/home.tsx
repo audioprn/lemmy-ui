@@ -133,6 +133,8 @@ import {
 } from "../../audioprn/search-panel";
 import {
   getFeedPosts,
+  isMyAudioprn,
+  MY_FAVOURITES,
   MY_FEED,
   MY_SAVED,
   MyFeedPrefs,
@@ -487,10 +489,9 @@ export class Home extends Component<HomeRouteProps, HomeState> {
                 key={this.props.filters === MY_FEED ? "my" : "site"}
                 my={this.props.filters === MY_FEED}
               />
-              {this.props.filters === MY_FEED ||
-              this.props.filters === MY_SAVED ? (
+              {isMyAudioprn(this.props.filters) ? (
                 <MyFeedPrefs
-                  saved={this.props.filters === MY_SAVED}
+                  list={this.props.filters}
                   onSaved={() => this.fetchData(this.props)}
                 />
               ) : (
@@ -551,14 +552,10 @@ export class Home extends Component<HomeRouteProps, HomeState> {
     );
   }
 
-  /** audioprn: the Content page's posts (not My audioprn or saved posts). */
+  /** audioprn: the Content page's posts (not My audioprn or its lists). */
   get contentPage(): boolean {
     const { filters, postOrCommentType } = this.props;
-    return (
-      postOrCommentType === "post" &&
-      filters !== MY_FEED &&
-      filters !== MY_SAVED
-    );
+    return postOrCommentType === "post" && !isMyAudioprn(filters);
   }
 
   get hasFollows(): boolean {
@@ -810,8 +807,7 @@ export class Home extends Component<HomeRouteProps, HomeState> {
       showRead: showRead?.toString(),
       hidePostsWithMedia: hidePostsWithMedia?.toString(),
       q,
-      filters:
-        filters === MY_FEED || filters === MY_SAVED ? undefined : filters,
+      filters: isMyAudioprn(filters) ? undefined : filters,
     };
 
     this.props.history.push({
@@ -821,7 +817,9 @@ export class Home extends Component<HomeRouteProps, HomeState> {
           ? "/my"
           : filters === MY_SAVED
             ? "/my/saved"
-            : "/content",
+            : filters === MY_FAVOURITES
+              ? "/my/favourites"
+              : "/content",
       search: getQueryString(queryParams),
     });
   }

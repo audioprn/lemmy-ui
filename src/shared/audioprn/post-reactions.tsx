@@ -22,6 +22,8 @@ interface Reactions {
   /** Awards per type. */
   awards?: Record<string, number>;
   awarded?: boolean;
+  /** The logged-in user's favourite (♥). */
+  favourite?: boolean;
 }
 
 const api = () => `${getBackendHostExternal()}/api/v4/audioprn`;
@@ -218,6 +220,52 @@ export class PostAwards extends Component<
           </button>
         )}
       </>
+    );
+  }
+}
+
+/** ♥ Favourite, next to Save: favourites are on My audioprn and creators' masterlists. */
+export class FavouriteButton extends Component<{ postId: number }, object> {
+  private isoData = setIsoData(this.context);
+  private unsubscribe?: () => void;
+
+  componentDidMount() {
+    this.unsubscribe = reactions.subscribe(() => this.forceUpdate());
+    reactions.request(this.props.postId);
+  }
+
+  componentWillUnmount() {
+    this.unsubscribe?.();
+  }
+
+  async toggle(favourite: boolean) {
+    try {
+      reactions.set(
+        this.props.postId,
+        await call<Reactions>("PUT", "/post_favourite", {
+          post_id: this.props.postId,
+          favourite,
+        }),
+      );
+    } catch (e) {
+      toast((e as Error).message, "danger");
+    }
+  }
+
+  render() {
+    const { favourite } = reactions.get(this.props.postId);
+    const loggedIn = !!this.isoData.myUserInfo;
+    return (
+      <button
+        type="button"
+        className="btn btn-sm py-0 px-2 btn-light border-light-subtle"
+        disabled={!loggedIn}
+        title={loggedIn ? undefined : "Log in to keep favourites"}
+        aria-pressed={!!favourite}
+        onClick={() => this.toggle(!favourite)}
+      >
+        {favourite ? "♥ Favourite" : "♡ Favourite"}
+      </button>
     );
   }
 }

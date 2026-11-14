@@ -9,7 +9,7 @@ import { Guide } from "../audioprn/guides";
 import { RedditImport } from "../audioprn/reddit-import";
 import { MasterlistEditor } from "../audioprn/masterlist";
 import { MasterlistPage } from "../audioprn/masterlist-page";
-import { MY_FEED, MY_SAVED } from "../audioprn/my-feed";
+import { MY_FAVOURITES, MY_FEED, MY_SAVED } from "../audioprn/my-feed";
 import {
   Communities,
   CommunitiesFetchConfig,
@@ -197,6 +197,18 @@ export const routes: IRoutePropsWithFetch<
       filters: MY_SAVED,
     }),
     mountedSameRouteNavKey: "my_saved",
+  } as HomeFetchConfig,
+  // audioprn: My audioprn's favourites
+  {
+    path: `/my/favourites`,
+    component: Home,
+    fetchInitialData: Home.fetchInitialData,
+    exact: true,
+    getQueryParams: (source, siteRes, myUserInfo) => ({
+      ...getHomeQueryParams(source, siteRes, myUserInfo),
+      filters: MY_FAVOURITES,
+    }),
+    mountedSameRouteNavKey: "my_favourites",
   } as HomeFetchConfig,
   {
     path: `/login`,

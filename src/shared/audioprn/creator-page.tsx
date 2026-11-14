@@ -213,6 +213,7 @@ interface Stats {
   posts: number;
   reactions: number;
   comments: number;
+  comments_made: number;
   awards: number;
 }
 
@@ -221,6 +222,7 @@ const STATS: [keyof Stats, string][] = [
   ["posts", "Posts"],
   ["reactions", "Reactions on your posts"],
   ["comments", "Comments on your posts"],
+  ["comments_made", "Comments you made"],
   ["awards", "Awards received"],
 ];
 

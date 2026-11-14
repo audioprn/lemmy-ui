@@ -1,10 +1,12 @@
-// audioprn: Save and Share buttons under each post. Saved posts are on My audioprn (/my/saved).
+// audioprn: Favourite, Save and Share buttons under each post. Favourites and saved posts are on
+// My audioprn (/my/favourites, /my/saved).
 // Share: copy the link, or share to Bluesky or X. Discord has no share link, so "Discord" copies
 // a ready-to-paste message.
 import { setIsoData, toast } from "@utils/app";
 import { Component } from "inferno";
 import { PostView } from "lemmy-js-client";
 import { HttpService } from "../services";
+import { FavouriteButton } from "./post-reactions";
 
 const buttonClass = "btn btn-sm py-0 px-2 btn-light border-light-subtle";
 
@@ -52,6 +54,7 @@ export class PostTools extends Component<
     );
     return (
       <div className="d-flex gap-1">
+        <FavouriteButton postId={post.id} />
         <button
           type="button"
           className={buttonClass}

@@ -1,6 +1,6 @@
 // audioprn: a creator's masterlist for listeners, at /u/:username/masterlist. Their posts and their
 // audios on other sites (free or paywalled), with the creator's categories worked out from tags,
-// search, sorting, category / site / paywall filters, favourites (posts use Save), Surprise Me,
+// search, sorting, category / site / paywall filters, favourites (♥ on posts and entries), Surprise Me,
 // 1-3 columns and reading options.
 import { htmlTags } from "@components/common/html-tags";
 import { Spinner } from "@components/common/icon";
@@ -33,7 +33,7 @@ interface Masterlist {
   categories: MasterlistCategory[];
   entries: MasterlistEntry[];
   posts: MasterlistPost[];
-  saved_posts: number[];
+  favourite_posts: number[];
   favourite_entries: number[];
 }
 
@@ -292,7 +292,7 @@ export class MasterlistPage extends Component<Props, State> {
           .map(e => fromEntry(e, ml.categories)),
       ],
       favourites: new Set([
-        ...ml.saved_posts.map(id => `p${id}`),
+        ...ml.favourite_posts.map(id => `p${id}`),
         ...ml.favourite_entries.map(id => `e${id}`),
       ]),
     });
@@ -324,11 +324,10 @@ export class MasterlistPage extends Component<Props, State> {
     const on = !this.state.favourites.has(item.key);
     try {
       if (item.postId) {
-        const res = await HttpService.client.savePost({
+        await call("PUT", "/post_favourite", {
           post_id: item.postId,
-          save: on,
+          favourite: on,
         });
-        if (res.state !== "success") throw new Error("Couldn't save the post.");
       } else {
         await call("PUT", "/masterlist/favourite", {
           entry_id: item.entryId,
