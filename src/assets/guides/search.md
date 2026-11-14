@@ -62,7 +62,7 @@ Lengths come from a length tag in the title, like [16:10] or [28 min], or from t
 
 ## Popular tags
 
-The buttons above the posts are the most used tags, with how many posts have them. Click one to add it to your search, and again to take it out.
+Open **Expanded search** to see the most used tags, with how many posts have them. Click one to add it to your search, and again to take it out.
 
 ## Your saved search
 

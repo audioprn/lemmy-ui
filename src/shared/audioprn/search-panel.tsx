@@ -1,6 +1,6 @@
 // audioprn: search on the Content page, in gwasi's syntax (see search_sql in the backend and the
 // Search Guide). Above the posts: the search box with Expanded search (a form that writes the
-// search) and the user's saved search, popular tag chips, and the Compact / Cards switch.
+// search, with popular tag chips) and the user's saved search, and the Compact / Cards switch.
 import { setIsoData, toast } from "@utils/app";
 import { Component } from "inferno";
 import { Link } from "inferno-router";
@@ -449,9 +449,10 @@ export class SearchPanel extends Component<Props, State> {
           </div>
         </div>
         {error && <div className="alert alert-danger py-1 small">{error}</div>}
-        {expanded && this.expandedForm()}
-        {tags.length > 0 && (
-          <div className="d-flex flex-wrap gap-1">
+        {/* Popular tags only in Expanded search: they take a lot of room. */}
+        {expanded && tags.length > 0 && (
+          <div className="d-flex flex-wrap align-items-center gap-1 mb-2">
+            <span className="small text-muted me-1">Popular tags:</span>
             {tags.slice(0, 24).map(({ tag, count: n }) => {
               const on = upperQ.includes(`[${tag}]`);
               return (
@@ -467,6 +468,7 @@ export class SearchPanel extends Component<Props, State> {
             })}
           </div>
         )}
+        {expanded && this.expandedForm()}
       </div>
     );
   }
