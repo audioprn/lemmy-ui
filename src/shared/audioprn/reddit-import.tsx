@@ -4,7 +4,10 @@
 // [Script Fill], [Private Script Fill] and [Script Offer] leave the title (the flair says it) and
 // tags past the 7th move to the top of the text, so titles meet the Content page rule. Credits
 // come only from "script by" / "written by" (writer) and "edited by" / "edit by" (editor) followed
-// by a username. Posts keep their Reddit date and say where they were first posted.
+// by a username. A post with a scriptbin link and no audio link is a script offer even untagged.
+// Posts keep their Reddit date and say where they were first posted. Cross-posts (same title, tags
+// aside) become one post: the newest copy, as the script may have been updated since; the other
+// copies' Reddit ids are remembered with it.
 import { htmlTags } from "@components/common/html-tags";
 import { setIsoData, WithHead } from "@utils/app";
 import { HttpService } from "@services/index";
@@ -44,7 +47,20 @@ interface Row {
   selected: boolean;
   /** "imported", or why it failed. */
   status?: string;
+  /** Older copies of the same post in other subreddits (cross-posts). */
+  also: { id: string; subreddit: string }[];
 }
+
+/**
+ * Copies of a post share this: the title without [tags] (not all copies of a script offer say
+ * so). A script fill of one's own script is a different post.
+ */
+const crossPostKey = (row: Row) =>
+  `${row.flair === "script_fill" ? "fill " : ""}${row.title
+    .replace(TAG, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()}`;
 
 /** RFC 4180 CSV (quoted fields can hold commas, quotes and new lines). */
 export function parseCsv(s: string): string[][] {
@@ -122,13 +138,18 @@ function toRow(get: (column: string) => string): Row | undefined {
   if (!tags[0] || !original.startsWith(tags[0]) || !GENDER.test(tags[0])) {
     return undefined;
   }
+  const raw = get("body");
+  const body = /^\[(deleted|removed)\]$/.test(raw) ? "" : raw;
   const flair = /\[script offer\]/i.test(original)
     ? "script_offer"
     : /script fill\]/i.test(original)
       ? "script_fill"
       : /\[(podcast|ama)\b/i.test(original)
         ? "podcast_ama"
-        : "oc";
+        : // Not tagged, but a script link and no audio: a script offer.
+          firstLink(body, "script_offer") && !firstLink(body, "oc")
+          ? "script_offer"
+          : "oc";
   let title = original;
   let kept = 0;
   const moved: string[] = [];
@@ -140,8 +161,6 @@ function toRow(get: (column: string) => string): Row | undefined {
       title = title.replace(tag, "");
     }
   }
-  const raw = get("body");
-  const body = /^\[(deleted|removed)\]$/.test(raw) ? "" : raw;
   return {
     id: get("id"),
     date: get("date").replace(" UTC", "Z").replace(" ", "T"),
@@ -162,6 +181,7 @@ function toRow(get: (column: string) => string): Row | undefined {
       /\bedit(?:ed)?\s*\**(?:\]\([^)]*\))?\**\s*by\b/gi,
     ),
     selected: false,
+    also: [],
   };
 }
 
@@ -191,6 +211,8 @@ const toCredits = (role: string, names: string) =>
 interface State {
   rows: Row[];
   skipped: number;
+  /** Cross-posts merged into another copy. */
+  merged: number;
   subreddit: string;
   shown: number;
   creatorPage: boolean;
@@ -205,6 +227,7 @@ export class RedditImport extends Component<Props, State> {
   state: State = {
     rows: [],
     skipped: 0,
+    merged: 0,
     subreddit: "",
     shown: PAGE,
     creatorPage: false,
@@ -234,16 +257,39 @@ export class RedditImport extends Component<Props, State> {
     const all = lines
       .filter(line => line.length === header.length)
       .map(line => toRow(name => line[col(name)] ?? ""));
-    const rows = all.filter((r): r is Row => !!r);
-    rows.sort((a, b) => b.date.localeCompare(a.date));
+    const found = all.filter((r): r is Row => !!r);
+    found.sort((a, b) => b.date.localeCompare(a.date));
+    // Newest first, so each cross-post group keeps its newest copy.
+    const newest = new Map<string, Row>();
+    for (const row of found) {
+      const first = newest.get(crossPostKey(row));
+      if (!first) {
+        newest.set(crossPostKey(row), row);
+        continue;
+      }
+      first.also.push({ id: row.id, subreddit: row.subreddit });
+      // Any copy that is a script offer makes the post one.
+      if (row.flair === "script_offer" && first.flair !== "script_offer") {
+        first.flair = "script_offer";
+        first.url = firstLink(first.body, "script_offer") ?? first.url;
+      }
+    }
+    const rows = [...newest.values()];
     const { reddit_ids } = await call<{ reddit_ids: string[] }>(
       "GET",
       "/reddit_imports",
     ).catch(() => ({ reddit_ids: [] as string[] }));
     for (const row of rows) {
-      if (reddit_ids.includes(row.id)) row.status = "imported";
+      if ([row, ...row.also].some(r => reddit_ids.includes(r.id))) {
+        row.status = "imported";
+      }
     }
-    this.setState({ rows, skipped: all.length - rows.length, shown: PAGE });
+    this.setState({
+      rows,
+      skipped: all.length - found.length,
+      merged: found.length - rows.length,
+      shown: PAGE,
+    });
   }
 
   get visible(): Row[] {
@@ -283,6 +329,7 @@ export class RedditImport extends Component<Props, State> {
         try {
           await call("POST", "/reddit_import", {
             reddit_id: current.id,
+            also_reddit_ids: current.also.map(a => a.id),
             date: current.date,
             credits: [
               ...toCredits("writer", current.writers),
@@ -323,7 +370,7 @@ export class RedditImport extends Component<Props, State> {
       title: `Import from Reddit - ${this.isoData.siteRes?.site_view.site.name ?? ""}`,
       context: this.context as RouterContext,
     });
-    const { rows, skipped, subreddit, shown, creatorPage, importing } =
+    const { rows, skipped, merged, subreddit, shown, creatorPage, importing } =
       this.state;
     const visible = this.visible;
     const subreddits = [...new Set(rows.map(r => r.subreddit))];
@@ -362,7 +409,10 @@ export class RedditImport extends Component<Props, State> {
             <>
               <p>
                 {rows.length} posts found
-                {skipped > 0 && ` (${skipped} without a gender tag left out)`}.
+                {skipped > 0 && ` (${skipped} without a gender tag left out)`}
+                {merged > 0 &&
+                  `. ${merged} cross-posts are merged into the newest copy of the same post`}
+                .
               </p>
               <div className="d-flex flex-wrap align-items-center gap-3 mb-2">
                 <select
@@ -440,6 +490,8 @@ export class RedditImport extends Component<Props, State> {
                           {row.url && ` · ${shortLink(row.url)}`}
                           {row.moved.length > 0 &&
                             ` · ${row.moved.length} tags moved to the text`}
+                          {row.also.length > 0 &&
+                            ` · also on ${[...new Set(row.also.map(a => where(a.subreddit)))].join(", ")}`}
                         </div>
                         <div className="d-flex flex-wrap gap-2">
                           <select

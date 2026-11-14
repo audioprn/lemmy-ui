@@ -86,15 +86,21 @@ function siteName(url: string): string {
 
 /** Plain text from the start of a post: no lines of only [tags], no markdown marks or links. */
 function plainText(markdown: string): string {
-  return markdown
-    .split("\n")
-    .filter(line => !/^\s*(\[[^\]]*\]\s*)+$/.test(line))
-    .join(" ")
-    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
-    .replace(/https?:\/\/\S+/g, "")
-    .replace(/[*_#>`~]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+  return (
+    markdown
+      // Reddit's export escapes brackets ("\[Tag\]") and has HTML entities.
+      .replace(/\\(.)/g, "$1")
+      .replace(/&#x200B;/gi, "")
+      .replace(/&amp;/g, "&")
+      .split("\n")
+      .filter(line => !/^\s*(\[[^\]]*\]\s*)+$/.test(line))
+      .join(" ")
+      .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
+      .replace(/https?:\/\/\S+/g, "")
+      .replace(/[*_#>`~]/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+  );
 }
 
 const creditText = (credits: string[], role: string) =>
