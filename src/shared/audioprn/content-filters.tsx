@@ -15,6 +15,7 @@ const FILTERS = [
   { name: "no_taboo", label: "No Taboo" },
   { name: "no_rape", label: "No Rape" },
   { name: "no_incest", label: "No Incest" },
+  { name: "sfw", label: "Show SFW" }, // only posts tagged [SFW]
   { name: "scripts", label: "Scripts Only" },
   { name: "audios", label: "Audios Only" },
 ];
@@ -112,7 +113,7 @@ export class ContentFilters extends Component<Props, object> {
             onChange={linkEvent(this, i => i.setFilters([DEFAULT_FILTERS]))}
           />
           <label className="form-check-label" htmlFor="filter-show-all">
-            Show All
+            Show All NSFW
           </label>
         </div>
         {[

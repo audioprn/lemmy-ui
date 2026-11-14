@@ -103,10 +103,10 @@ export class PostCredits extends Component<
     return (
       <div className="small d-flex flex-wrap align-items-center gap-2 my-1">
         {list.map(c => (
-          // Twice the usual badge size (0.75em), so credits stand out.
+          // 1.4 times the usual badge size (0.75em), so credits stand out.
           <span
             className="badge text-bg-light border fw-normal"
-            style="font-size: 1.5em"
+            style="font-size: 1.05em"
           >
             {CREDIT_ROLES.find(r => r.role === c.role)?.emoji}{" "}
             <CreditName name={c.name} />

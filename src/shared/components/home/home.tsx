@@ -98,6 +98,7 @@ import { tippyMixin } from "../mixins/tippy-mixin";
 import { toast } from "@utils/app";
 import { CommentNodes } from "../comment/comment-nodes";
 import { PostOrCommentTypeDropdown } from "../common/post-or-comment-type-dropdown";
+import { amAdmin } from "@utils/roles";
 import { htmlTags } from "../common/html-tags";
 import { Icon, Spinner } from "../common/icon";
 import { CommentSortDropdown, PostSortDropdown } from "../common/sort-dropdown";
@@ -1048,12 +1049,15 @@ export class Home extends Component<HomeRouteProps, HomeState> {
               showLabel
             />
           </div>
-          <div className="col">
-            <PostOrCommentTypeDropdown
-              currentOption={postOrCommentType}
-              onSelect={val => handlePostOrCommentTypeChange(this, val)}
-            />
-          </div>
+          {/* audioprn: listing comments instead of posts is for admins only */}
+          {amAdmin(myUserInfo) && (
+            <div className="col">
+              <PostOrCommentTypeDropdown
+                currentOption={postOrCommentType}
+                onSelect={val => handlePostOrCommentTypeChange(this, val)}
+              />
+            </div>
+          )}
           {!hideTimeSelect && (
             <div className="col">
               <TimeIntervalFilter

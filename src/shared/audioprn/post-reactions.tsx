@@ -141,7 +141,7 @@ export class PostAwards extends Component<
         {AWARDS.filter(a => awards[a.kind]).map(a => (
           <span
             className="badge text-bg-light border fw-normal"
-            style="font-size: 1.5em"
+            style="font-size: 1.05em"
             title={`${a.label} award`}
           >
             {a.emoji} {awards[a.kind]}
