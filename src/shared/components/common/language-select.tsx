@@ -30,6 +30,9 @@ export function LanguageSelect({
   myUserInfo,
   onChange,
 }: LanguageSelectProps) {
+  // audioprn: no language pickers anywhere; the site is English (other languages get their own
+  // cummunity).
+  return null;
   const title = multiple ? "language_plural" : "language";
 
   const filteredLangs = selectableLanguages(

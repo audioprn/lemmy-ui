@@ -325,7 +325,8 @@ export class CommunityForm extends Component<
             </div>
           </div>
         </div>
-        <details className="col-form-label mb-3">
+        {/* audioprn: no language settings, the site is English */}
+        <details className="d-none">
           <summary>{I18NextService.i18n.t("language_plural")}</summary>
           <LanguageSelect
             allLanguages={this.props.allLanguages}

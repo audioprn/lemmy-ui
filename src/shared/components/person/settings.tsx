@@ -1368,7 +1368,8 @@ export class Settings extends Component<SettingsRouteProps, SettingsState> {
               <div className="card-body">{this.lookAndFeelCard()}</div>
             </div>
           </div>
-          <div className="col-12 col-md-6">
+          {/* audioprn: this card only had the language picker */}
+          <div className="col-12 col-md-6 d-none">
             <div className="card mb-3">
               <div className="card-body">{this.contentCard()}</div>
             </div>
