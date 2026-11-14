@@ -665,7 +665,15 @@ export class MasterlistPage extends Component<Props, State> {
     const open = expanded.has(item.key);
     const long = item.description.length > 220;
     return (
-      <div className="card h-100">
+      // A click anywhere on the card opens its details (its own buttons and links do their job).
+      <div
+        className="card h-100"
+        style="cursor: pointer"
+        onClick={e =>
+          !(e.target as HTMLElement).closest("button, a") &&
+          this.setState({ open: item.key })
+        }
+      >
         <div className="card-body d-flex flex-column">
           <div className="d-flex align-items-start gap-1">
             <div className="d-flex flex-wrap gap-1">
@@ -703,7 +711,7 @@ export class MasterlistPage extends Component<Props, State> {
             {/* Opens its details: blurb, tags, length, links */}
             <button
               type="button"
-              className="btn btn-link p-0 text-start fw-semibold text-decoration-none"
+              className="btn btn-link p-0 text-start fw-semibold text-decoration-underline"
               onClick={() => this.setState({ open: item.key })}
             >
               {item.title}
