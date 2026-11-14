@@ -6,9 +6,10 @@ import { htmlTags } from "@components/common/html-tags";
 import { setIsoData, toast, WithHead } from "@utils/app";
 import { Component } from "inferno";
 import { Link, RouteComponentProps, RouterContext } from "inferno-router";
-import { call } from "./creator-api";
+import { call, CreatorApiError } from "./creator-api";
 import { CreatorOnly } from "./creator-status";
 import { shortLink } from "./news-feed";
+import { parseCsv } from "./reddit-import";
 
 export interface MasterlistCategory {
   name: string;
@@ -32,6 +33,8 @@ export interface MasterlistEntry {
   links: string[];
   script_link: string | null;
   paywalled: boolean;
+  /** The post this entry adds details to (imported from a spreadsheet). */
+  post_id: number | null;
 }
 
 interface Masterlist {
@@ -134,6 +137,7 @@ const NEW_ENTRY: MasterlistEntry = {
   links: [],
   script_link: null,
   paywalled: false,
+  post_id: null,
 };
 
 /** The editor's text fields for a category (lists as comma-separated text). */
@@ -180,6 +184,8 @@ interface EditorState {
   categoryDrafts: CategoryDraft[];
   entries: MasterlistEntry[];
   entry?: EntryDraft;
+  importPaywalled: boolean;
+  importing?: string;
 }
 
 type Props = RouteComponentProps<Record<string, never>> & WithHead;
@@ -192,6 +198,7 @@ export class MasterlistEditor extends Component<Props, EditorState> {
     categories: [],
     categoryDrafts: [],
     entries: [],
+    importPaywalled: false,
   };
 
   async componentDidMount() {
@@ -292,6 +299,7 @@ export class MasterlistEditor extends Component<Props, EditorState> {
           {this.state.loaded && (
             <>
               {this.categoriesSection()}
+              {this.importSection()}
               {this.entriesSection()}
             </>
           )}
@@ -396,8 +404,196 @@ export class MasterlistEditor extends Component<Props, EditorState> {
     );
   }
 
+  /** Rows of a CSV file chosen in the page, with a column finder by header name. */
+  async readCsv(file?: File) {
+    if (!file) return undefined;
+    const [header, ...rows] = parseCsv(await file.text());
+    const names = header.map(h => h.trim().toLowerCase());
+    const col = (...wanted: string[]) =>
+      names.findIndex(n => wanted.includes(n));
+    return { rows: rows.filter(r => r.some(Boolean)), col };
+  }
+
+  /** "Tag as written, Category" or "If Selected, Also Select" rows into the category drafts. */
+  async importCategoryCsv(file: File | undefined, kind: "aliases" | "also") {
+    const csv = await this.readCsv(file);
+    if (!csv) return;
+    const drafts = [...this.state.categoryDrafts];
+    const draft = (name: string) => {
+      let d = drafts.find(x => x.name.toLowerCase() === name.toLowerCase());
+      if (!d) {
+        d = { name, icon: "", aliases: "", also: "" };
+        drafts.push(d);
+      }
+      return d;
+    };
+    let added = 0;
+    for (const [first = "", second = ""] of csv.rows) {
+      const [a, b] = [first.trim(), second.trim()];
+      if (!a || !b) continue;
+      // Aliases: tag, category. Also adds: category, the category it adds.
+      const d = draft(kind === "aliases" ? b : a);
+      const value = kind === "aliases" ? a : b;
+      const list = splitList(d[kind], ",");
+      if (!list.some(x => x.toLowerCase() === value.toLowerCase())) {
+        d[kind] = [...list, value].join(", ");
+        added++;
+      }
+    }
+    this.setState({ categoryDrafts: drafts });
+    toast(
+      `${added} added to the categories. Check them, then Save categories.`,
+    );
+  }
+
+  /** Audio rows (columns like the masterlist sheet's) to the import API, 100 at a time. */
+  async importAudios(file?: File) {
+    const csv = await this.readCsv(file);
+    if (!csv) return;
+    const { rows, col } = csv;
+    const get = (row: string[], ...names: string[]) =>
+      (row[col(...names)] ?? "").trim();
+    const isLink = (s: string) => /^https?:\/\//i.test(s);
+    const known = new Map(
+      this.state.categories.map(c => [c.name.toLowerCase(), c.name]),
+    );
+    const unknown = new Set<string>();
+    const entries = rows
+      .filter(row => get(row, "title"))
+      .map(row => {
+        const postLink = get(row, "post link", "link");
+        const audioLink = get(row, "audio link");
+        const chosen = splitList(get(row, "category", "categories"), ",")
+          .map(name => {
+            if (!known.has(name.toLowerCase())) unknown.add(name);
+            return known.get(name.toLowerCase());
+          })
+          .filter((n): n is string => !!n);
+        const date = get(row, "date");
+        return {
+          ...NEW_ENTRY,
+          title: get(row, "title"),
+          description: get(row, "description", "synopsis"),
+          date: /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : null,
+          duration: get(row, "duration", "length"),
+          writer: get(row, "writer", "written by"),
+          writer_link: get(row, "writer link") || null,
+          credits: get(row, "collab partners", "collaborators", "credits"),
+          // Comma-separated; a piece like "[F4M][Romance] [Slow Burn]" is several tags.
+          tags: splitList(get(row, "tags"), ",").flatMap(tag =>
+            tag.includes("[")
+              ? [...tag.matchAll(/\[([^\]]+)\]/g)].map(m => m[1].trim())
+              : [tag],
+          ),
+          categories: chosen.length ? chosen : null,
+          links: [postLink, audioLink].filter(isLink),
+          script_link: isLink(get(row, "script link"))
+            ? get(row, "script link")
+            : null,
+          paywalled: this.state.importPaywalled,
+          reddit_id:
+            /reddit\.com\/r\/[^/]+\/comments\/([a-z0-9]+)/i.exec(
+              postLink,
+            )?.[1] ?? null,
+        };
+      });
+    const total = { added: 0, updated: 0, posts: 0, skipped: 0 };
+    for (let i = 0; i < entries.length;) {
+      this.setState({ importing: `Importing ${i} of ${entries.length}…` });
+      try {
+        const res = await call<typeof total>("PUT", "/masterlist/import", {
+          entries: entries.slice(i, i + 100),
+        });
+        Object.keys(total).forEach(k => {
+          total[k as keyof typeof total] += res[k as keyof typeof total];
+        });
+        i += 100;
+      } catch (e) {
+        if ((e as CreatorApiError).status !== 429) {
+          this.setState({ importing: (e as Error).message });
+          return;
+        }
+        // Over the site's requests-a-minute limit: wait, then try again.
+        await new Promise(r => setTimeout(r, 60_000));
+      }
+    }
+    const me = this.isoData.myUserInfo?.local_user_view.person.id;
+    if (me) this.setState({ entries: (await getMasterlist(me)).entries });
+    this.setState({
+      importing:
+        `Done: ${total.added} added, ${total.updated} updated (${total.posts} of them your posts), ` +
+        `${total.skipped} skipped.` +
+        (unknown.size
+          ? ` Categories not on your list, left out: ${[...unknown].join(", ")}.`
+          : ""),
+    });
+  }
+
+  importSection() {
+    const { entries, importing, importPaywalled } = this.state;
+    const file = (label: string, onChange: (f?: File) => void) => (
+      <div className="mb-2">
+        <label className="form-label small mb-0">{label}</label>
+        <input
+          type="file"
+          accept=".csv,text/csv"
+          className="form-control form-control-sm"
+          onChange={e => onChange(e.target.files?.[0])}
+        />
+      </div>
+    );
+    return (
+      <section className="card card-body mb-4">
+        <h2 className="h5">Import from your spreadsheet</h2>
+        <p className="small text-muted">
+          Download a tab as CSV (in Google Sheets: File → Download →
+          Comma-separated values) and choose it here. Columns are found by their
+          names.
+        </p>
+        {file("Tag aliases (columns: Tag as written, Category)", f =>
+          this.importCategoryCsv(f, "aliases"),
+        )}
+        {file("Double selects (columns: If Selected, Also Select)", f =>
+          this.importCategoryCsv(f, "also"),
+        )}
+        <p className="small text-muted">
+          These add to your categories above: check them, add icons, then Save
+          categories. Import your categories before your audios.
+        </p>
+        <div className="form-check mb-1">
+          <input
+            className="form-check-input"
+            type="checkbox"
+            id="import-paywalled"
+            checked={importPaywalled}
+            onChange={e => this.setState({ importPaywalled: e.target.checked })}
+          />
+          <label className="form-check-label" htmlFor="import-paywalled">
+            The audios in this file are paywalled
+          </label>
+        </div>
+        {file(
+          "Audios (columns like Title, Category, Tags, Date, Writer, Script Link, Description, Post Link, Collab Partners, Duration, Audio Link)",
+          f => this.importAudios(f),
+        )}
+        <p className="small text-muted mb-1">
+          A row whose Post Link is one of your Reddit posts imported here adds
+          its details (title, description, length, writer, categories) to that
+          post. Other rows become audios below. Importing again updates them.
+        </p>
+        {importing && <p className="small mb-1">{importing}</p>}
+        <p className="small mb-0">
+          {entries.filter(e => e.post_id).length} of your posts have details
+          from your spreadsheet.
+        </p>
+      </section>
+    );
+  }
+
   entriesSection() {
-    const { entries, entry, categories } = this.state;
+    const { entry, categories } = this.state;
+    // Entries adding details to posts are counted in the import section.
+    const entries = this.state.entries.filter(e => !e.post_id);
     return (
       <section className="card card-body mb-5">
         <h2 className="h5">Audios on other sites ({entries.length})</h2>

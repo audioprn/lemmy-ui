@@ -47,7 +47,7 @@ interface Row {
 }
 
 /** RFC 4180 CSV (quoted fields can hold commas, quotes and new lines). */
-function parseCsv(s: string): string[][] {
+export function parseCsv(s: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
   let field = "";

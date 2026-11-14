@@ -159,6 +159,34 @@ function fromEntry(e: MasterlistEntry, cats: MasterlistCategory[]): Item {
   };
 }
 
+/** A post with the details its creator imported for it from their spreadsheet. */
+function withDetails(
+  post: Item,
+  entry: MasterlistEntry | undefined,
+  cats: MasterlistCategory[],
+): Item {
+  if (!entry) return post;
+  const d = fromEntry(entry, cats);
+  return {
+    ...post,
+    title: d.title,
+    description: d.description || post.description,
+    duration: d.duration || post.duration,
+    writer: d.writer || post.writer,
+    writerLink: d.writer ? d.writerLink : post.writerLink,
+    credits: d.credits || post.credits,
+    // Categories they picked for it, or those of both its tags and the post's.
+    categories: entry.categories
+      ? d.categories
+      : [...new Set([...d.categories, ...post.categories])],
+    links: [
+      ...post.links,
+      ...d.links.filter(l => !post.links.some(p => p.url === l.url)),
+    ],
+    text: `${post.text} ${d.text}`,
+  };
+}
+
 const formatDate = (date: string) =>
   date
     ? new Date(`${date}T12:00:00Z`).toLocaleDateString("en-GB", {
@@ -233,8 +261,16 @@ export class MasterlistPage extends Component<Props, State> {
       loading: false,
       categories: ml.categories,
       items: [
-        ...ml.posts.map(p => fromPost(p, ml.categories)),
-        ...ml.entries.map(e => fromEntry(e, ml.categories)),
+        ...ml.posts.map(p =>
+          withDetails(
+            fromPost(p, ml.categories),
+            ml.entries.find(e => e.post_id === p.id),
+            ml.categories,
+          ),
+        ),
+        ...ml.entries
+          .filter(e => !e.post_id)
+          .map(e => fromEntry(e, ml.categories)),
       ],
       favourites: new Set([
         ...ml.saved_posts.map(id => `p${id}`),
