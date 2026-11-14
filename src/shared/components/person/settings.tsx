@@ -73,6 +73,7 @@ import { CommunityLink } from "../community/community-link";
 import { SHOW_COMMUNITIES } from "../../audioprn/features";
 import { CreatorOnly } from "../../audioprn/creator-status";
 import { CreatorFooterSettings } from "../../audioprn/post-footer";
+import { AccessibilityOptions } from "../../audioprn/accessibility";
 import { PersonListing } from "./person-listing";
 import { Invites } from "./invites";
 import { InitialFetchRequest } from "@utils/types";
@@ -1036,6 +1037,10 @@ export class Settings extends Component<SettingsRouteProps, SettingsState> {
     return (
       <>
         <h5 className="card-title">{I18NextService.i18n.t("look_and_feel")}</h5>
+        {/* audioprn: text size and font for the whole site, kept in this browser */}
+        <div className="mb-3">
+          <AccessibilityOptions />
+        </div>
         <div className="mb-3 row align-items-center">
           <label className="col-sm-3 col-form-label" htmlFor="user-theme">
             {I18NextService.i18n.t("theme")}

@@ -5,6 +5,7 @@ import { Creators } from "../audioprn/creators";
 import { Guide } from "../audioprn/guides";
 import { RedditImport } from "../audioprn/reddit-import";
 import { MasterlistEditor } from "../audioprn/masterlist";
+import { MasterlistPage } from "../audioprn/masterlist-page";
 import { MY_FEED, MY_SAVED } from "../audioprn/my-feed";
 import {
   Communities,
@@ -157,6 +158,8 @@ export const routes: IRoutePropsWithFetch<
   { path: `/guides/:name`, component: Guide },
   { path: `/reddit_import`, component: RedditImport },
   { path: `/masterlist/edit`, component: MasterlistEditor },
+  // Before /u/:username, which would match it too.
+  { path: `/u/:username/masterlist`, component: MasterlistPage },
   {
     path: `/content`,
     component: Home,

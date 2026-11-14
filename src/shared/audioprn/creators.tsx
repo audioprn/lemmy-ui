@@ -288,6 +288,12 @@ export class CreatorPageActions extends Component<
           )}
           <Link
             className={`${classes} btn-light border-light-subtle`}
+            to={`/u/${creator.name}/masterlist`}
+          >
+            📜 Masterlist
+          </Link>
+          <Link
+            className={`${classes} btn-light border-light-subtle`}
             to="/masterlist/edit"
           >
             Edit my masterlist
@@ -298,6 +304,12 @@ export class CreatorPageActions extends Component<
     const loggedIn = !!this.isoData.myUserInfo;
     return (
       <>
+        <Link
+          className={`${classes} btn-light border-light-subtle`}
+          to={`/u/${creator.name}/masterlist`}
+        >
+          📜 Masterlist
+        </Link>
         {creator.followers !== null && (
           <span className="align-self-center text-muted me-2">
             {followersText(creator.followers)}
