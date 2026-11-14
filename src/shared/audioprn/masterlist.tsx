@@ -53,7 +53,7 @@ const aliasMatches = (alias: string, tag: string) =>
     `^${alias.toLowerCase().split("*").map(escapeRegex).join(".*")}$`,
   ).test(tag.toLowerCase());
 
-/** Minutes in a length like "1:02:03", "16:10" or "85 minutes"; undefined if it isn't one. */
+/** Minutes in a length like "1:02:03", "16:10", "22m 52s" or "85 minutes"; else undefined. */
 export function lengthMinutes(text: string): number | undefined {
   const clock = /^(?:(\d+):)?(\d{1,2}):(\d{2})$/.exec(text.trim());
   if (clock) {
@@ -61,8 +61,17 @@ export function lengthMinutes(text: string): number | undefined {
       Number(clock[1] ?? 0) * 60 + Number(clock[2]) + Number(clock[3]) / 60
     );
   }
-  const minutes = /^(\d+)\s*(?:m|mins?|minutes?)$/i.exec(text.trim());
-  return minutes ? Number(minutes[1]) : undefined;
+  // "1h 05m", "22m 52s", "28m", "85 minutes"
+  const parts =
+    /^(?:(\d+)\s*h\s*)?(?:(\d+)\s*m(?:in(?:ute)?s?)?\s*)?(?:(\d+)\s*s)?$/i.exec(
+      text.trim(),
+    );
+  if (!parts || !(parts[1] || parts[2] || parts[3])) return undefined;
+  return (
+    Number(parts[1] ?? 0) * 60 +
+    Number(parts[2] ?? 0) +
+    Number(parts[3] ?? 0) / 60
+  );
 }
 
 /** A category tag like ">40min" or "<15min" is a rule on the audio's length. */
@@ -469,12 +478,18 @@ export class MasterlistEditor extends Component<Props, EditorState> {
             return known.get(name.toLowerCase());
           })
           .filter((n): n is string => !!n);
+        // 2025-07-24, or day/month/year: 24/07/2025
         const date = get(row, "date");
+        const dmy = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(date);
         return {
           ...NEW_ENTRY,
           title: get(row, "title"),
           description: get(row, "description", "synopsis"),
-          date: /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : null,
+          date: /^\d{4}-\d{2}-\d{2}$/.test(date)
+            ? date
+            : dmy
+              ? `${dmy[3]}-${dmy[2].padStart(2, "0")}-${dmy[1].padStart(2, "0")}`
+              : null,
           duration: get(row, "duration", "length"),
           writer: get(row, "writer", "written by"),
           writer_link: get(row, "writer link") || null,
