@@ -126,6 +126,12 @@ import {
 } from "../../audioprn/features";
 import { ContentFilters, savedFilters } from "../../audioprn/content-filters";
 import {
+  CompactPosts,
+  SearchPanel,
+  savedCompact,
+  searchError,
+} from "../../audioprn/search-panel";
+import {
   getFeedPosts,
   MY_FEED,
   MY_SAVED,
@@ -165,6 +171,8 @@ interface HomeState {
   markPageAsReadLoading: boolean;
   postListingMode: PostListingMode;
   selectButtonsHidden: boolean;
+  /** audioprn: one line per post (the search panel's Compact view) */
+  compact?: boolean;
 }
 
 interface HomeProps {
@@ -372,11 +380,12 @@ export class Home extends Component<HomeRouteProps, HomeState> {
   }
 
   componentDidMount() {
-    // audioprn: bring back the viewer's last content filters.
+    // audioprn: bring back the viewer's last content filters, and Compact or Cards.
     const saved = savedFilters();
     if (!this.props.filters && saved) {
       this.updateUrl({ filters: saved });
     }
+    this.setState({ compact: savedCompact() });
   }
 
   async componentWillReceiveProps(
@@ -511,6 +520,21 @@ export class Home extends Component<HomeRouteProps, HomeState> {
                   )}
                 ></div>
               )}
+              {/* audioprn: search, on the Content page */}
+              {this.contentPage && (
+                <SearchPanel
+                  q={this.props.q}
+                  error={
+                    this.state.postsRes.state === "failed"
+                      ? searchError(this.state.postsRes.err.message)
+                      : undefined
+                  }
+                  compact={!!this.state.compact}
+                  onSearch={q => this.updateUrl({ q, cursor: undefined })}
+                  onCompact={compact => this.setState({ compact })}
+                  onSavedChange={() => this.fetchData(this.props)}
+                />
+              )}
               {this.posts}
             </div>
             {/* Only show the sidebar on md or larger */}
@@ -520,6 +544,16 @@ export class Home extends Component<HomeRouteProps, HomeState> {
           </div>
         )}
       </div>
+    );
+  }
+
+  /** audioprn: the Content page's posts (not My audioprn or saved posts). */
+  get contentPage(): boolean {
+    const { filters, postOrCommentType } = this.props;
+    return (
+      postOrCommentType === "post" &&
+      filters !== MY_FEED &&
+      filters !== MY_SAVED
     );
   }
 
@@ -855,6 +889,10 @@ export class Home extends Component<HomeRouteProps, HomeState> {
           return <PostsLoadingSkeleton />;
         case "success": {
           const posts = this.state.postsRes.data.items;
+          // audioprn: the search panel's Compact view
+          if (this.contentPage && this.state.compact) {
+            return <CompactPosts posts={posts} />;
+          }
           return (
             <PostListings
               posts={posts}

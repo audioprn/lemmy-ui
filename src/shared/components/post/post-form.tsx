@@ -97,6 +97,11 @@ import {
   parseCredits,
   savePostCredits,
 } from "../../audioprn/post-credits";
+import {
+  getScriptFill,
+  saveScriptFill,
+  scriptPostId,
+} from "../../audioprn/script-fills";
 
 const MAX_POST_TITLE_LENGTH = 300; // audioprn: spec allows 300 characters
 
@@ -182,6 +187,9 @@ interface PostFormState {
   poll?: { question: string; options: string[]; ends: string };
   /** audioprn: the script on a new Script Offer post */
   script?: ScriptInput;
+  /** audioprn: a Script Fill's script (a link to its post here), and as loaded when editing */
+  fillOf?: string;
+  fillLoaded?: string;
   /** audioprn: the open draft, while its saved copy loads, and how often it was saved */
   draftId?: number;
   draftLoading?: boolean;
@@ -297,6 +305,12 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
         offContent: off_content.includes(pv.post.id),
         creditsLoaded: true,
       });
+      const fill = await getScriptFill(pv.post.id).catch(() => undefined);
+      const fillOf =
+        fill?.chosen && fill.script_post_id
+          ? `${location.origin}/post/${fill.script_post_id}`
+          : "";
+      this.setState({ fillOf, fillLoaded: fillOf });
     }
   }
 
@@ -381,6 +395,27 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
             </div>
           </div>
         )}
+        {/* audioprn: the Script Offer a Script Fill is for (fills: in search) */}
+        {this.scriptFill && (
+          <div className="mb-3 row">
+            <label className="col-sm-2 col-form-label" htmlFor="post-fill-of">
+              Script you filled
+            </label>
+            <div className="col-sm-10">
+              <input
+                id="post-fill-of"
+                className="form-control"
+                placeholder="Link to the Script Offer's post here (optional)"
+                value={this.state.fillOf ?? ""}
+                onInput={e => this.setState({ fillOf: e.target.value })}
+              />
+              <div className="small text-muted mt-1">
+                Counts your fill for that script. Left empty, a link to the
+                Script Offer in your post's text is used.
+              </div>
+            </div>
+          </div>
+        )}
       </>
     );
   }
@@ -392,6 +427,10 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
       return "Choose one flair for your post (e.g. Audio: OC or Script Offer).";
     }
     if (this.titleTagError) return this.titleTagError;
+    const fillOf = this.state.fillOf?.trim();
+    if (this.scriptFill && fillOf && scriptPostId(fillOf) === undefined) {
+      return "The script you filled should be a link to its post here.";
+    }
     if (this.pollIncomplete) {
       return "The poll needs a question, at least 2 options and an end date in the future.";
     }
@@ -426,10 +465,18 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
 
   /** audioprn: the Script Offer flair is chosen. */
   get scriptOffer(): boolean {
+    return this.flairChosen("script_offer");
+  }
+
+  /** audioprn: the Script Fill flair is chosen. */
+  get scriptFill(): boolean {
+    return this.flairChosen("script_fill");
+  }
+
+  flairChosen(name: string): boolean {
     return !!this.state.form.tags?.some(
       id =>
-        this.props.selectedCommunityTags?.find(t => t.id === id)?.name ===
-        "script_offer",
+        this.props.selectedCommunityTags?.find(t => t.id === id)?.name === name,
     );
   }
 
@@ -1254,6 +1301,16 @@ function handlePostSubmit(i: PostForm, event: FormEvent<HTMLFormElement>) {
             toast(e.message, "danger"),
           );
         }
+        // audioprn: the script this fills, when changed
+        if (
+          res?.state !== "failed" &&
+          i.state.fillLoaded !== undefined &&
+          i.state.fillOf !== i.state.fillLoaded
+        ) {
+          saveScriptFill(pv.post.id, i.state.fillOf ?? "").catch(e =>
+            toast(e.message, "danger"),
+          );
+        }
       });
     } else if (i.editorType === "mod_or_admin") {
       i.props.onModEdit?.(
@@ -1296,6 +1353,9 @@ function handlePostSubmit(i: PostForm, event: FormEvent<HTMLFormElement>) {
               script &&
               (script.body.trim() || script.link.trim()) &&
               savePostScript(postId, script),
+            i.scriptFill &&
+              i.state.fillOf?.trim() &&
+              saveScriptFill(postId, i.state.fillOf),
             poll &&
               createPostPoll(
                 postId,

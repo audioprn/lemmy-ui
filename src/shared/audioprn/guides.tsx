@@ -13,6 +13,7 @@ import { Link, RouteComponentProps, RouterContext } from "inferno-router";
 const GUIDES: Record<string, { title: string; file?: string }> = {
   "getting-started": { title: "Getting Started Guide" },
   tagging: { title: "Tagging Guide", file: "tagging.md" },
+  search: { title: "Search Guide", file: "search.md" },
 };
 
 // Same as Slug in guide-from-docx.ps1, so links in the guide match the heading ids.

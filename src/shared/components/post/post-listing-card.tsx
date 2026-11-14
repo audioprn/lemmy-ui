@@ -49,6 +49,7 @@ import { PostPoll } from "../../audioprn/post-poll";
 import { PostTools } from "../../audioprn/post-tools";
 import { PostFooter } from "../../audioprn/post-footer";
 import { ScriptBox } from "../../audioprn/post-script";
+import { FillLine } from "../../audioprn/script-fills"; // audioprn
 import { PostThumbnail } from "./post-thumbnail";
 import classNames from "classnames";
 import { MetadataCard } from "./metadata-card";
@@ -199,6 +200,12 @@ export class PostListingCard extends Component<
           </div>
           {/* audioprn: the script (Script Offer posts) and the creator's footer on the post page */}
           {p.showBody === "full" && <ScriptBox postView={p.postView} />}
+          {p.showBody === "full" && (
+            <FillLine
+              postId={p.postView.post.id}
+              scriptOffer={p.postView.tags.some(t => t.name === "script_offer")}
+            />
+          )}
           {p.showBody === "full" && (
             <PostFooter creatorId={p.postView.creator.id} />
           )}
