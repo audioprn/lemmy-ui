@@ -222,9 +222,17 @@ export function setupMarkdown() {
     // Provide custom renderer for our emojis to allow us to add a css class and force size dimensions on them.
     const item = tokens[idx];
 
-    // audioprn: no images except GIF links in comments; anything else shows as a link.
+    // audioprn: no images except GIF links in comments, and only from well-known GIF sites (an
+    // image's host sees each viewer's IP address); anything else shows as a link.
     const href = item.attrGet("src") ?? "";
-    if (!(env?.gifs && /\.gif([?#]|$)/i.test(href))) {
+    if (
+      !(
+        env?.gifs &&
+        /^https:\/\/([\w-]+\.)*(giphy|tenor|imgur)\.com\/[^?#]*\.gif([?#]|$)/i.test(
+          href,
+        )
+      )
+    ) {
       const text = self.renderInlineAsText(item.children ?? [], options, env);
       return `<a href="${md.utils.escapeHtml(href)}" rel="${relTags}">${md.utils.escapeHtml(text || href)}</a>`;
     }

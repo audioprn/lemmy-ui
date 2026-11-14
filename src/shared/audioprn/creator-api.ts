@@ -65,10 +65,12 @@ const ERROR_MESSAGES: Record<string, string> = {
   invalid_draft: "This draft is too long to save.",
   invalid_masterlist:
     "Check the masterlist: names, tags and categories up to 60 characters, a title on every audio, valid links.",
-  too_many_masterlist_entries: "A masterlist can have up to 5,000 audios.",
+  too_many_masterlist_entries:
+    "Your masterlist is full (up to 5,000 audios, or about 10 MB of text).",
   already_imported: "Already imported.",
   import_limit: "You can import up to 500 posts a day. Try the rest tomorrow.",
-  invalid_reddit_import: "This post's Reddit id or date isn't valid.",
+  invalid_reddit_import:
+    "This post's Reddit id or date isn't valid (posts from the past day can't be imported yet).",
   too_many_drafts: "You have 50 drafts. Delete some to save new ones.",
   invalid_creator_pin:
     "The pinned post can have up to 20 social links and 5,000 characters per section.",

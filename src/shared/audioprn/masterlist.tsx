@@ -45,13 +45,25 @@ interface Masterlist {
 export const getMasterlist = (personId: number) =>
   call<Masterlist>("GET", `/masterlist?person_id=${personId}`);
 
-const escapeRegex = (s: string) => s.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
-
-/** A tag alias matches a whole tag (any case); `*` matches any text. */
-const aliasMatches = (alias: string, tag: string) =>
-  new RegExp(
-    `^${alias.toLowerCase().split("*").map(escapeRegex).join(".*")}$`,
-  ).test(tag.toLowerCase());
+/**
+ * A tag alias matches a whole tag (any case); `*` matches any text. Done by finding the pieces
+ * between the `*`s in order (not a regular expression, which many `*`s could make very slow).
+ */
+function aliasMatches(alias: string, tag: string) {
+  tag = tag.toLowerCase();
+  const [first, ...rest] = alias.toLowerCase().split("*");
+  const last = rest.pop();
+  if (last === undefined) return tag === first;
+  const end = tag.length - last.length;
+  let at = first.length;
+  if (!tag.startsWith(first) || !tag.endsWith(last) || at > end) return false;
+  for (const piece of rest) {
+    const found = tag.indexOf(piece, at);
+    if (found < 0 || found + piece.length > end) return false;
+    at = found + piece.length;
+  }
+  return true;
+}
 
 /** Minutes in a length like "1:02:03", "16:10", "22m 52s" or "85 minutes"; else undefined. */
 export function lengthMinutes(text: string): number | undefined {
