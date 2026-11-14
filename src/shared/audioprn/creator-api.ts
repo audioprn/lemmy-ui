@@ -35,6 +35,8 @@ const ERROR_MESSAGES: Record<string, string> = {
     "Your 3 content links must all be different.",
   creator_too_many_social_links: "You can add at most 20 social media links.",
   only_verified_creators_can_post: "Only verified creators can post.",
+  too_many_page_pins: "You can pin up to 4 posts. Unpin one first.",
+  not_your_post: "You can only pin your own posts.",
   invalid_url: "One of the links isn't a valid web address.",
   invalid_url_scheme: "Links must start with https:// or http://",
   already_exists: "You already have a creator application.",

@@ -113,6 +113,7 @@ import {
 } from "../../audioprn/features";
 import { CreatorPageActions, CreditedOn } from "../../audioprn/creators";
 import { CreatorPin, CreatorStats } from "../../audioprn/creator-page";
+import { withPagePins } from "../../audioprn/page-pins";
 import { PersonDetails } from "./person-details";
 import { PersonListing } from "./person-listing";
 import { getHttpBaseInternal } from "@utils/env";
@@ -395,6 +396,29 @@ export class Profile extends Component<ProfileRouteProps, ProfileState> {
   async componentWillMount() {
     if (!this.state.isIsomorphic && isBrowser()) {
       await this.fetchUserData(this.props, true);
+    } else if (isBrowser()) {
+      await this.addPagePins(this.props); // audioprn
+    }
+  }
+
+  // audioprn: a creator's pinned posts go first on the first page of their posts.
+  async addPagePins(props: ProfileRouteProps) {
+    const token = this.fetchUserDataToken;
+    const { personRes, personContentRes } = this.state;
+    if (
+      props.cursor ||
+      props.viewType !== "all" ||
+      props.contentType === "comments" ||
+      personRes.state !== "success"
+    ) {
+      return;
+    }
+    const withPins = await withPagePins(
+      personContentRes,
+      personRes.data.person_view.person.id,
+    );
+    if (token === this.fetchUserDataToken) {
+      this.setState({ personContentRes: withPins });
     }
   }
 
@@ -511,6 +535,9 @@ export class Profile extends Component<ProfileRouteProps, ProfileState> {
         }));
       }
     });
+    if (token === this.fetchUserDataToken) {
+      await this.addPagePins(props_); // audioprn
+    }
   }
 
   get amCurrentUser() {
@@ -697,6 +724,7 @@ export class Profile extends Component<ProfileRouteProps, ProfileState> {
               <CreatorPin
                 key={personRes.person_view.person.id}
                 personId={personRes.person_view.person.id}
+                name={personRes.person_view.person.name}
               />
               {this.selects}
               {isUpload && this.renderUploadsRes()}

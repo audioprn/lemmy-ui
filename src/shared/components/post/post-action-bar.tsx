@@ -20,6 +20,7 @@ import {
 } from "@utils/types";
 import classNames from "classnames";
 import { Link } from "inferno-router";
+import { PagePinButton } from "../../audioprn/page-pins"; // audioprn
 import {
   PostView,
   PersonView,
@@ -156,6 +157,12 @@ export function PostActionBar(props: PostActionBarProps, context: object) {
           >
             {postView.post.deleted ? "↩ Restore" : "🗑 Delete"}
           </button>
+          {!postView.post.deleted && !postView.post.removed && (
+            <PagePinButton
+              postId={postView.post.id}
+              personId={postView.creator.id}
+            />
+          )}
         </div>
       )}
       <div className="col">

@@ -1,9 +1,10 @@
-// audioprn: creator page extras. The pinned post at the top (social links, terms of use,
-// boundaries, masterlists), and the creator's private stats (only they see them).
+// audioprn: creator page extras. A big Masterlist button and the pinned post at the top (social
+// links, terms of use, boundaries), and the creator's private stats (only they see them).
 import { setIsoData, toast } from "@utils/app";
 import { relTags } from "@utils/config";
 import { mdToHtml } from "@utils/markdown";
 import { Component } from "inferno";
+import { Link } from "inferno-router";
 import { call } from "./creator-api";
 import { shortLink } from "./news-feed";
 
@@ -11,7 +12,6 @@ interface Pin {
   social_links: string[];
   terms: string;
   boundaries: string;
-  masterlists: string;
 }
 
 type Draft = Omit<Pin, "social_links"> & { social_links: string };
@@ -19,7 +19,6 @@ type Draft = Omit<Pin, "social_links"> & { social_links: string };
 const SECTIONS = [
   { key: "terms", title: "Terms of use" },
   { key: "boundaries", title: "Boundaries" },
-  { key: "masterlists", title: "Masterlists" },
 ] as const;
 
 interface PinState {
@@ -28,8 +27,11 @@ interface PinState {
   draft?: Draft;
 }
 
-/** The pinned post at the top of a creator's page. The creator edits it there. */
-export class CreatorPin extends Component<{ personId: number }, PinState> {
+/** The top of a creator's page: the Masterlist button and their pinned post (edited there). */
+export class CreatorPin extends Component<
+  { personId: number; name: string },
+  PinState
+> {
   private isoData = setIsoData(this.context);
   state: PinState = { isCreator: false };
 
@@ -57,7 +59,6 @@ export class CreatorPin extends Component<{ personId: number }, PinState> {
         social_links: pin?.social_links.join("\n") ?? "",
         terms: pin?.terms ?? "",
         boundaries: pin?.boundaries ?? "",
-        masterlists: pin?.masterlists ?? "",
       },
     });
   }
@@ -76,8 +77,27 @@ export class CreatorPin extends Component<{ personId: number }, PinState> {
   }
 
   render() {
-    const { pin, isCreator, draft } = this.state;
-    if (!pin && !(this.isMe && isCreator)) return null;
+    const { isCreator } = this.state;
+    if (!isCreator) return null;
+    return (
+      <>
+        <Link
+          className="btn btn-primary btn-lg w-100 mb-3 py-3 fw-bold fs-4"
+          to={`/u/${this.props.name}/masterlist`}
+        >
+          📜 {this.isMe ? "Your masterlist" : "Masterlist"}
+          <span className="d-block fs-6 fw-normal">
+            Every audio in one place
+          </span>
+        </Link>
+        {this.pinCard()}
+      </>
+    );
+  }
+
+  pinCard() {
+    const { pin, draft } = this.state;
+    if (!pin && !this.isMe) return null;
     return (
       <div className="card border-primary-subtle mb-3">
         <div className="card-body">
@@ -95,8 +115,8 @@ export class CreatorPin extends Component<{ personId: number }, PinState> {
           </div>
           {!pin && !draft && (
             <p className="small text-muted mb-0">
-              Pin your social links, terms of use, boundaries and masterlists to
-              the top of your page.
+              Pin your social links, terms of use and boundaries to the top of
+              your page.
             </p>
           )}
           {pin && !draft && (

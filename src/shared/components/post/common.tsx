@@ -25,6 +25,7 @@ import { hostname } from "@utils/helpers";
 import { ShowBodyType } from "@utils/types";
 import { CommunityTag } from "@components/community/community-tag";
 import { InfernoNode } from "inferno";
+import { isPagePinned } from "../../audioprn/page-pins"; // audioprn
 
 type PostNameProps = {
   post: Post;
@@ -102,6 +103,12 @@ export function PostBadges({ post, tags, allLanguages }: PostBadgesProps) {
           data-tippy-content={I18NextService.i18n.t("locked")}
         >
           <Icon icon="lock" classes="icon-inline text-danger" />
+        </small>
+      )}
+      {/* audioprn: pinned on the creator's page */}
+      {isPagePinned(post) && (
+        <small className="me-2" title="Pinned on their page">
+          📌
         </small>
       )}
       {post.featured_community && (
