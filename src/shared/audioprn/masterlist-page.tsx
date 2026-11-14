@@ -49,6 +49,7 @@ interface Item {
   writer: string;
   writerLink?: string;
   credits: string;
+  tags: string[];
   categories: string[];
   links: { label: string; url: string }[];
   sites: string[];
@@ -124,6 +125,14 @@ function fromPost(p: MasterlistPost, cats: MasterlistCategory[]): Item {
     writer: writer.replace(/^u\//, ""),
     writerLink: writer.startsWith("u/") ? `/u/${writer.slice(2)}` : undefined,
     credits: others,
+    // As written in the title and text (not link texts like [Script](link)).
+    tags: [
+      ...new Set(
+        [...`${p.name} ${p.body}`.matchAll(/\[([^[\]]{1,40})\](?!\()/g)].map(
+          m => m[1].trim(),
+        ),
+      ),
+    ],
     categories: entryCategories(p.tags, cats, null, lengthMinutes(duration)),
     links: p.url ? [{ label: siteName(p.url), url: p.url }] : [],
     sites: [THIS_SITE],
@@ -143,6 +152,7 @@ function fromEntry(e: MasterlistEntry, cats: MasterlistCategory[]): Item {
     writer: e.writer,
     writerLink: e.writer_link ?? undefined,
     credits: e.credits,
+    tags: e.tags,
     categories: entryCategories(
       e.tags,
       cats,
@@ -175,6 +185,7 @@ function withDetails(
     writer: d.writer || post.writer,
     writerLink: d.writer ? d.writerLink : post.writerLink,
     credits: d.credits || post.credits,
+    tags: d.tags.length ? d.tags : post.tags,
     // Categories they picked for it, or those of both its tags and the post's.
     categories: entry.categories
       ? d.categories
@@ -196,6 +207,8 @@ const formatDate = (date: string) =>
 
 interface State {
   personId?: number;
+  /** The audio whose details are open. */
+  open?: string;
   categories: MasterlistCategory[];
   items: Item[];
   favourites: Set<string>;
@@ -494,6 +507,7 @@ export class MasterlistPage extends Component<Props, State> {
               <AccessibilityOptions />
             </div>
           </details>
+          {this.details(items.find(i => i.key === this.state.open))}
           {surprise && (
             <div className="border border-primary rounded p-2 mb-3">
               <div className="d-flex align-items-center mb-2">
@@ -540,6 +554,111 @@ export class MasterlistPage extends Component<Props, State> {
     );
   }
 
+  /** An audio's details over the page: categories, length, writer, blurb, tags and links. */
+  details(item?: Item) {
+    if (!item) return null;
+    const close = () => this.setState({ open: undefined });
+    const { categories } = this.state;
+    return (
+      <div
+        className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-start p-3 overflow-auto"
+        style="background: rgba(0, 0, 0, 0.5); z-index: 1050"
+        onClick={close}
+      >
+        <div
+          className="card w-100 my-4"
+          style="max-width: 40rem"
+          role="dialog"
+          aria-modal="true"
+          aria-label={item.title}
+          onClick={e => e.stopPropagation()}
+        >
+          <div className="card-body">
+            <div className="d-flex align-items-start gap-2 mb-2">
+              <h2 className="h5 mb-0">{item.title}</h2>
+              <button
+                type="button"
+                className="btn-close ms-auto"
+                aria-label="Close"
+                onClick={close}
+              />
+            </div>
+            <div className="small text-muted mb-2">
+              {[
+                formatDate(item.date),
+                item.duration &&
+                  `Length: ${/^[\d:]+$/.test(item.duration) ? `${item.duration} min` : item.duration}`,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+              {item.paywalled && (
+                <span className="badge text-bg-warning ms-2">🔒 Paywalled</span>
+              )}
+            </div>
+            {item.writer && (
+              <div className="small">Written by: {item.writer}</div>
+            )}
+            {item.credits && (
+              <div className="small text-muted">🎙️ {item.credits}</div>
+            )}
+            {item.categories.length > 0 && (
+              <div className="d-flex flex-wrap gap-1 my-2">
+                {item.categories.map(name => (
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-light border-light-subtle py-0"
+                    onClick={() =>
+                      this.setState({
+                        category: name,
+                        shown: PAGE,
+                        open: undefined,
+                      })
+                    }
+                  >
+                    {categories.find(c => c.name === name)?.icon} {name}
+                  </button>
+                ))}
+              </div>
+            )}
+            {item.description && (
+              <p className="my-3" style="white-space: pre-line">
+                {item.description}
+              </p>
+            )}
+            {item.tags.length > 0 && (
+              <div className="d-flex flex-wrap gap-1 mb-3">
+                {item.tags.map(tag => (
+                  <span className="badge text-bg-light border fw-normal">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="d-flex flex-wrap gap-2">
+              {item.postId && (
+                <Link
+                  className="btn btn-sm btn-primary"
+                  to={`/post/${item.postId}`}
+                >
+                  Open post
+                </Link>
+              )}
+              {item.links.map(l => (
+                <a
+                  className="btn btn-sm btn-primary"
+                  href={l.url}
+                  rel={relTags}
+                >
+                  {l.label === "Script" ? "Script" : `Listen on ${l.label}`}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   card(item: Item) {
     const { categories, favourites, expanded } = this.state;
     const isFavourite = favourites.has(item.key);
@@ -581,11 +700,14 @@ export class MasterlistPage extends Component<Props, State> {
             </button>
           </div>
           <h2 className="h6 mt-2 mb-1">
-            {item.postId ? (
-              <Link to={`/post/${item.postId}`}>{item.title}</Link>
-            ) : (
-              item.title
-            )}
+            {/* Opens its details: blurb, tags, length, links */}
+            <button
+              type="button"
+              className="btn btn-link p-0 text-start fw-semibold text-decoration-none"
+              onClick={() => this.setState({ open: item.key })}
+            >
+              {item.title}
+            </button>
           </h2>
           <div className="small text-muted">
             {[
