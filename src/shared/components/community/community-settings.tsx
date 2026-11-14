@@ -390,7 +390,7 @@ export class CommunitySettings extends Component<RouteProps, State> {
             },
             {
               key: "tags",
-              label: I18NextService.i18n.t("tags"),
+              label: "Flairs", // audioprn: post flairs
               getNode: isSelected => (
                 <div
                   className={classNames("tab-pane", {
@@ -471,7 +471,13 @@ export class CommunitySettings extends Component<RouteProps, State> {
     return (
       res && (
         <>
-          <h1 className="h4 mb-4">{I18NextService.i18n.t("tags")}</h1>
+          {/* audioprn: post flairs */}
+          <h1 className="h4 mb-1">Flairs</h1>
+          <p className="small text-muted mb-4">
+            The flairs people pick for posts in this cummunity (every post needs
+            one while it has any). The name can't change later; the display name
+            and colour can.
+          </p>
           {res.community_view.tags.map(t => (
             <CommunityTagForm
               key={`community-tag-form-${t.id}`}

@@ -52,13 +52,42 @@ async function react(postId: number, emoji?: string) {
   reactions.set(postId, await res.json());
 }
 
-const AWARDS = [
-  { kind: "goat", emoji: "🐐", label: "Goat" },
-  { kind: "kino", emoji: "🎞️", label: "Kino" },
-  { kind: "dropped_crown", emoji: "👑", label: "Dropped Crown" },
-  { kind: "uwu", emoji: "🥹", label: "Uwu" },
-  { kind: "respect", emoji: "🫡", label: "Respect" },
-];
+/** An award admins made: the built-in ones are emoji, new ones a picture. */
+export interface AwardType {
+  kind: string;
+  name: string;
+  emoji: string | null;
+  image: string | null;
+  /** Can't be given any more; ones already given still show. */
+  hidden: boolean;
+}
+
+let awardTypes: AwardType[] = [];
+let awardTypesLoad: Promise<void> | undefined;
+
+/** The award types, fetched once per page load (or again after an admin changes them). */
+export function loadAwardTypes(reload = false): Promise<void> {
+  if (reload || !awardTypesLoad) {
+    awardTypesLoad = call<{ award_types: AwardType[] }>("GET", "/award_types")
+      .then(res => {
+        awardTypes = res.award_types;
+      })
+      .catch(() => {});
+  }
+  return awardTypesLoad;
+}
+
+export function AwardIcon({ type }: { type: AwardType }) {
+  return type.image ? (
+    <img
+      src={type.image}
+      alt=""
+      style="height: 1.2em; width: auto; vertical-align: -0.2em"
+    />
+  ) : (
+    <>{type.emoji}</>
+  );
+}
 
 // audioprn awards: one per person per post, and it can't be taken back.
 async function award(postId: number, kind: string, label: string) {
@@ -125,6 +154,7 @@ export class PostAwards extends Component<
   componentDidMount() {
     this.unsubscribe = reactions.subscribe(() => this.forceUpdate());
     reactions.request(this.props.postId);
+    loadAwardTypes().then(() => this.forceUpdate());
   }
 
   componentWillUnmount() {
@@ -138,15 +168,17 @@ export class PostAwards extends Component<
     const button = "btn btn-sm btn-light border-light-subtle py-0";
     return (
       <>
-        {AWARDS.filter(a => awards[a.kind]).map(a => (
-          <span
-            className="badge text-bg-light border fw-normal"
-            style="font-size: 1.05em"
-            title={`${a.label} award`}
-          >
-            {a.emoji} {awards[a.kind]}
-          </span>
-        ))}
+        {awardTypes
+          .filter(a => awards[a.kind])
+          .map(a => (
+            <span
+              className="badge text-bg-light border fw-normal"
+              style="font-size: 1.05em"
+              title={`${a.name} award`}
+            >
+              <AwardIcon type={a} /> {awards[a.kind]}
+            </span>
+          ))}
         {myId !== undefined &&
           myId !== this.props.creatorId &&
           !awarded &&
@@ -160,20 +192,22 @@ export class PostAwards extends Component<
             </button>
           )}
         {picking &&
-          AWARDS.map(a => (
-            <button
-              type="button"
-              className={button}
-              onClick={() => {
-                this.setState({ picking: false });
-                award(this.props.postId, a.kind, a.label).catch(e =>
-                  toast(e.message, "danger"),
-                );
-              }}
-            >
-              {a.emoji} {a.label}
-            </button>
-          ))}
+          awardTypes
+            .filter(a => !a.hidden)
+            .map(a => (
+              <button
+                type="button"
+                className={button}
+                onClick={() => {
+                  this.setState({ picking: false });
+                  award(this.props.postId, a.kind, a.name).catch(e =>
+                    toast(e.message, "danger"),
+                  );
+                }}
+              >
+                <AwardIcon type={a} /> {a.name}
+              </button>
+            ))}
         {picking && (
           <button
             type="button"

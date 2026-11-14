@@ -8,6 +8,7 @@ import { GetPosts } from "lemmy-js-client";
 import { WrappedLemmyHttp } from "../services/HttpService";
 import { call } from "./creator-api";
 import { contentFilters } from "./content-filters";
+import { AwardSettings, awardRulesText } from "./awards-admin";
 
 export const MY_FEED = "my";
 /** My audioprn's saved posts (/my/saved). */
@@ -69,7 +70,13 @@ const textTags = (text: string) => text.split(",");
 /** The left column of My audioprn: tag preferences, saved posts and own comments. */
 export class MyFeedPrefs extends Component<
   { onSaved: () => void; saved?: boolean },
-  { prefs?: Prefs; favourite: string; excluded: string; awards?: number }
+  {
+    prefs?: Prefs;
+    favourite: string;
+    excluded: string;
+    awards?: number;
+    awardRules?: string;
+  }
 > {
   private isoData = setIsoData(this.context);
   state = {
@@ -77,19 +84,22 @@ export class MyFeedPrefs extends Component<
     favourite: "",
     excluded: "",
     awards: undefined as number | undefined,
+    awardRules: undefined as string | undefined,
   };
 
   async componentDidMount() {
     if (!this.isoData.myUserInfo) return;
-    const [prefs, awards] = await Promise.all([
+    const [prefs, awards, rules] = await Promise.all([
       call<Prefs>("GET", "/feed_prefs"),
-      call<{ weekly: boolean; monthly: number }>("GET", "/awards"),
+      call<{ awards_left: number }>("GET", "/awards"),
+      call<AwardSettings>("GET", "/award_settings"),
     ]);
     this.setState({
       prefs,
       favourite: tagsText(prefs.favourite_tags),
       excluded: tagsText(prefs.excluded_tags),
-      awards: (awards.weekly ? 1 : 0) + awards.monthly,
+      awards: awards.awards_left,
+      awardRules: awardRulesText(rules),
     });
   }
 
@@ -130,10 +140,7 @@ export class MyFeedPrefs extends Component<
           </p>
         )}
         {this.state.awards !== undefined && (
-          <p
-            className="small"
-            title="One each week you post or comment; creators get 10 more each month after a month with Content posts. Unused awards don't carry over."
-          >
+          <p className="small" title={this.state.awardRules}>
             🏆 Awards to give: {this.state.awards}
           </p>
         )}

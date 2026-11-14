@@ -47,7 +47,7 @@ import RateLimitForm from "./rate-limit-form";
 import { SiteForm } from "./site-form";
 import { TaglineForm } from "./tagline-form";
 import { getHttpBaseInternal } from "../../utils/env";
-import { RouteComponentProps, RouterContext } from "inferno-router";
+import { Link, RouteComponentProps, RouterContext } from "inferno-router";
 import { IRoutePropsWithFetch } from "@utils/routes";
 import { MediaUploads } from "../common/media-uploads";
 import { snapToTop } from "@utils/browser";
@@ -198,6 +198,11 @@ export class AdminSettings extends Component<
     });
     return (
       <div className="admin-settings container">
+        {/* audioprn: the site's own admin pages */}
+        <p className="mb-3">
+          <Link to="/admin/flairs">Flairs</Link> ·{" "}
+          <Link to="/admin/awards">Awards</Link>
+        </p>
         <Tabs
           tabs={[
             {

@@ -3,6 +3,8 @@ import { CreatorApplications } from "../audioprn/creator-applications";
 import { Landing } from "../audioprn/landing";
 import { Creators } from "../audioprn/creators";
 import { ReportPage } from "../audioprn/report-page";
+import { AwardsAdmin } from "../audioprn/awards-admin";
+import { FlairsAdmin } from "../audioprn/flairs-admin";
 import { Guide } from "../audioprn/guides";
 import { RedditImport } from "../audioprn/reddit-import";
 import { MasterlistEditor } from "../audioprn/masterlist";
@@ -159,6 +161,8 @@ export const routes: IRoutePropsWithFetch<
   { path: `/guides/:name`, component: Guide },
   { path: `/reddit_import`, component: RedditImport },
   { path: `/report`, component: ReportPage },
+  { path: `/admin/awards`, component: AwardsAdmin },
+  { path: `/admin/flairs`, component: FlairsAdmin },
   { path: `/masterlist/edit`, component: MasterlistEditor },
   // Before /u/:username, which would match it too.
   { path: `/u/:username/masterlist`, component: MasterlistPage },
