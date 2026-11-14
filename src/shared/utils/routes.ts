@@ -3,6 +3,7 @@ import { CreatorApplications } from "../audioprn/creator-applications";
 import { Landing } from "../audioprn/landing";
 import { Creators } from "../audioprn/creators";
 import { Guide } from "../audioprn/guides";
+import { RedditImport } from "../audioprn/reddit-import";
 import { MY_FEED, MY_SAVED } from "../audioprn/my-feed";
 import {
   Communities,
@@ -153,6 +154,7 @@ export const routes: IRoutePropsWithFetch<
   { path: `/`, component: Landing, exact: true },
   { path: `/creators`, component: Creators },
   { path: `/guides/:name`, component: Guide },
+  { path: `/reddit_import`, component: RedditImport },
   {
     path: `/content`,
     component: Home,

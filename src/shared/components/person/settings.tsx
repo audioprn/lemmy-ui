@@ -979,6 +979,10 @@ export class Settings extends Component<SettingsRouteProps, SettingsState> {
             </div>
             {/* audioprn: the creator's footer under each of their posts */}
             <CreatorFooterSettings />
+            {/* audioprn: bring posts over from Reddit */}
+            <p>
+              <a href="/reddit_import">Import your posts from Reddit</a>
+            </p>
           </>
         </CreatorOnly>
         <div className="row mb-3">
