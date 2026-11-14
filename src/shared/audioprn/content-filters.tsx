@@ -15,7 +15,7 @@ const FILTERS = [
   { name: "no_taboo", label: "No Taboo" },
   { name: "no_rape", label: "No Rape" },
   { name: "no_incest", label: "No Incest" },
-  { name: "sfw", label: "Show SFW" }, // only posts tagged [SFW]
+  { name: "sfw", label: "Show SFW" }, // posts tagged [SFW] are hidden unless ticked
   { name: "scripts", label: "Scripts Only" },
   { name: "audios", label: "Audios Only" },
 ];
