@@ -1,6 +1,8 @@
-// audioprn: news flashes. Site news (admins) at the top of the Content and My audioprn left
-// column; community news (the community's mods) on community pages, which admins can also show
-// in the site news. Up to 300 characters, every link counts as 23 and shows shortened.
+// audioprn: news flashes. Site news (admins) at the top of the Content left column; community news
+// (the community's mods) on community pages, which admins can also show in the site news; a
+// creator's own news on their profile. My audioprn shows the site news plus news from followed
+// creators and joined communities. Up to 300 characters, every link counts as 23 and shows
+// shortened. Whoever can post sees Bluesky and X links to share a flash there too.
 import { amAdmin } from "@utils/roles";
 import { setIsoData, toast } from "@utils/app";
 import { relTags } from "@utils/config";
@@ -14,6 +16,8 @@ interface NewsFlash {
   community_id: number | null;
   in_main: boolean;
   community_title: string | null;
+  person_id: number | null;
+  creator_name: string | null;
 }
 
 const MAX_LENGTH = 300;
@@ -49,30 +53,51 @@ function NewsBody({ body }: { body: string }) {
   );
 }
 
+/** Without any of these: the site news. */
 interface Props {
-  /** A community page's news (its mods post it); without it, the site news. */
+  /** A community page's news (its mods post it). */
   communityId?: number;
+  /** A creator's own news, on their profile. */
+  personId?: number;
+  /** My audioprn: site news plus followed creators' and joined communities' news. */
+  my?: boolean;
 }
+
+const shareLinks = (body: string) => [
+  [
+    "Post to Bluesky",
+    `https://bsky.app/intent/compose?text=${encodeURIComponent(body)}`,
+  ],
+  ["Post to X", `https://x.com/intent/post?text=${encodeURIComponent(body)}`],
+];
 
 export class NewsFeed extends Component<
   Props,
-  { news: NewsFlash[]; draft: string }
+  { news: NewsFlash[]; draft: string; canPostOwn: boolean }
 > {
   private isoData = setIsoData(this.context);
-  state = { news: [] as NewsFlash[], draft: "" };
+  state = { news: [] as NewsFlash[], draft: "", canPostOwn: false };
 
   async componentDidMount() {
-    const { communityId } = this.props;
-    const res = await call<{ news: NewsFlash[] }>(
+    const { communityId, personId, my } = this.props;
+    const res = await call<{ news: NewsFlash[]; can_post: boolean }>(
       "GET",
-      communityId ? `/news?community_id=${communityId}` : "/news",
-    ).catch(() => ({ news: [] }));
-    this.setState({ news: res.news });
+      communityId
+        ? `/news?community_id=${communityId}`
+        : personId
+          ? `/news?person_id=${personId}`
+          : `/news${my ? "?my=true" : ""}`,
+    ).catch(() => ({ news: [], can_post: false }));
+    this.setState({ news: res.news, canPostOwn: res.can_post });
   }
 
-  /** Admins post site news and manage all news; a community's mods its community news. */
+  /**
+   * Admins post site news and manage all news; a community's mods its community news; creators
+   * their own news.
+   */
   get canPost() {
-    const { communityId } = this.props;
+    const { communityId, personId } = this.props;
+    if (personId) return this.state.canPostOwn;
     const mui = this.isoData.myUserInfo;
     return (
       amAdmin(mui) ||
@@ -87,6 +112,7 @@ export class NewsFeed extends Component<
       const flash = await call<NewsFlash>("POST", "/news", {
         body: this.state.draft,
         community_id: this.props.communityId,
+        mine: !!this.props.personId,
       });
       this.setState({ news: [flash, ...this.state.news], draft: "" });
     } catch (e) {
@@ -119,7 +145,12 @@ export class NewsFeed extends Component<
     return (
       <section className="card card-body mb-3 p-2">
         <h2 className="h6 mb-2">
-          📣 {this.props.communityId ? "Cummunity news" : "News"}
+          📣{" "}
+          {this.props.communityId
+            ? "Cummunity news"
+            : this.props.personId
+              ? "Creator news"
+              : "News"}
         </h2>
         {canPost && (
           <form className="mb-2" onSubmit={e => this.post(e)}>
@@ -149,9 +180,13 @@ export class NewsFeed extends Component<
         )}
         {news.map(n => (
           <div className="small border-top pt-1 mt-1">
-            {!this.props.communityId && n.community_title && (
-              <div className="text-muted">{n.community_title}:</div>
-            )}
+            {!this.props.communityId &&
+              !this.props.personId &&
+              (n.community_title ?? n.creator_name) && (
+                <div className="text-muted">
+                  {n.community_title ?? n.creator_name}:
+                </div>
+              )}
             <NewsBody body={n.body} />
             <div className="text-muted">
               {new Date(n.published_at).toLocaleDateString(undefined, {
@@ -166,6 +201,12 @@ export class NewsFeed extends Component<
                   Delete
                 </button>
               )}
+              {canPost &&
+                shareLinks(n.body).map(([site, href]) => (
+                  <a className="ms-2" href={href} rel={relTags}>
+                    {site}
+                  </a>
+                ))}
             </div>
             {admin && n.community_id && (
               <div className="form-check">

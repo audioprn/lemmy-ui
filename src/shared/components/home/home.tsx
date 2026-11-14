@@ -481,8 +481,12 @@ export class Home extends Component<HomeRouteProps, HomeState> {
           <div className="row">
             {/* audioprn: search and content filters on the left */}
             <aside className="col-12 col-md-3">
-              {/* audioprn: news, then filters or My audioprn, then the guides */}
-              <NewsFeed />
+              {/* audioprn: news (My audioprn: plus followed creators' and cummunities'), then
+                  filters or My audioprn, then the guides */}
+              <NewsFeed
+                key={this.props.filters === MY_FEED ? "my" : "site"}
+                my={this.props.filters === MY_FEED}
+              />
               {this.props.filters === MY_FEED ||
               this.props.filters === MY_SAVED ? (
                 <MyFeedPrefs

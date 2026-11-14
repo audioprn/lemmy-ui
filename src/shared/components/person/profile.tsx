@@ -114,6 +114,7 @@ import {
 import { CreatorPageActions, CreditedOn } from "../../audioprn/creators";
 import { CreatorPin, CreatorStats } from "../../audioprn/creator-page";
 import { MyBlocks } from "../../audioprn/blocks";
+import { NewsFeed } from "../../audioprn/news-feed";
 import { withPagePins } from "../../audioprn/page-pins";
 import { PersonDetails } from "./person-details";
 import { PersonListing } from "./person-listing";
@@ -813,6 +814,11 @@ export class Profile extends Component<ProfileRouteProps, ProfileState> {
             </div>
 
             <div className="col-12 col-md-4">
+              {/* audioprn: the creator's own news */}
+              <NewsFeed
+                key={personRes.person_view.person.id}
+                personId={personRes.person_view.person.id}
+              />
               {/* audioprn: the creator's own stats, only for them */}
               {this.amCurrentUser && <CreatorStats />}
               {/* audioprn: who you blocked and who blocked you, only for you */}
