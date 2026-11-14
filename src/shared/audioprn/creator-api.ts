@@ -63,6 +63,9 @@ const ERROR_MESSAGES: Record<string, string> = {
     "You have no awards left. You get one each week you post or comment.",
   cant_award_post: "You can't award your own post, or one you already awarded.",
   invalid_draft: "This draft is too long to save.",
+  invalid_masterlist:
+    "Check the masterlist: names, tags and categories up to 60 characters, a title on every audio, valid links.",
+  too_many_masterlist_entries: "A masterlist can have up to 5,000 audios.",
   already_imported: "Already imported.",
   import_limit: "You can import up to 500 posts a day. Try the rest tomorrow.",
   invalid_reddit_import: "This post's Reddit id or date isn't valid.",

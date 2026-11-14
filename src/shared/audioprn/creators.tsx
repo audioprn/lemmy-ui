@@ -286,6 +286,12 @@ export class CreatorPageActions extends Component<
               Post on my page
             </Link>
           )}
+          <Link
+            className={`${classes} btn-light border-light-subtle`}
+            to="/masterlist/edit"
+          >
+            Edit my masterlist
+          </Link>
         </>
       );
     }
