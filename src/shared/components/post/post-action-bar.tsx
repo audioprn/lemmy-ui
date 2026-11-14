@@ -135,6 +135,29 @@ export function PostActionBar(props: PostActionBarProps, context: object) {
           />
         </div>
       )}
+      {/* audioprn: Edit and Delete in plain sight for the post's creator */}
+      {postView.creator.id === myUserInfo?.local_user_view.person.id && (
+        <div className="col">
+          <button
+            type="button"
+            className="btn btn-sm btn-light border-light-subtle py-0 me-2"
+            onClick={props.onEditClick}
+          >
+            ✏️ Edit
+          </button>
+          <button
+            type="button"
+            className="btn btn-sm btn-light border-light-subtle py-0"
+            onClick={() =>
+              (postView.post.deleted ||
+                confirm("Delete this post? You can restore it later.")) &&
+              handleDeletePost(props)
+            }
+          >
+            {postView.post.deleted ? "↩ Restore" : "🗑 Delete"}
+          </button>
+        </div>
+      )}
       <div className="col">
         <PostActionDropdown
           postView={postView}
