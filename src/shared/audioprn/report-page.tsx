@@ -84,7 +84,7 @@ export class ReportPage extends Component<WithHead, State> {
         <h2 className="h6">From the post, comment or creator</h2>
         <ul>
           <li>
-            <strong>A post or comment:</strong> open the <strong>⋮</strong> menu
+            <strong>A post or comment:</strong> click <strong>More</strong>{" "}
             under it and choose <strong>Create report</strong>.
           </li>
           <li>

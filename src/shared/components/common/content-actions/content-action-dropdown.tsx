@@ -246,7 +246,8 @@ export default class ContentActionDropdown extends Component<
             aria-label={I18NextService.i18n.t("more")}
             onClick={() => handleDropdownToggleClick(this)}
           >
-            <Icon icon="more-vertical" inline />
+            {/* audioprn: a word instead of ⋮, which wasn't clear */}
+            More
           </button>
 
           <ul className="dropdown-menu" id={dropdownId}>

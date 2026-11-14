@@ -318,9 +318,10 @@ export class CreatorPageActions extends Component<
           {creator.following ? "Following" : "Follow"}
         </button>
         {loggedIn && (
+          // Last in the profile's button row, after Send message and Block user.
           <button
             type="button"
-            className={`${classes} btn-light border-light-subtle`}
+            className={`${classes} btn-light border-light-subtle order-last`}
             onClick={() => this.report(creator)}
           >
             Report creator
