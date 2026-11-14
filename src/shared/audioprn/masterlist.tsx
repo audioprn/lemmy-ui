@@ -50,21 +50,48 @@ const aliasMatches = (alias: string, tag: string) =>
     `^${alias.toLowerCase().split("*").map(escapeRegex).join(".*")}$`,
   ).test(tag.toLowerCase());
 
+/** Minutes in a length like "1:02:03", "16:10" or "85 minutes"; undefined if it isn't one. */
+export function lengthMinutes(text: string): number | undefined {
+  const clock = /^(?:(\d+):)?(\d{1,2}):(\d{2})$/.exec(text.trim());
+  if (clock) {
+    return (
+      Number(clock[1] ?? 0) * 60 + Number(clock[2]) + Number(clock[3]) / 60
+    );
+  }
+  const minutes = /^(\d+)\s*(?:m|mins?|minutes?)$/i.exec(text.trim());
+  return minutes ? Number(minutes[1]) : undefined;
+}
+
+/** A category tag like ">40min" or "<15min" is a rule on the audio's length. */
+const LENGTH_RULE = /^([<>])\s*(\d+)\s*min$/i;
+
+function aliasApplies(alias: string, tags: string[], minutes?: number) {
+  const rule = LENGTH_RULE.exec(alias.trim());
+  if (rule) {
+    return (
+      minutes !== undefined &&
+      (rule[1] === ">" ? minutes > Number(rule[2]) : minutes < Number(rule[2]))
+    );
+  }
+  return tags.some(tag => aliasMatches(alias, tag));
+}
+
 /**
- * An audio's categories: those whose name or an alias matches one of its tags, plus the
- * categories they add along with them. In the creator's category order.
+ * An audio's categories: those whose name or an alias matches one of its tags (or whose length
+ * rule fits it), plus the categories they add along with them. In the creator's category order.
  */
 export function entryCategories(
   tags: string[],
   categories: MasterlistCategory[],
   chosen?: string[] | null,
+  minutes?: number,
 ): string[] {
   if (chosen) return chosen;
   const found = new Set(
     categories
       .filter(c =>
         [c.name, ...c.aliases].some(alias =>
-          tags.some(tag => aliasMatches(alias, tag)),
+          aliasApplies(alias, tags, minutes),
         ),
       )
       .map(c => c.name),
@@ -283,7 +310,8 @@ export class MasterlistEditor extends Component<Props, EditorState> {
           category&apos;s name or one of its tags (any capitals; <code>*</code>{" "}
           matches any text, e.g. <code>* blowjob</code>). &ldquo;Also
           adds&rdquo; puts it in other categories too (e.g. Deepthroat also adds
-          Blowjob).
+          Blowjob). A tag like <code>{">40min"}</code> or{" "}
+          <code>{"<15min"}</code> picks audios by length.
         </p>
         {categoryDrafts.map((d, i) => (
           <div className="row g-2 mb-2 align-items-start">
@@ -393,7 +421,12 @@ export class MasterlistEditor extends Component<Props, EditorState> {
             <li className="list-group-item d-flex flex-wrap align-items-center gap-2">
               <span className="me-1">
                 {this.categoryIcons(
-                  entryCategories(e.tags, categories, e.categories),
+                  entryCategories(
+                    e.tags,
+                    categories,
+                    e.categories,
+                    lengthMinutes(e.duration),
+                  ),
                 )}
               </span>
               <strong>{e.title}</strong>
@@ -430,7 +463,12 @@ export class MasterlistEditor extends Component<Props, EditorState> {
     const { categories } = this.state;
     const set = (change: Partial<EntryDraft>) =>
       this.setState({ entry: { ...d, ...change } });
-    const auto = entryCategories(splitList(d.tags, ","), categories);
+    const auto = entryCategories(
+      splitList(d.tags, ","),
+      categories,
+      null,
+      lengthMinutes(d.duration),
+    );
     const field = (
       key: "title" | "duration" | "writer" | "credits",
       label: string,

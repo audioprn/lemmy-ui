@@ -13,6 +13,7 @@ import { AccessibilityOptions } from "./accessibility";
 import { call } from "./creator-api";
 import {
   entryCategories,
+  lengthMinutes,
   MasterlistCategory,
   MasterlistEntry,
 } from "./masterlist";
@@ -111,17 +112,19 @@ function fromPost(p: MasterlistPost, cats: MasterlistCategory[]): Item {
     .replace(/\s{2,}/g, " ")
     .trim();
   const description = plainText(p.body);
+  // A tag like [16:10], [1:02:03] or [85 Minutes].
+  const duration = p.tags.find(t => lengthMinutes(t) !== undefined) ?? "";
   return {
     key: `p${p.id}`,
     postId: p.id,
     title: title || p.name,
     description,
     date: p.published_at.slice(0, 10),
-    duration: p.tags.find(t => /^\d{1,2}:\d{2}(:\d{2})?$/.test(t)) ?? "",
+    duration: duration.toLowerCase(),
     writer: writer.replace(/^u\//, ""),
     writerLink: writer.startsWith("u/") ? `/u/${writer.slice(2)}` : undefined,
     credits: others,
-    categories: entryCategories(p.tags, cats),
+    categories: entryCategories(p.tags, cats, null, lengthMinutes(duration)),
     links: p.url ? [{ label: siteName(p.url), url: p.url }] : [],
     sites: [THIS_SITE],
     paywalled: false,
@@ -140,7 +143,12 @@ function fromEntry(e: MasterlistEntry, cats: MasterlistCategory[]): Item {
     writer: e.writer,
     writerLink: e.writer_link ?? undefined,
     credits: e.credits,
-    categories: entryCategories(e.tags, cats, e.categories),
+    categories: entryCategories(
+      e.tags,
+      cats,
+      e.categories,
+      lengthMinutes(e.duration),
+    ),
     links: [
       ...e.links.map(url => ({ label: siteName(url), url })),
       ...(e.script_link ? [{ label: "Script", url: e.script_link }] : []),
@@ -544,7 +552,14 @@ export class MasterlistPage extends Component<Props, State> {
             )}
           </h2>
           <div className="small text-muted">
-            {[formatDate(item.date), item.duration && `${item.duration} min`]
+            {[
+              formatDate(item.date),
+              // "16:10 min", but "85 minutes" as it is
+              item.duration &&
+                (/^[\d:]+$/.test(item.duration)
+                  ? `${item.duration} min`
+                  : item.duration),
+            ]
               .filter(Boolean)
               .join(" · ")}
             {item.paywalled && (
