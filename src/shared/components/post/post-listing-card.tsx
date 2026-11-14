@@ -40,6 +40,7 @@ import {
   UrlLine,
   TorrentHelp,
   PostBadges,
+  withoutLinks, // audioprn
 } from "./common";
 import { CrossPosts } from "./cross-posts";
 import { PostActionBar } from "./post-action-bar";
@@ -278,16 +279,17 @@ function Body({ viewSource, body, showBody }: BodyProps) {
     "card card-body": showBody === "full",
   });
 
+  // audioprn: links in feed previews are plain text; they open from the post itself.
+  const html = mdToHtml(body, () => {});
+  const shown = showBody === "full" ? html : withoutLinks(html);
+
   return (
     <article className={classes}>
       {viewSource ? (
         <pre>{body}</pre>
       ) : (
         <div className={innerClasses}>
-          <div
-            className="md-div"
-            dangerouslySetInnerHTML={mdToHtml(body, () => {})}
-          />
+          <div className="md-div" dangerouslySetInnerHTML={shown} />
         </div>
       )}
     </article>

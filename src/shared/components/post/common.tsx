@@ -239,10 +239,19 @@ function PostLink({ post }: PostLinkProps) {
     >
       <span
         className="d-inline"
-        dangerouslySetInnerHTML={mdToHtmlInline(post.name)}
+        dangerouslySetInnerHTML={withoutLinks(mdToHtmlInline(post.name))}
       />
     </Link>
   );
+}
+
+/** audioprn: links as plain text, for feeds (a post's links only open from the post itself). */
+export function withoutLinks(html: { __html: string }) {
+  return {
+    __html: html.__html
+      .replace(/<a\b[^>]*>/g, "<span>")
+      .replace(/<\/a>/g, "</span>"),
+  };
 }
 
 type UrlLineProps = {

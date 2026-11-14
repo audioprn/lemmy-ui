@@ -643,15 +643,17 @@ export class MasterlistPage extends Component<Props, State> {
                   Open post
                 </Link>
               )}
-              {item.links.map(l => (
-                <a
-                  className="btn btn-sm btn-primary"
-                  href={l.url}
-                  rel={relTags}
-                >
-                  {l.label === "Script" ? "Script" : `Listen on ${l.label}`}
-                </a>
-              ))}
+              {/* A post's links only open from the post itself. */}
+              {!item.postId &&
+                item.links.map(l => (
+                  <a
+                    className="btn btn-sm btn-primary"
+                    href={l.url}
+                    rel={relTags}
+                  >
+                    {l.label === "Script" ? "Script" : `Listen on ${l.label}`}
+                  </a>
+                ))}
             </div>
           </div>
         </div>
@@ -781,15 +783,16 @@ export class MasterlistPage extends Component<Props, State> {
                 Open post
               </Link>
             )}
-            {item.links.map(l => (
-              <a
-                className="btn btn-sm btn-light border-light-subtle py-0"
-                href={l.url}
-                rel={relTags}
-              >
-                {l.label}
-              </a>
-            ))}
+            {!item.postId &&
+              item.links.map(l => (
+                <a
+                  className="btn btn-sm btn-light border-light-subtle py-0"
+                  href={l.url}
+                  rel={relTags}
+                >
+                  {l.label}
+                </a>
+              ))}
           </div>
         </div>
       </div>

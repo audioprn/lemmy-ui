@@ -19,6 +19,25 @@ export function PostThumbnail({ postView, hideImage, myUserInfo }: Props) {
   const thumbnail = post.thumbnail_url;
   const hideImages_ = hideImage || !showMedia(myUserInfo);
 
+  // audioprn: a post's link only opens from the post itself, so the tile opens the post.
+  if (url) {
+    return (
+      <Link
+        className="text-body d-none d-md-block"
+        to={`/post/${post.id}`}
+        title="Open post"
+      >
+        <div className="thumbnail rounded bg-light d-flex justify-content-center">
+          <Icon
+            icon="external-link"
+            small
+            classes="d-flex align-items-center"
+          />
+        </div>
+      </Link>
+    );
+  }
+
   if (
     !hideImages_ &&
     url &&
