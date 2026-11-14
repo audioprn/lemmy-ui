@@ -19,6 +19,7 @@ import { Locale, setDefaultOptions } from "date-fns";
 import { i18n } from "i18next";
 import { setupEmojiDataModel } from "@utils/markdown";
 import { applyAccessibility } from "../../audioprn/accessibility";
+import { openExternalLinksInNewTab } from "../../audioprn/external-links";
 import { RouteComponentProps } from "inferno-router";
 
 function handleJumpToContent(
@@ -51,6 +52,7 @@ export default class App extends Component<AppProps, object> {
 
   async componentDidMount() {
     applyAccessibility(); // audioprn: text size and font chosen by the reader
+    openExternalLinksInNewTab(() => window.isoData); // audioprn
     setupTippy(this.rootRef);
     await setupEmojiDataModel();
   }
