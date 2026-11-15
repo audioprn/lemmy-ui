@@ -16,7 +16,6 @@ import { Icon } from "../common/icon";
 import { PersonListing } from "../person/person-listing";
 import { tippyMixin } from "../mixins/tippy-mixin";
 import {
-  CreateCommunityButton,
   CreateMultiCommunityButton,
   CreatePostButton,
 } from "@components/common/content-actions/create-item-buttons";
@@ -107,7 +106,7 @@ export class SiteSidebar extends Component<SiteSidebarProps, SiteSidebarState> {
 
     return (
       <div className="d-flex flex-column gap-2">
-        {site.summary && <h6>{site.summary}</h6>}
+        {/* audioprn: no site description here (it stays in the tab title and link previews) */}
         {site.sidebar && (
           <div
             className="md-div"
@@ -116,13 +115,8 @@ export class SiteSidebar extends Component<SiteSidebarProps, SiteSidebarState> {
             )}
           />
         )}
-        {/* audioprn: no language labels (English only) */}
+        {/* audioprn: no language labels (English only), no Create cummunity button */}
         <CreatePostButton myUserInfo={myUserInfo} />
-        <CreateCommunityButton
-          localSite={this.props.localSite}
-          myUserInfo={myUserInfo}
-          blockButton
-        />
         <CreateMultiCommunityButton myUserInfo={myUserInfo} blockButton />
         <Link
           className="btn btn-light border-light-subtle d-block w-100"
