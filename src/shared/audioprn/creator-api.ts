@@ -51,7 +51,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   too_many_feed_tags: "Use at most 10 favourite tags.",
   invalid_feed_tag: "Tags can be up to 40 characters, without [ ] inside.",
   invalid_creator_footer:
-    "The footer can have up to 500 characters and 10 links.",
+    "The post footer and the cash box can have up to 500 characters each.",
   invalid_news_flash: "News flashes can be up to 300 characters.",
   invalid_taboo_tags: "Taboo tags can be up to 40 characters each.",
   invalid_poll: "A poll needs a question, 2-6 options and a future end date.",

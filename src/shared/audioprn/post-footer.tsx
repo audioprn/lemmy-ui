@@ -1,18 +1,15 @@
 // audioprn: a creator's optional footer under each of their posts (on the post page): a
-// disclaimer/blurb and social links (Patreon, Throne, Bluesky…). Creators set it in Settings.
+// disclaimer/blurb. Creators set it in Settings, next to their cash box (support links).
 import { setIsoData, toast } from "@utils/app";
 import { masonryUpdate } from "@utils/browser";
-import { relTags } from "@utils/config";
 import { mdToHtml } from "@utils/markdown";
 import { Component } from "inferno";
 import { batchLoader } from "./batch-loader";
 import { call } from "./creator-api";
-import { shortLink } from "./news-feed";
 
 interface Footer {
   person_id: number;
   blurb: string;
-  links: string[];
   support: string;
 }
 
@@ -40,22 +37,14 @@ export class PostFooter extends Component<{ creatorId: number }, object> {
   }
 
   render() {
-    const footer = footers.get(this.props.creatorId);
-    if (!footer?.blurb && !footer?.links.length) return null;
+    const blurb = footers.get(this.props.creatorId)?.blurb;
+    if (!blurb) return null;
     return (
-      <div className="border-top small text-muted pt-2 my-2">
-        {footer.blurb && (
-          <div style="white-space: pre-line">{footer.blurb}</div>
-        )}
-        {footer.links.length > 0 && (
-          <div className="d-flex flex-wrap gap-3 mt-1">
-            {footer.links.map(link => (
-              <a href={link} rel={relTags} title={link}>
-                {shortLink(link)}
-              </a>
-            ))}
-          </div>
-        )}
+      <div
+        className="border-top small text-muted pt-2 my-2"
+        style="white-space: pre-line"
+      >
+        {blurb}
       </div>
     );
   }
@@ -81,14 +70,14 @@ export class CashBox extends PostFooter {
   }
 }
 
-/** Settings: the creator's footer (blurb up to 500 characters, up to 10 links, one per line)
- * and cash box (up to 500 characters of markdown). */
+/** Settings: the creator's footer (blurb up to 500 characters) and cash box (up to 500
+ * characters of markdown). */
 export class CreatorFooterSettings extends Component<
   object,
-  { blurb: string; links: string; support: string }
+  { blurb: string; support: string }
 > {
   private isoData = setIsoData(this.context);
-  state = { blurb: "", links: "", support: "" };
+  state = { blurb: "", support: "" };
 
   async componentDidMount() {
     // The settings cards are laid out before this section appears: lay them out again.
@@ -97,11 +86,7 @@ export class CreatorFooterSettings extends Component<
     if (!me) return;
     const [footer] = (await getFooters([me])).footers;
     if (footer) {
-      this.setState({
-        blurb: footer.blurb,
-        links: footer.links.join("\n"),
-        support: footer.support,
-      });
+      this.setState({ blurb: footer.blurb, support: footer.support });
     }
   }
 
@@ -109,14 +94,11 @@ export class CreatorFooterSettings extends Component<
     try {
       const footer = await call<Footer>("PUT", "/creator_footer", {
         blurb: this.state.blurb,
-        links: this.state.links.split("\n"),
+        // The cash box replaced the footer's social links.
+        links: [],
         support: this.state.support,
       });
-      this.setState({
-        blurb: footer.blurb,
-        links: footer.links.join("\n"),
-        support: footer.support,
-      });
+      this.setState({ blurb: footer.blurb, support: footer.support });
       footers.set(footer.person_id, footer);
       toast("Post footer and cash box saved.");
     } catch (e) {
@@ -142,16 +124,6 @@ export class CreatorFooterSettings extends Component<
             placeholder="Disclaimer or a few words about you"
             value={this.state.blurb}
             onInput={e => this.setState({ blurb: e.target.value })}
-          />
-          <textarea
-            className="form-control mb-2"
-            rows={3}
-            aria-label="Social links, one per line"
-            placeholder={
-              "Social links, one per line (up to 10)\nhttps://patreon.com/…"
-            }
-            value={this.state.links}
-            onInput={e => this.setState({ links: e.target.value })}
           />
           <label className="small text-muted mb-1" htmlFor="creator-cash-box">
             Cash box: a pale green box inside your Content posts, at the bottom:
