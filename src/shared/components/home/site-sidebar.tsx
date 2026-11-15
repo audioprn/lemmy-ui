@@ -15,7 +15,6 @@ import { BannerIconHeader } from "../common/banner-icon-header";
 import { Icon } from "../common/icon";
 import { PersonListing } from "../person/person-listing";
 import { tippyMixin } from "../mixins/tippy-mixin";
-import { LanguageList } from "@components/common/language-list";
 import {
   CreateCommunityButton,
   CreateMultiCommunityButton,
@@ -117,10 +116,7 @@ export class SiteSidebar extends Component<SiteSidebarProps, SiteSidebarState> {
             )}
           />
         )}
-        <LanguageList
-          allLanguages={this.props.allLanguages}
-          languageIds={this.props.siteLanguages}
-        />
+        {/* audioprn: no language labels (English only) */}
         <CreatePostButton myUserInfo={myUserInfo} />
         <CreateCommunityButton
           localSite={this.props.localSite}

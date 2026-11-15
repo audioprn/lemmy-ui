@@ -26,7 +26,6 @@ import { PersonListing } from "../person/person-listing";
 import { tippyMixin } from "../mixins/tippy-mixin";
 import CommunityReportModal from "@components/common/modal/community-report-modal";
 import { CommunityNotificationsDropdown } from "@components/common/notifications-dropdown";
-import { LanguageList } from "@components/common/language-list";
 import { canViewCommunity, reportToast } from "@utils/app";
 import { CreatePostButton } from "@components/common/content-actions/create-item-buttons";
 import ModActionFormModal from "@components/common/modal/mod-action-form-modal";
@@ -286,10 +285,7 @@ export class CommunitySidebar extends Component<SidebarProps, SidebarState> {
                     </p>
                   </div>
                 )}
-                <LanguageList
-                  allLanguages={this.props.allLanguages}
-                  languageIds={this.props.siteLanguages}
-                />
+                {/* audioprn: no language labels (English only) */}
                 {SHOW_COMMUNITIES && (
                   <CommunityBadges community={communityView.community} />
                 )}
