@@ -125,7 +125,7 @@ export class Navbar extends Component<NavbarProps, NavbarState> {
             id="navTitle"
             to="/"
             title={siteView?.site.summary ?? siteView?.site.name}
-            className="d-flex align-items-center navbar-brand me-md-3"
+            className="d-flex align-items-center navbar-brand me-md-3 fs-6"
             onMouseUp={() => handleCollapseClick(this)}
           >
             {siteView?.site.icon &&
@@ -227,7 +227,8 @@ export class Navbar extends Component<NavbarProps, NavbarState> {
             id="navbarDropdown"
             ref={this.mobileMenuRef}
           >
-            <ul id="navbarLinks" className="me-auto navbar-nav">
+            {/* audioprn: smaller title (fs-6 above), links on the right next to the icons */}
+            <ul id="navbarLinks" className="ms-auto navbar-nav">
               <li className="nav-item">
                 <NavLink
                   to="/content"
