@@ -37,38 +37,52 @@ const SORTS = {
 };
 type Sort = keyof typeof SORTS;
 
-function sorted(creators: Creator[], sort: Sort): Creator[] {
-  const name = (c: Creator) => (c.display_name ?? c.name).toLowerCase();
-  if (sort === "alpha") {
-    return [...creators].sort((a, b) => name(a).localeCompare(name(b)));
-  }
-  if (sort === "random") {
-    return creators
-      .map(c => ({ c, r: Math.random() }))
-      .sort((a, b) => a.r - b.r)
-      .map(({ c }) => c);
-  }
-  // ISO dates sort as text; never posted goes last.
-  return [...creators].sort((a, b) =>
-    (b.last_post_at ?? "").localeCompare(a.last_post_at ?? ""),
-  );
-}
+/** The server sorts and sends 50 at a time (there can be thousands of creators). */
+const PAGE_SIZE = 50;
 
 interface CreatorsState {
   creators?: Creator[];
   sort: Sort;
+  page: number;
+  more: boolean;
+  loading: boolean;
 }
 
 export class Creators extends Component<WithHead, CreatorsState> {
   private isoData = setIsoData(this.context);
-  state: CreatorsState = { sort: "recent" };
+  // The same seed keeps Random's order across pages.
+  private seed = String(Math.random());
+  state: CreatorsState = {
+    sort: "recent",
+    page: 1,
+    more: false,
+    loading: false,
+  };
 
-  async componentDidMount() {
-    const creators = await listCreators().catch(e => {
-      toast(e.message, "danger");
-      return [];
+  componentDidMount() {
+    this.load("recent", 1);
+  }
+
+  async load(sort: Sort, page: number) {
+    this.setState({ loading: true });
+    const next = await call<{ creators: Creator[] }>(
+      "GET",
+      `/creators?sort=${sort}&page=${page}&seed=${this.seed}`,
+    )
+      .then(r => r.creators)
+      .catch(e => {
+        toast(e.message, "danger");
+        return [];
+      });
+    if (sort !== this.state.sort) {
+      return; // Another sort was picked meanwhile.
+    }
+    this.setState({
+      creators: page === 1 ? next : [...(this.state.creators ?? []), ...next],
+      page,
+      more: next.length === PAGE_SIZE,
+      loading: false,
     });
-    this.setState({ creators });
   }
 
   render() {
@@ -77,7 +91,7 @@ export class Creators extends Component<WithHead, CreatorsState> {
       title: `Creators - ${this.isoData.siteRes?.site_view.site.name ?? ""}`,
       context: this.context as RouterContext,
     });
-    const { creators, sort } = this.state;
+    const { creators, sort, page, more, loading } = this.state;
     return (
       <div className="container-lg">
         <h1 className="h4 mb-3">Creators</h1>
@@ -87,12 +101,10 @@ export class Creators extends Component<WithHead, CreatorsState> {
               type="button"
               className={`btn btn-sm ${s === sort ? "btn-secondary" : "btn-outline-secondary"}`}
               aria-pressed={s === sort}
-              onClick={() =>
-                this.setState({
-                  sort: s,
-                  creators: creators && sorted(creators, s),
-                })
-              }
+              onClick={() => {
+                this.setState({ sort: s, creators: undefined });
+                this.load(s, 1);
+              }}
             >
               {SORTS[s]}
             </button>
@@ -129,6 +141,16 @@ export class Creators extends Component<WithHead, CreatorsState> {
               </li>
             ))}
           </ul>
+        )}
+        {creators && more && (
+          <button
+            type="button"
+            className="btn btn-sm btn-outline-secondary"
+            disabled={loading}
+            onClick={() => this.load(sort, page + 1)}
+          >
+            {loading ? <Spinner /> : "Load more"}
+          </button>
         )}
       </div>
     );
