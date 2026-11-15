@@ -409,7 +409,7 @@ export class RedditImport extends Component<Props, State> {
           {/* audioprn: placeholder wording for the multi-voice rule (to be rewritten) */}
           <p className="small text-muted">
             Posts with more than one voice (a gender tag like [FM4M] or [M4F4M],
-            or marked collab) are imported hidden. Unhide them in{" "}
+            or collab in the title) are imported hidden. Unhide them in{" "}
             <Link to="/my/hidden">Hidden posts</Link> once everyone in them has
             agreed to be on audioprn.
           </p>
