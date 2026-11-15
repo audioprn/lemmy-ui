@@ -96,8 +96,7 @@ export class ShareWithCreator extends Component<{ postView: PostView }, State> {
               <div className="card-body">
                 <div className="d-flex align-items-start gap-2 mb-2">
                   <p className="mb-0">
-                    Love this script? Recommend it with up to three creators
-                    here:
+                    Love this script? Recommend it to a creator here!
                   </p>
                   <button
                     type="button"
