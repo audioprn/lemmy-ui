@@ -1,7 +1,6 @@
 import { Icon } from "@components/common/icon";
 import { MomentTime } from "@components/common/moment-time";
 import { UserBadges } from "@components/common/user-badges";
-import { VoteButtons } from "@components/common/vote-buttons";
 import {
   CommunityLink,
   communityName,
@@ -84,17 +83,7 @@ function ExpandedCrossPosts({
 
           return (
             <div className="d-flex col-sm-12 col-md-6 col-lg-4 mb-3">
-              <VoteButtons
-                voteContentType={"post"}
-                id={pv.post.id}
-                subject={pv.post}
-                myVoteIsUpvote={pv.post_actions?.vote_is_upvote}
-                myUserInfo={myUserInfo}
-                community={pv.community}
-                disabled
-                onVote={() => null}
-                loading={false}
-              />
+              {/* audioprn: no vote arrows on posts */}
               <div className="col">
                 <div className="post-title">
                   <h1 className="h5 d-inline text-break">

@@ -5,8 +5,6 @@ import {
   MyUserInfo,
   PostView,
 } from "lemmy-js-client";
-import { VoteButtons } from "@components/common/vote-buttons";
-import { postIsInteractable, userNotLoggedInOrBanned } from "@utils/app";
 import { PostThumbnail } from "./post-thumbnail";
 import { PostCreatedLine, PostName } from "./common";
 import { CrossPosts } from "./cross-posts";
@@ -37,12 +35,9 @@ export function PostListingList({
   allLanguages,
   showCommunity,
   hideImage,
-  viewOnly,
   myUserInfo,
   showCrossPosts,
-  onPostVote,
   onScrollIntoCommentsClick,
-  voteLoading,
   mutePersonName,
   muteCommunityName,
   hideAvatar,
@@ -50,21 +45,7 @@ export function PostListingList({
   return (
     <div>
       <article className="row post-container">
-        {postIsInteractable(postView, viewOnly) && (
-          <div className="col-auto px-0">
-            <VoteButtons
-              voteContentType={"post"}
-              id={postView.post.id}
-              onVote={onPostVote}
-              myUserInfo={myUserInfo}
-              community={postView.community}
-              subject={postView.post}
-              myVoteIsUpvote={postView.post_actions?.vote_is_upvote}
-              disabled={userNotLoggedInOrBanned(myUserInfo)}
-              loading={voteLoading}
-            />
-          </div>
-        )}
+        {/* audioprn: no vote arrows on posts (emoji reactions instead) */}
         <div className="col">
           <PostName post={postView.post} showBody="hidden" />
           <PostCreatedLine

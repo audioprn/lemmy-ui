@@ -1,13 +1,8 @@
 import PostActionDropdown from "@components/common/content-actions/post-action-dropdown";
 import { Icon, Spinner } from "@components/common/icon";
 import { BanUpdateForm } from "@components/common/modal/mod-action-form-modal";
-import { VoteButtonsCompact } from "@components/common/vote-buttons";
 import { I18NextService } from "@services/index";
-import {
-  postIsInteractable,
-  setIsoData,
-  userNotLoggedInOrBanned,
-} from "@utils/app";
+import { setIsoData } from "@utils/app";
 import { share } from "@utils/browser";
 import { futureDaysToUnixTime } from "@utils/date";
 import { httpFrontendUrl } from "@utils/env";
@@ -89,7 +84,6 @@ export function PostActionBar(props: PostActionBarProps, context: object) {
     postView,
     admins,
     showBody,
-    onPostVote,
     onScrollIntoCommentsClick,
     viewOnly,
     viewSource,
@@ -98,9 +92,7 @@ export function PostActionBar(props: PostActionBarProps, context: object) {
     notificationRead,
     onMarkPostAsRead,
     markReadLoading,
-    voteLoading,
   } = props;
-  const { id } = postView.post;
 
   return (
     <div className="row row-cols-auto align-items-center g-3 justify-content-end justify-content-md-start">
@@ -121,21 +113,7 @@ export function PostActionBar(props: PostActionBarProps, context: object) {
           onScrollIntoCommentsClick={onScrollIntoCommentsClick}
         />
       </div>
-      {postIsInteractable(postView, viewOnly) && (
-        <div className="col">
-          <VoteButtonsCompact
-            voteContentType={"post"}
-            id={id}
-            onVote={onPostVote}
-            subject={postView.post}
-            myVoteIsUpvote={postView.post_actions?.vote_is_upvote}
-            myUserInfo={myUserInfo}
-            community={postView.community}
-            disabled={userNotLoggedInOrBanned(myUserInfo)}
-            loading={voteLoading}
-          />
-        </div>
-      )}
+      {/* audioprn: no vote arrows on posts (emoji reactions instead) */}
       {/* audioprn: Edit and Delete in plain sight for the post's creator */}
       {postView.creator.id === myUserInfo?.local_user_view.person.id && (
         <div className="col">
