@@ -136,6 +136,7 @@ import {
   isMyAudioprn,
   MY_FAVOURITES,
   MY_FEED,
+  MY_HIDDEN,
   MY_SAVED,
   MyFeedPrefs,
 } from "../../audioprn/my-feed";
@@ -819,7 +820,9 @@ export class Home extends Component<HomeRouteProps, HomeState> {
             ? "/my/saved"
             : filters === MY_FAVOURITES
               ? "/my/favourites"
-              : "/content",
+              : filters === MY_HIDDEN
+                ? "/my/hidden"
+                : "/content",
       search: getQueryString(queryParams),
     });
   }
@@ -904,7 +907,9 @@ export class Home extends Component<HomeRouteProps, HomeState> {
                   ? "You have no saved posts yet."
                   : this.props.filters === MY_FAVOURITES
                     ? "You have no favourite posts yet."
-                    : undefined
+                    : this.props.filters === MY_HIDDEN
+                      ? "You have no hidden posts."
+                      : undefined
               }
               showCommunity
               multiCommunity={false}

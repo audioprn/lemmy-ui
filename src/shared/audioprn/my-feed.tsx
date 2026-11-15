@@ -9,16 +9,22 @@ import { WrappedLemmyHttp } from "../services/HttpService";
 import { call } from "./creator-api";
 import { contentFilters } from "./content-filters";
 import { AwardSettings, awardRulesText } from "./awards-admin";
+import { CreatorOnly } from "./creator-status";
 
 export const MY_FEED = "my";
 /** My audioprn's saved posts (/my/saved). */
 export const MY_SAVED = "my_saved";
 /** My audioprn's favourite posts (/my/favourites). */
 export const MY_FAVOURITES = "my_favourites";
+/** A creator's hidden posts (/my/hidden): only they see them, and can unhide them there. */
+export const MY_HIDDEN = "my_hidden";
 
-/** My audioprn's lists: its feed, saved posts, favourites. */
+/** My audioprn's lists: its feed, saved posts, favourites, hidden posts. */
 export const isMyAudioprn = (filters?: string) =>
-  filters === MY_FEED || filters === MY_SAVED || filters === MY_FAVOURITES;
+  filters === MY_FEED ||
+  filters === MY_SAVED ||
+  filters === MY_FAVOURITES ||
+  filters === MY_HIDDEN;
 
 /**
  * Posts for the Content page, or for My audioprn: its first page starts with followed creators'
@@ -39,6 +45,9 @@ export async function getFeedPosts(
   }
   if (filters === MY_FAVOURITES) {
     return feed("favourites");
+  }
+  if (filters === MY_HIDDEN) {
+    return feed("hidden");
   }
   if (filters !== MY_FEED) {
     return client.getPosts({ ...form, ...contentFilters(filters) });
@@ -142,6 +151,7 @@ export class MyFeedPrefs extends Component<
           My audioprn
           {this.props.list === MY_SAVED && ": saved posts"}
           {this.props.list === MY_FAVOURITES && ": favourites"}
+          {this.props.list === MY_HIDDEN && ": hidden posts"}
         </h1>
         <p className="small text-muted">
           New posts from creators you follow come first, then posts that match
@@ -217,6 +227,13 @@ export class MyFeedPrefs extends Component<
               <li>
                 <Link to="/my/saved">🔖 Saved posts</Link>
               </li>
+            )}
+            {this.props.list !== MY_HIDDEN && (
+              <CreatorOnly>
+                <li>
+                  <Link to="/my/hidden">🙈 Hidden posts</Link>
+                </li>
+              </CreatorOnly>
             )}
             <li>
               <Link to={`/u/${me}?contentType=comments`}>My comments</Link>

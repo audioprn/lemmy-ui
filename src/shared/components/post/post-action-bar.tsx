@@ -129,11 +129,14 @@ export function PostActionBar(props: PostActionBarProps, context: object) {
             className="btn btn-sm btn-light border-light-subtle py-0"
             onClick={() =>
               (postView.post.deleted ||
-                confirm("Delete this post? You can restore it later.")) &&
+                confirm(
+                  "Hide this post? Only you will see it, under My audioprn → Hidden posts, where you can unhide it.",
+                )) &&
               handleDeletePost(props)
             }
           >
-            {postView.post.deleted ? "↩ Restore" : "🗑 Delete"}
+            {/* audioprn: deleting is hiding (only the creator sees it, in /my/hidden) */}
+            {postView.post.deleted ? "👁 Unhide" : "🙈 Hide"}
           </button>
           {!postView.post.deleted && !postView.post.removed && (
             <PagePinButton

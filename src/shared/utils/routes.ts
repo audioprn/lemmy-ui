@@ -10,7 +10,12 @@ import { Guide } from "../audioprn/guides";
 import { RedditImport } from "../audioprn/reddit-import";
 import { MasterlistEditor } from "../audioprn/masterlist";
 import { MasterlistPage } from "../audioprn/masterlist-page";
-import { MY_FAVOURITES, MY_FEED, MY_SAVED } from "../audioprn/my-feed";
+import {
+  MY_FAVOURITES,
+  MY_FEED,
+  MY_HIDDEN,
+  MY_SAVED,
+} from "../audioprn/my-feed";
 import {
   Communities,
   CommunitiesFetchConfig,
@@ -212,6 +217,18 @@ export const routes: IRoutePropsWithFetch<
       filters: MY_FAVOURITES,
     }),
     mountedSameRouteNavKey: "my_favourites",
+  } as HomeFetchConfig,
+  // audioprn: a creator's hidden posts
+  {
+    path: `/my/hidden`,
+    component: Home,
+    fetchInitialData: Home.fetchInitialData,
+    exact: true,
+    getQueryParams: (source, siteRes, myUserInfo) => ({
+      ...getHomeQueryParams(source, siteRes, myUserInfo),
+      filters: MY_HIDDEN,
+    }),
+    mountedSameRouteNavKey: "my_hidden",
   } as HomeFetchConfig,
   {
     path: `/login`,

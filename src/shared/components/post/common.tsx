@@ -89,13 +89,9 @@ export function PostBadges({ post, tags, allLanguages }: PostBadgesProps) {
           {I18NextService.i18n.t("removed")}
         </small>
       )}
+      {/* audioprn: deleted posts are hidden by their creator */}
       {post.deleted && (
-        <small
-          className="unselectable pointer me-2 text-muted fst-italic"
-          data-tippy-content={I18NextService.i18n.t("deleted")}
-        >
-          <Icon icon="trash" classes="icon-inline text-danger" />
-        </small>
+        <small className="me-2 badge text-bg-light">🙈 Hidden</small>
       )}
       {post.locked && (
         <small
