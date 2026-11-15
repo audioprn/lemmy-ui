@@ -47,7 +47,7 @@ import { PostActionBar } from "./post-action-bar";
 import { PostReactions } from "../../audioprn/post-reactions";
 import { PostPoll } from "../../audioprn/post-poll";
 import { PostTools } from "../../audioprn/post-tools";
-import { PostFooter } from "../../audioprn/post-footer";
+import { CashBox, PostFooter } from "../../audioprn/post-footer";
 import { ScriptBox } from "../../audioprn/post-script";
 import { FillLine } from "../../audioprn/script-fills"; // audioprn
 import { PostThumbnail } from "./post-thumbnail";
@@ -197,6 +197,11 @@ export class PostListingCard extends Component<
                 viewSource={this.state.viewSource}
               />
             )}
+            {/* audioprn: the creator's cash box, inside Content posts at the bottom (post page) */}
+            {p.showBody === "full" &&
+              p.postView.community.name !== "creators" && (
+                <CashBox creatorId={p.postView.creator.id} />
+              )}
           </div>
           {/* audioprn: the script (Script Offer posts) and the creator's footer on the post page */}
           {p.showBody === "full" && <ScriptBox postView={p.postView} />}
