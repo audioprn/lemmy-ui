@@ -363,11 +363,7 @@ export class SiteForm extends Component<SiteFormProps, SiteFormState> {
         <div className="mb-3 row align-items-center">
           {(
             [
-              { kind: "default_post_upvotes", i18nKey: "default_post_upvotes" },
-              {
-                kind: "default_post_downvotes",
-                i18nKey: "default_post_downvotes",
-              },
+              // audioprn: posts get emoji reactions, never votes
               {
                 kind: "default_comment_upvotes",
                 i18nKey: "default_comment_upvotes",

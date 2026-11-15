@@ -39,7 +39,6 @@ import {
   SaveUserSettings,
   SuccessResponse,
   EditTotpResponse,
-  VoteShow,
   InstanceId,
   PersonId,
   CommunityId,
@@ -101,7 +100,6 @@ import BlockingKeywordsTextArea from "@components/common/blocking-keywords-texta
 import { NoOptionI18nKeys } from "i18next";
 import { PostListingModeDropdown } from "@components/common/post-listing-mode-dropdown";
 import { ListingTypeDropdown } from "@components/common/listing-type-dropdown";
-import { VoteShowDropdown } from "@components/common/vote-show-dropdown";
 import { ThemeDropdown } from "@components/common/theme-dropdown";
 import { FilterChipCheckbox } from "@components/common/filter-chip-checkbox";
 import { FilterChipSelect } from "@components/common/filter-chip-select";
@@ -1304,61 +1302,6 @@ export class Settings extends Component<SettingsRouteProps, SettingsState> {
     );
   }
 
-  votingCard() {
-    const myUserInfo = this.isoData.myUserInfo;
-
-    return (
-      <>
-        <h5 className="card-title">{I18NextService.i18n.t("voting")}</h5>
-        <div className="row mb-3 align-items-center">
-          <div className="col">
-            <FilterChipCheckbox
-              option={"show_scores"}
-              isChecked={this.state.saveUserSettingsForm.show_score ?? false}
-              onCheck={val => handleShowScoresChange(this, val, myUserInfo)}
-            />
-          </div>
-        </div>
-        <div className="row mb-3">
-          <div className="col">
-            <FilterChipCheckbox
-              option={"show_upvotes"}
-              isChecked={this.state.saveUserSettingsForm.show_upvotes ?? false}
-              onCheck={val => handleShowUpvotesChange(this, val, myUserInfo)}
-            />
-          </div>
-        </div>
-        <div className="row mb-3">
-          <div className="col">
-            <FilterChipCheckbox
-              option={"show_upvote_percentage"}
-              isChecked={
-                this.state.saveUserSettingsForm.show_upvote_percentage ?? false
-              }
-              onCheck={val =>
-                handleShowUpvotePercentageChange(this, val, myUserInfo)
-              }
-            />
-          </div>
-        </div>
-        {/* audioprn: no vote totals for users, so no setting for them */}
-        <div className="mb-3 row align-items-center">
-          <label className="col-sm-3 col-form-label">
-            {I18NextService.i18n.t("show_downvotes")}
-          </label>
-          <div className="col-sm-9">
-            <VoteShowDropdown
-              currentOption={
-                this.state.saveUserSettingsForm.show_downvotes ?? "show"
-              }
-              onSelect={val => handleShowDownvotesChange(this, val)}
-            />
-          </div>
-        </div>
-      </>
-    );
-  }
-
   saveUserSettingsHtmlForm() {
     return (
       <form onSubmit={e => handleSaveSettingsSubmit(this, e)}>
@@ -1384,11 +1327,7 @@ export class Settings extends Component<SettingsRouteProps, SettingsState> {
               <div className="card-body">{this.sortingAndFilteringCard()}</div>
             </div>
           </div>
-          <div className="col-12 col-md-6">
-            <div className="card mb-3">
-              <div className="card-body">{this.votingCard()}</div>
-            </div>
-          </div>
+          {/* audioprn: no voting box (posts get emoji reactions; no vote totals shown) */}
           <div className="col-12">
             <div className="input-group d-grid mb-3">
               <button
@@ -1865,46 +1804,6 @@ function handleAutoMarkFetchedPostsAsReadChange(i: Settings, val: boolean) {
   i.setState(
     s => ((s.saveUserSettingsForm.auto_mark_fetched_posts_as_read = val), s),
   );
-}
-
-function handleShowScoresChange(
-  i: Settings,
-  val: boolean,
-  myUserInfo: MyUserInfo | undefined,
-) {
-  const mui = myUserInfo;
-  if (mui) {
-    mui.local_user_view.local_user.show_score = val;
-  }
-  i.setState(s => ((s.saveUserSettingsForm.show_score = val), s));
-}
-
-function handleShowUpvotesChange(
-  i: Settings,
-  val: boolean,
-  myUserInfo: MyUserInfo | undefined,
-) {
-  const mui = myUserInfo;
-  if (mui) {
-    mui.local_user_view.local_user.show_upvotes = val;
-  }
-  i.setState(s => ((s.saveUserSettingsForm.show_upvotes = val), s));
-}
-
-function handleShowDownvotesChange(i: Settings, val: VoteShow) {
-  i.setState(s => ((s.saveUserSettingsForm.show_downvotes = val), s));
-}
-
-function handleShowUpvotePercentageChange(
-  i: Settings,
-  val: boolean,
-  myUserInfo: MyUserInfo | undefined,
-) {
-  const mui = myUserInfo;
-  if (mui) {
-    mui.local_user_view.local_user.show_upvote_percentage = val;
-  }
-  i.setState(s => ((s.saveUserSettingsForm.show_upvote_percentage = val), s));
 }
 
 function handleCollapseBotCommentsChange(i: Settings, val: boolean) {

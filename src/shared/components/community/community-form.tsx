@@ -343,8 +343,7 @@ export class CommunityForm extends Component<
         <div className="mb-3 row align-items-center">
           {(
             [
-              { kind: "post_upvotes", i18nKey: "post_upvotes" },
-              { kind: "post_downvotes", i18nKey: "post_downvotes" },
+              // audioprn: posts get emoji reactions, never votes
               { kind: "comment_upvotes", i18nKey: "comment_upvotes" },
               { kind: "comment_downvotes", i18nKey: "comment_downvotes" },
             ] as const
