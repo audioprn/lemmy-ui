@@ -50,6 +50,7 @@ import { PostTools } from "../../audioprn/post-tools";
 import { CashBox, PostFooter } from "../../audioprn/post-footer";
 import { ScriptBox } from "../../audioprn/post-script";
 import { FillLine } from "../../audioprn/script-fills"; // audioprn
+import { ShareWithCreator } from "../../audioprn/share-with-creator";
 import { PostThumbnail } from "./post-thumbnail";
 import classNames from "classnames";
 import { MetadataCard } from "./metadata-card";
@@ -214,6 +215,11 @@ export class PostListingCard extends Component<
           {p.showBody === "full" && (
             <PostFooter creatorId={p.postView.creator.id} />
           )}
+          {/* audioprn: Script Offers end with Share with Creator (recommend by private message) */}
+          {p.showBody === "full" &&
+            p.postView.tags.some(t => t.name === "script_offer") && (
+              <ShareWithCreator postView={p.postView} />
+            )}
           {/* audioprn: poll (creator page posts), then emoji reactions instead of votes */}
           {p.postView.community.name === "creators" && (
             <PostPoll postId={p.postView.post.id} />
