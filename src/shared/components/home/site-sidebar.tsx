@@ -23,6 +23,7 @@ import {
 } from "@components/common/content-actions/create-item-buttons";
 import { Link } from "inferno-router";
 import { amAdmin } from "@utils/roles";
+import { SITE_TITLE } from "../../audioprn/features";
 
 interface SiteSidebarProps {
   site: Site;
@@ -69,7 +70,8 @@ export class SiteSidebar extends Component<SiteSidebarProps, SiteSidebarState> {
   siteName() {
     return (
       <div className={classNames({ "mb-2": !this.state.collapsed })}>
-        <h5 className="mb-0 d-inline">{this.props.site.name}</h5>
+        {/* audioprn: title with tagline */}
+        <h5 className="mb-0 d-inline">{SITE_TITLE}</h5>
         {!this.props.isMobile && (
           <button
             type="button"

@@ -2,7 +2,8 @@
 // Search Guide). Above the posts: the search box with Expanded search (a form that writes the
 // search, with popular tag chips) and the user's saved search, and the Compact / Cards switch.
 import { setIsoData, toast } from "@utils/app";
-import { Component } from "inferno";
+import { isBrowser } from "@utils/browser";
+import { Component, createRef } from "inferno";
 import { Link } from "inferno-router";
 import { PostView } from "lemmy-js-client";
 import { call } from "./creator-api";
@@ -167,6 +168,7 @@ interface State {
 
 export class SearchPanel extends Component<Props, State> {
   private isoData = setIsoData(this.context);
+  private inputRef = createRef<HTMLInputElement>();
   state: State = {
     text: this.props.q ?? "",
     expanded: false,
@@ -176,6 +178,7 @@ export class SearchPanel extends Component<Props, State> {
   };
 
   async componentDidMount() {
+    this.openFromLink();
     popularTags ??= call<{ tags: Tag[] }>("GET", "/popular_tags")
       .then(r => r.tags)
       .catch(() => []);
@@ -190,6 +193,22 @@ export class SearchPanel extends Component<Props, State> {
 
   componentWillReceiveProps(next: Props) {
     if (next.q !== this.props.q) this.setState({ text: next.q ?? "" });
+  }
+
+  componentDidUpdate() {
+    this.openFromLink();
+  }
+
+  /** The top bar's search icon links to /content#search: open Expanded search there. */
+  openFromLink() {
+    if (!isBrowser() || location.hash !== "#search") return;
+    history.replaceState(
+      history.state,
+      "",
+      location.pathname + location.search,
+    );
+    this.setState({ expanded: true });
+    this.inputRef.current?.focus();
   }
 
   search(text: string) {
@@ -386,6 +405,7 @@ export class SearchPanel extends Component<Props, State> {
             className="form-control form-control-sm"
             aria-label="Search the Content page"
             placeholder='Search: words, "phrase", [tag], -word, fills:0, w:writer…'
+            ref={this.inputRef}
             value={text}
             onInput={e => this.setState({ text: e.target.value })}
           />

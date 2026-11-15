@@ -24,6 +24,7 @@ import { NoOptionI18nKeys } from "i18next";
 import {
   SHOW_COMMUNITIES,
   SHOW_MULTI_COMMUNITIES,
+  SITE_TITLE,
 } from "../../audioprn/features";
 
 interface NavbarProps {
@@ -132,24 +133,9 @@ export class Navbar extends Component<NavbarProps, NavbarState> {
               showMedia(this.props.myUserInfo) && (
                 <PictrsImage src={siteView.site.icon} type="icon" />
               )}
-            {siteView?.site.name}
+            {/* audioprn: title with tagline */}
+            {SITE_TITLE}
           </NavLink>
-          {/* audioprn: search Content, next to the site name */}
-          <form
-            className="d-flex flex-shrink-1 me-2"
-            action="/content"
-            method="get"
-            role="search"
-          >
-            <input
-              type="search"
-              name="q"
-              className="form-control form-control-sm"
-              style="max-width: 14rem"
-              placeholder="Search content"
-              aria-label="Search content"
-            />
-          </form>
           {person && (
             <ul className="navbar-nav d-flex flex-row ms-auto d-md-none">
               {/* Always show the notif button on mobile, but hide the others if the counts are 0. */}
@@ -311,8 +297,9 @@ export class Navbar extends Component<NavbarProps, NavbarState> {
             </ul>
             <ul id="navbarIcons" className="navbar-nav">
               <li id="navSearch" className="nav-item">
+                {/* audioprn: the Content page's Expanded search */}
                 <NavLink
-                  to="/search"
+                  to="/content#search"
                   className="nav-link d-inline-flex align-items-center d-md-inline-block"
                   title={I18NextService.i18n.t("search")}
                   onMouseUp={() => handleCollapseClick(this)}
