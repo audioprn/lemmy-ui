@@ -161,7 +161,7 @@ export class PostListings extends Component<PostListingsProps, never> {
               !this.props.multiCommunity && (
                 // audioprn: creators too (English only, so written out)
                 <div>
-                  Subscribe to some <Link to="/communities">cummunities</Link>{" "}
+                  Subscribe to some <Link to="/communities">Cummunities</Link>{" "}
                   or follow some <Link to="/creators">Creators</Link>.
                 </div>
               )}
