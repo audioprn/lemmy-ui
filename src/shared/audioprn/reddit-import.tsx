@@ -12,7 +12,7 @@ import { htmlTags } from "@components/common/html-tags";
 import { setIsoData, WithHead } from "@utils/app";
 import { HttpService } from "@services/index";
 import { Component } from "inferno";
-import { RouteComponentProps, RouterContext } from "inferno-router";
+import { Link, RouteComponentProps, RouterContext } from "inferno-router";
 import { CommunityView } from "lemmy-js-client";
 import { call, CreatorApiError } from "./creator-api";
 import { CreatorOnly } from "./creator-status";
@@ -47,6 +47,8 @@ interface Row {
   selected: boolean;
   /** "imported", or why it failed. */
   status?: string;
+  /** Imported hidden: more than one voice (see is_multi_voice in the backend). */
+  hidden?: boolean;
   /** Older copies of the same post in other subreddits (cross-posts). */
   also: { id: string; subreddit: string }[];
 }
@@ -325,24 +327,30 @@ export class RedditImport extends Component<Props, State> {
         t => t.name === current.flair && !t.deleted,
       );
       let status: string | undefined;
+      let hidden = false;
       while (!status) {
         try {
-          await call("POST", "/reddit_import", {
-            reddit_id: current.id,
-            also_reddit_ids: current.also.map(a => a.id),
-            date: current.date,
-            credits: [
-              ...toCredits("writer", current.writers),
-              ...toCredits("editor", current.editors),
-            ],
-            post: {
-              name: current.title,
-              community_id: community.community.id,
-              url: current.url,
-              body: importBody(current),
-              tags: flair ? [flair.id] : undefined,
+          const res = await call<{ post_view: { post: { deleted: boolean } } }>(
+            "POST",
+            "/reddit_import",
+            {
+              reddit_id: current.id,
+              also_reddit_ids: current.also.map(a => a.id),
+              date: current.date,
+              credits: [
+                ...toCredits("writer", current.writers),
+                ...toCredits("editor", current.editors),
+              ],
+              post: {
+                name: current.title,
+                community_id: community.community.id,
+                url: current.url,
+                body: importBody(current),
+                tags: flair ? [flair.id] : undefined,
+              },
             },
-          });
+          );
+          hidden = res.post_view.post.deleted;
           status = "imported";
         } catch (e) {
           if ((e as CreatorApiError).status === 429) {
@@ -356,7 +364,7 @@ export class RedditImport extends Component<Props, State> {
       this.setState(s => ({
         rows: s.rows.map(r =>
           r.id === current.id
-            ? { ...r, status, selected: status !== "imported" }
+            ? { ...r, status, hidden, selected: status !== "imported" }
             : r,
         ),
         importing: { done: i + 1, total: todo.length },
@@ -397,6 +405,13 @@ export class RedditImport extends Component<Props, State> {
             by&rdquo;, &ldquo;written by&rdquo;, &ldquo;edited by&rdquo; or
             &ldquo;edit by&rdquo; followed by a username: check them before
             importing. Posts keep their Reddit date and link back to Reddit.
+          </p>
+          {/* audioprn: placeholder wording for the multi-voice rule (to be rewritten) */}
+          <p className="small text-muted">
+            Posts with more than one voice (a gender tag like [FM4M] or [M4F4M],
+            or marked collab) are imported hidden. Unhide them in{" "}
+            <Link to="/my/hidden">Hidden posts</Link> once everyone in them has
+            agreed to be on audioprn.
           </p>
           <input
             type="file"
@@ -529,9 +544,17 @@ export class RedditImport extends Component<Props, State> {
                           <div
                             className={`small mt-1 ${row.status === "imported" ? "text-success" : "text-danger"}`}
                           >
-                            {row.status === "imported"
-                              ? "✓ Imported"
-                              : row.status}
+                            {row.status !== "imported" ? (
+                              row.status
+                            ) : row.hidden ? (
+                              <>
+                                ✓ Imported hidden (more than one voice): unhide
+                                it in <Link to="/my/hidden">Hidden posts</Link>{" "}
+                                once everyone in it has agreed.
+                              </>
+                            ) : (
+                              "✓ Imported"
+                            )}
                           </div>
                         )}
                       </div>
