@@ -19,7 +19,7 @@ export class ShareWithCreator extends Component<{ postView: PostView }, State> {
   private isoData = setIsoData(this.context);
   state: State = {
     open: false,
-    names: Array(MAX_CREATORS).fill(""),
+    names: Array<string>(MAX_CREATORS).fill(""),
     sending: false,
     results: [],
   };
@@ -58,7 +58,7 @@ export class ShareWithCreator extends Component<{ postView: PostView }, State> {
     this.setState({
       sending: false,
       results,
-      names: Array(MAX_CREATORS).fill(""),
+      names: Array<string>(MAX_CREATORS).fill(""),
     });
   }
 
@@ -90,7 +90,7 @@ export class ShareWithCreator extends Component<{ postView: PostView }, State> {
               onClick={e => e.stopPropagation()}
               onSubmit={e => {
                 e.preventDefault();
-                this.sendAll();
+                void this.sendAll();
               }}
             >
               <div className="card-body">

@@ -201,7 +201,8 @@ export class AdminSettings extends Component<
         {/* audioprn: the site's own admin pages */}
         <p className="mb-3">
           <Link to="/admin/flairs">Flairs</Link> ·{" "}
-          <Link to="/admin/awards">Awards</Link>
+          <Link to="/admin/awards">Awards</Link> ·{" "}
+          <Link to="/admin/opt_outs">Reddit opt-outs</Link>
         </p>
         <Tabs
           tabs={[

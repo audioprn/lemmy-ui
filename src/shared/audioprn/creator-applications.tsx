@@ -101,6 +101,13 @@ export class CreatorApplications extends Component<Props, State> {
                   Email not verified
                 </span>
               )}
+              {view.opted_out && (
+                <div className="alert alert-warning small py-1 px-2 mt-2 mb-0">
+                  ⚠️ Matches u/{view.opted_out} on the{" "}
+                  <Link to="/admin/opt_outs">Reddit opt-out list</Link>{" "}
+                  (username or a link).
+                </div>
+              )}
             </div>
             <div className="text-end small">
               {statusLabel(app.approved)}

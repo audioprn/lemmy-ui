@@ -25,6 +25,8 @@ export interface CreatorApplicationView {
   person_name: string;
   person_display_name: string | null;
   email_verified: boolean;
+  /** An opted-out Reddit name matching the username or mentioned in a link. */
+  opted_out: string | null;
 }
 
 /** Readable messages for the backend's creator error codes. */
@@ -78,12 +80,26 @@ const ERROR_MESSAGES: Record<string, string> = {
   too_many_drafts: "You have 50 drafts. Delete some to save new ones.",
   invalid_creator_pin:
     "The pinned post can have up to 20 social links and 5,000 characters per section.",
+  invalid_reddit_name:
+    "Enter a Reddit username: 3-20 letters, numbers, _ or -.",
+  invalid_takedown_request:
+    "Keep the contact to 200 characters and the message to 2,000.",
+  takedown_requests_full:
+    "There are too many open requests right now. Please try again later.",
 };
 
+/** The readable message for a code, if there is one ("opted_out:name" names the user). */
+function messageFor(code?: string): string | undefined {
+  if (code?.startsWith("opted_out:")) {
+    return `u/${code.slice("opted_out:".length)} has opted out of audioprn, so posts can't mention them.`;
+  }
+  return code && Object.hasOwn(ERROR_MESSAGES, code)
+    ? ERROR_MESSAGES[code]
+    : undefined;
+}
+
 export function creatorErrorMessage(code?: string): string {
-  return (
-    (code && ERROR_MESSAGES[code]) || "Something went wrong. Please try again."
-  );
+  return messageFor(code) ?? "Something went wrong. Please try again.";
 }
 
 export class CreatorApiError extends Error {
@@ -163,6 +179,5 @@ export function registerErrorMessage(err: {
   name: string;
   message?: string;
 }): string | undefined {
-  const code = err.name === "unknown" ? err.message : err.name;
-  return code && code in ERROR_MESSAGES ? ERROR_MESSAGES[code] : undefined;
+  return messageFor(err.name === "unknown" ? err.message : err.name);
 }
