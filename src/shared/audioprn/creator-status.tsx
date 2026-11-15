@@ -2,9 +2,11 @@
 //
 // The backend enforces this on every post. This module lets the website hide the
 // "Create post" buttons and the post form from everyone else.
-import { setIsoData } from "@utils/app";
+import { htmlTags } from "@components/common/html-tags";
+import { setIsoData, WithHead } from "@utils/app";
 import { isBrowser } from "@utils/browser";
 import { Component, InfernoNode } from "inferno";
+import { Link, RouterContext } from "inferno-router";
 import { MyUserInfo } from "lemmy-js-client";
 import { getMyCreatorApplication } from "./creator-api";
 
@@ -109,5 +111,63 @@ export class CreatorOnly extends Component<CreatorOnlyProps, object> {
 
   render() {
     return canPost(this.isoData.myUserInfo) ? this.props.children : null;
+  }
+}
+
+/** /signup/creator for someone who is already logged in: where their creator status stands. */
+export class CreatorSignupLoggedIn extends Component<
+  WithHead & { myUserInfo: MyUserInfo },
+  object
+> {
+  private unsubscribe?: () => void;
+
+  componentDidMount() {
+    this.unsubscribe = subscribeCreatorStatus(() => this.forceUpdate());
+    loadCreatorStatus(this.props.myUserInfo);
+  }
+
+  componentWillUnmount() {
+    this.unsubscribe?.();
+  }
+
+  render() {
+    htmlTags({
+      head: this.props.head,
+      title: "Sign up as a creator - audioprn",
+      context: this.context as RouterContext,
+    });
+    const { myUserInfo } = this.props;
+    const name = myUserInfo.local_user_view.person.name;
+    const s = myUserInfo.local_user_view.local_user.admin
+      ? "approved"
+      : creatorStatus(myUserInfo);
+    return (
+      <div className="container-lg" style="max-width: 40rem">
+        <h1 className="h4 mb-3">Sign up as a creator</h1>
+        {s === undefined && <p className="text-muted">Checking…</p>}
+        {s === "approved" && (
+          <>
+            <p>
+              You're already a verified creator, so you can post right away.
+            </p>
+            <p>
+              <Link to="/create_post">Create a post</Link> ·{" "}
+              <Link to={`/u/${name}`}>Your creator page</Link>
+            </p>
+          </>
+        )}
+        {s === "pending" && (
+          <p>Your creator application is waiting for an admin to verify it.</p>
+        )}
+        {s === "denied" && <p>Your creator application wasn't approved.</p>}
+        {s === "none" && (
+          <p>
+            You're logged in as {name}, a listener account. Applying to be a
+            creator with an existing account isn't possible yet: please ask an
+            admin.
+          </p>
+        )}
+      </div>
+    );
   }
 }

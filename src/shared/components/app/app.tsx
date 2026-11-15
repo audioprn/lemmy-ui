@@ -19,6 +19,7 @@ import { Locale, setDefaultOptions } from "date-fns";
 import { i18n } from "i18next";
 import { setupEmojiDataModel } from "@utils/markdown";
 import { applyAccessibility } from "../../audioprn/accessibility";
+import { CreatorSignupLoggedIn } from "../../audioprn/creator-status";
 import { openExternalLinksInNewTab } from "../../audioprn/external-links";
 import { RouteComponentProps } from "inferno-router";
 
@@ -118,6 +119,12 @@ export default class App extends Component<AppProps, object> {
                         {...queryProps}
                       />
                     </AuthGuard>
+                  ) : path === "/signup/creator" && this.isoData.myUserInfo ? (
+                    // audioprn: logged in already: their creator status, not a redirect
+                    <CreatorSignupLoggedIn
+                      myUserInfo={this.isoData.myUserInfo}
+                      head={this.props.head}
+                    />
                   ) : isAnonymousPath(path ?? "") ? (
                     <AnonymousGuard myUserInfo={this.isoData.myUserInfo}>
                       <RouteComponent

@@ -13,7 +13,8 @@ class AnonymousGuard extends Component<AnonymousGuardProps, never> {
     return this.props.myUserInfo;
   }
 
-  componentWillMount() {
+  // audioprn: after mounting; redirecting while mounting left the spinner showing on "/".
+  componentDidMount() {
     if (this.hasAuth() && isBrowser()) {
       const context = this.context as RouterContext;
       context.router.history.replace(`/`);
