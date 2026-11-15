@@ -179,7 +179,8 @@ const viewTypeOptions: FilterOption<ViewType>[] = [
   { value: "saved", i18n: "saved" },
   { value: "liked", i18n: "liked" },
   { value: "read", i18n: "read" },
-  { value: "hidden", i18n: "hidden" },
+  // audioprn: posts hidden from your feeds (a creator's own hidden posts are in /my/hidden)
+  { value: "hidden", noI18n: "Hidden from my feeds" },
 ];
 
 interface ProfileProps {

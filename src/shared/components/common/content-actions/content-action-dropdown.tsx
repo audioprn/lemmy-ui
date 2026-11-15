@@ -355,15 +355,21 @@ export default class ContentActionDropdown extends Component<
                           />
                         </li>
                       )}
-                      <li>
-                        <ActionButton
-                          icon={hidden_at ? "eye" : "eye-slash"}
-                          label={I18NextService.i18n.t(
-                            hidden_at ? "unhide_post" : "hide_post",
-                          )}
-                          onClick={this.props.onHidePost}
-                        />
-                      </li>
+                      {/* audioprn: only for others' posts, named apart from the creator's
+                          🙈 Hide (which hides a post from everyone); on your own only to undo it */}
+                      {(!this.amCreator || hidden_at) && (
+                        <li>
+                          <ActionButton
+                            icon={hidden_at ? "eye" : "eye-slash"}
+                            label={
+                              hidden_at
+                                ? "Show in my feeds"
+                                : "Hide from my feeds"
+                            }
+                            onClick={this.props.onHidePost}
+                          />
+                        </li>
+                      )}
                     </>
                   )}
                 {/* Mods / admins can also edit post tags or nsfw. */}
@@ -386,9 +392,16 @@ export default class ContentActionDropdown extends Component<
                         <ActionButton
                           onClick={onDelete}
                           icon={deleted ? "undo-trash" : "trash"}
-                          label={I18NextService.i18n.t(
-                            deleted ? "undelete" : "delete",
-                          )}
+                          label={
+                            // audioprn: deleting a post hides it (see the action row's 🙈 Hide)
+                            type === "post"
+                              ? deleted
+                                ? "Unhide"
+                                : "Hide"
+                              : I18NextService.i18n.t(
+                                  deleted ? "undelete" : "delete",
+                                )
+                          }
                           iconClass={`text-${deleted ? "success" : "danger"}`}
                         />
                       </li>
