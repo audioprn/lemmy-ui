@@ -39,6 +39,8 @@ import { SHOW_COMMUNITIES } from "../../audioprn/features";
 
 interface PostListingsProps {
   posts: PostView[];
+  /** audioprn: shown instead of "No posts." (My audioprn's Saved and Favourites). */
+  emptyText?: string;
   allLanguages: Language[];
   siteLanguages: LanguageId[];
   showCommunity: boolean;
@@ -155,7 +157,9 @@ export class PostListings extends Component<PostListingsProps, never> {
           </div>
         ) : (
           <>
-            <div>{I18NextService.i18n.t("no_posts")}</div>
+            <div>
+              {this.props.emptyText ?? I18NextService.i18n.t("no_posts")}
+            </div>
             {SHOW_COMMUNITIES &&
               this.props.showCommunity &&
               !this.props.multiCommunity && (

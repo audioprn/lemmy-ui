@@ -898,6 +898,14 @@ export class Home extends Component<HomeRouteProps, HomeState> {
           return (
             <PostListings
               posts={posts}
+              // audioprn: My audioprn's Saved and Favourites when empty
+              emptyText={
+                this.props.filters === MY_SAVED
+                  ? "You have no saved posts yet."
+                  : this.props.filters === MY_FAVOURITES
+                    ? "You have no favourite posts yet."
+                    : undefined
+              }
               showCommunity
               multiCommunity={false}
               showCrossPosts="small"
