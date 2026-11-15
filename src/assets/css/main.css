@@ -575,3 +575,17 @@ em-emoji-picker {
 .viewer-transition {
   transition-duration: 0.1s; /* 0.3s -> 0.1s */
 }
+
+/* audioprn: the right column's dropdown sections (spoiler blocks in the site sidebar) read as headings */
+.site-sidebar summary {
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0.5rem;
+}
+
+/* audioprn: "[here](#todo)" in site text marks a page still to be written: plain underlined text */
+.md-div a[href="#todo"] {
+  color: inherit;
+  text-decoration: underline;
+  pointer-events: none;
+}
