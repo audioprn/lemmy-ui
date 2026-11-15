@@ -1,5 +1,4 @@
 import { Component } from "inferno";
-import { T } from "inferno-i18next-dess";
 import { Link } from "inferno-router";
 import {
   AddAdmin,
@@ -160,9 +159,11 @@ export class PostListings extends Component<PostListingsProps, never> {
             {SHOW_COMMUNITIES &&
               this.props.showCommunity &&
               !this.props.multiCommunity && (
-                <T i18nKey="subscribe_to_communities">
-                  #<Link to="/communities">#</Link>
-                </T>
+                // audioprn: creators too (English only, so written out)
+                <div>
+                  Subscribe to some <Link to="/communities">cummunities</Link>{" "}
+                  or follow some <Link to="/creators">Creators</Link>.
+                </div>
               )}
           </>
         )}
