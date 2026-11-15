@@ -50,7 +50,10 @@ export async function getFeedPosts(
     return feed("hidden");
   }
   if (filters !== MY_FEED) {
-    return client.getPosts({ ...form, ...contentFilters(filters) });
+    return client.getPosts({
+      ...form,
+      ...contentFilters(filters, form.search_term),
+    });
   }
   const [recent, rest] = await Promise.all([
     form.page_cursor ? undefined : feed("my_recent", { limit: 50 }),

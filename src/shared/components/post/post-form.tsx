@@ -79,7 +79,11 @@ import { communityTagName } from "@components/community/community-tag";
 import { FilterChipSelect } from "@components/common/filter-chip-select";
 import { PostName } from "./common";
 import { NoOptionI18nKeys } from "i18next";
-import { MAIN_COMMUNITY_NAME, SHOW_COMMUNITIES } from "../../audioprn/features";
+import {
+  MAIN_COMMUNITY_NAME,
+  SAPPHIC_COMMUNITY_NAME,
+  SHOW_COMMUNITIES,
+} from "../../audioprn/features";
 import { RichTextEditor } from "../../audioprn/rich-text";
 import { createPostPoll } from "../../audioprn/post-poll";
 import {
@@ -143,6 +147,8 @@ interface PostFormProps {
   draftId?: number;
   /** audioprn: posting to `main`, the Content page only (no cummunity) */
   contentPageOnly?: boolean;
+  /** audioprn: the chosen cummunity's name, for a new post */
+  selectedCommunityName?: string;
   // audioprn: the result, so a refused edit can show an error
   onEdit?: (
     form: EditPost,
@@ -179,6 +185,8 @@ interface PostFormState {
   credits: Partial<Record<CreditRole, string>>;
   /** audioprn: keep the post off the Content page */
   offContent?: boolean;
+  /** audioprn: sapphic, "No comments from men are welcome on this post" (also off Content) */
+  noMen?: boolean;
   /** audioprn: the post's credits were loaded, so saving an edit may replace them */
   creditsLoaded?: boolean;
   /** audioprn: rich text mode for the body */
@@ -297,12 +305,13 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
     // audioprn: load the post's credits when editing.
     const pv = this.props.post_view;
     if (pv) {
-      const { credits, off_content } = await getPostCredits(pv.post.id);
+      const { credits, off_content, no_men } = await getPostCredits(pv.post.id);
       this.setState({
         credits: Object.fromEntries(
           CREDIT_ROLES.map(({ role }) => [role, creditsText(credits, role)]),
         ),
         offContent: off_content.includes(pv.post.id),
+        noMen: no_men.includes(pv.post.id),
         creditsLoaded: true,
       });
       const fill = await getScriptFill(pv.post.id).catch(() => undefined);
@@ -321,6 +330,19 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
       !!this.props.selectedCommunityTags?.some(t => !t.deleted) &&
       this.state.form.tags?.length !== 1
     );
+  }
+
+  /** audioprn: a post in the sapphic cummunity (can welcome no comments from men). */
+  get sapphic(): boolean {
+    return (
+      (this.props.post_view?.community.name ??
+        this.props.selectedCommunityName) === SAPPHIC_COMMUNITY_NAME
+    );
+  }
+
+  /** audioprn: what to save as no_men: only for sapphic posts. */
+  get noMen(): boolean {
+    return this.sapphic && !!this.state.noMen;
   }
 
   /** audioprn: credits inputs, below the title, and the Content page option. */
@@ -366,7 +388,8 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
                   className="form-check-input"
                   type="checkbox"
                   id="post-on-content"
-                  checked={!this.state.offContent}
+                  checked={!this.state.offContent && !this.noMen}
+                  disabled={this.noMen}
                   onChange={() =>
                     this.setState(s => ({ offContent: !s.offContent }))
                   }
@@ -376,6 +399,21 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
                   cummunity)
                 </label>
               </div>
+              {this.sapphic && (
+                <div className="form-check">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id="post-no-men"
+                    checked={!!this.state.noMen}
+                    onChange={() => this.setState(s => ({ noMen: !s.noMen }))}
+                  />
+                  <label className="form-check-label" htmlFor="post-no-men">
+                    No comments from men are welcome on this post (shows it only
+                    in sapphic)
+                  </label>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1297,9 +1335,12 @@ function handlePostSubmit(i: PostForm, event: FormEvent<HTMLFormElement>) {
           backendErrorPopup(res.err);
         } else if (i.state.creditsLoaded) {
           // Only once the edit went through, and never over credits that didn't load.
-          savePostCredits(pv.post.id, credits, !!i.state.offContent).catch(e =>
-            toast(e.message, "danger"),
-          );
+          savePostCredits(
+            pv.post.id,
+            credits,
+            !!i.state.offContent,
+            i.noMen,
+          ).catch(e => toast(e.message, "danger"));
         }
         // audioprn: the script this fills, when changed
         if (
@@ -1348,7 +1389,7 @@ function handlePostSubmit(i: PostForm, event: FormEvent<HTMLFormElement>) {
         // Each part is saved on its own, so one failing doesn't lose the others.
         const failed = (
           await Promise.allSettled([
-            savePostCredits(postId, credits, !!i.state.offContent),
+            savePostCredits(postId, credits, !!i.state.offContent, i.noMen),
             i.scriptOffer &&
               script &&
               (script.body.trim() || script.link.trim()) &&
@@ -1380,7 +1421,7 @@ function handlePostSubmit(i: PostForm, event: FormEvent<HTMLFormElement>) {
 }
 // audioprn: save the whole form as a draft (JSON), or update the open draft.
 async function handleSaveDraft(i: PostForm) {
-  const { form, credits, offContent, richText, poll, script } = i.state;
+  const { form, credits, offContent, noMen, richText, poll, script } = i.state;
   try {
     const { id } = await saveDraft(
       i.state.draftId,
@@ -1389,6 +1430,7 @@ async function handleSaveDraft(i: PostForm) {
         form: { ...form, honeypot: undefined },
         credits,
         offContent,
+        noMen,
         richText,
         poll,
         script,
@@ -1406,7 +1448,13 @@ async function loadDraft(i: PostForm, id: number) {
   try {
     const saved: Pick<
       PostFormState,
-      "form" | "credits" | "offContent" | "richText" | "poll" | "script"
+      | "form"
+      | "credits"
+      | "offContent"
+      | "noMen"
+      | "richText"
+      | "poll"
+      | "script"
     > = JSON.parse((await getDraft(id)).data);
     i.setState(s => ({
       ...saved,

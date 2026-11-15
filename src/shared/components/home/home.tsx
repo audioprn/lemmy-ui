@@ -124,7 +124,12 @@ import {
   SHOW_COMMUNITIES,
   SHOW_MULTI_COMMUNITIES,
 } from "../../audioprn/features";
-import { ContentFilters, savedFilters } from "../../audioprn/content-filters";
+import {
+  ContentFilters,
+  EXTREME,
+  savedFilters,
+  setFilter,
+} from "../../audioprn/content-filters";
 import {
   CompactPosts,
   SearchPanel,
@@ -536,6 +541,15 @@ export class Home extends Component<HomeRouteProps, HomeState> {
                       : undefined
                   }
                   compact={!!this.state.compact}
+                  extreme={(this.props.filters ?? "")
+                    .split(",")
+                    .includes(EXTREME)}
+                  onExtreme={on =>
+                    this.updateUrl({
+                      filters: setFilter(this.props.filters, EXTREME, on),
+                      cursor: undefined,
+                    })
+                  }
                   onSearch={q => this.updateUrl({ q, cursor: undefined })}
                   onCompact={compact => this.setState({ compact })}
                   onSavedChange={() => this.fetchData(this.props)}

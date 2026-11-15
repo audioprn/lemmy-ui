@@ -151,6 +151,9 @@ interface Props {
   /** A search problem from the backend, already in words. */
   error?: string;
   compact: boolean;
+  /** Search results include the dark cummunity's tags ([Extreme], slurs). */
+  extreme: boolean;
+  onExtreme: (on: boolean) => void;
   onSearch: (q: string | undefined) => void;
   onCompact: (compact: boolean) => void;
   /** The saved search changed: load the posts again. */
@@ -432,6 +435,22 @@ export class SearchPanel extends Component<Props, State> {
               Clear search
             </button>
           )}
+          <div className="form-check mb-0">
+            <input
+              className="form-check-input"
+              type="checkbox"
+              id="search-extreme"
+              checked={this.props.extreme}
+              onChange={() => this.props.onExtreme(!this.props.extreme)}
+            />
+            <label
+              className="form-check-label"
+              htmlFor="search-extreme"
+              title="These posts never show on the Content page itself, only in search results."
+            >
+              Include [Extreme] and slur tags
+            </label>
+          </div>
           {saved?.saved_query && (
             <div className="form-check mb-0">
               <input

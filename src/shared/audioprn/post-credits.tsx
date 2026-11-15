@@ -32,19 +32,20 @@ const credits = batchLoader<PostCredit[]>(async ids => {
   return byPost;
 }, []);
 
-/** A post's credits, and whether it's kept off the Content page. */
+/** A post's credits, whether it's kept off the Content page, and whether it welcomes no men. */
 export async function getPostCredits(
   postId: number,
-): Promise<{ credits: PostCredit[]; off_content: number[] }> {
+): Promise<{ credits: PostCredit[]; off_content: number[]; no_men: number[] }> {
   const res = await fetch(`${api()}?post_ids=${postId}`);
   return res.json();
 }
 
-/** Replaces a post's credits (and sets off_content). Throws if the backend refuses. */
+/** Replaces a post's credits (and sets off_content, no_men). Throws if the backend refuses. */
 export async function savePostCredits(
   postId: number,
   list: PostCredit[],
   offContent?: boolean,
+  noMen?: boolean,
 ) {
   const res = await fetch(api(), {
     method: "PUT",
@@ -56,10 +57,36 @@ export async function savePostCredits(
       post_id: postId,
       credits: list,
       off_content: offContent,
+      no_men: noMen,
     }),
   });
   if (!res.ok) throw new Error("Couldn't save the credits.");
   credits.set(postId, (await res.json()).credits);
+}
+
+/** Above a post's comments: the sapphic notice, when the post's creator ticked it. */
+export class NoMenNotice extends Component<
+  { postId: number },
+  { show: boolean }
+> {
+  state = { show: false };
+
+  async componentDidMount() {
+    const { no_men } = await getPostCredits(this.props.postId).catch(() => ({
+      no_men: [] as number[],
+    }));
+    this.setState({ show: no_men.includes(this.props.postId) });
+  }
+
+  render() {
+    return (
+      this.state.show && (
+        <div className="alert alert-warning py-2">
+          No comments from men are welcome on this post.
+        </div>
+      )
+    );
+  }
 }
 
 /** "u/anna, Bo" -> [{role, name: "u/anna"}, {role, name: "Bo"}] */

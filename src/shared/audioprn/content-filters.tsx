@@ -26,11 +26,38 @@ const STORAGE_KEY = "audioprn_content_filters";
  * The backend parameters for the Content feed: `content_page` leaves out creators' own page posts
  * and posts kept off Content, then these filters (none = the defaults, which show everything).
  */
-export function contentFilters(filters?: string) {
+export function contentFilters(filters?: string, q?: string) {
+  // The dark cummunity's tags only ever show in search results.
+  const list = (filters ?? DEFAULT_FILTERS)
+    .split(",")
+    .filter(f => q || f !== EXTREME);
   return {
     ...(SHOW_COMMUNITIES ? {} : { community_name: MAIN_COMMUNITY_NAME }),
-    content_filters: `content_page,${filters ?? DEFAULT_FILTERS}`,
+    content_filters: `content_page,${list.join(",")}`,
   };
+}
+
+/** Search results also show posts with the dark cummunity's tags ([Extreme], slurs). */
+export const EXTREME = "extreme";
+
+/** The filters with `name` turned on or off, as kept in the URL (and remembered). */
+export function setFilter(
+  filters: string | undefined,
+  name: string,
+  on: boolean,
+) {
+  const list = (filters ?? DEFAULT_FILTERS)
+    .split(",")
+    .filter(f => f !== name && f !== "none");
+  return normalizeFilters(on ? [...list, name] : list);
+}
+
+function normalizeFilters(filters: string[]): string | undefined {
+  // "none" keeps an all-unchecked state in the URL; the backend ignores unknown names.
+  const value = filters.filter(Boolean).sort().join(",") || "none";
+  const next = value === DEFAULT_FILTERS ? undefined : value;
+  saveFilters(next);
+  return next;
 }
 
 /** The viewer's last filters, to restore when they come back. */
@@ -66,11 +93,10 @@ export class ContentFilters extends Component<Props, object> {
   }
 
   setFilters(filters: string[]) {
-    // "none" keeps an all-unchecked state in the URL; the backend ignores unknown names.
-    const value = filters.filter(Boolean).sort().join(",") || "none";
-    const next = value === DEFAULT_FILTERS ? undefined : value;
-    saveFilters(next);
-    this.props.onChange({ filters: next, q: this.props.q });
+    this.props.onChange({
+      filters: normalizeFilters(filters),
+      q: this.props.q,
+    });
   }
 
   toggle(name: string) {
@@ -109,7 +135,11 @@ export class ContentFilters extends Component<Props, object> {
             className="form-check-input"
             type="checkbox"
             id="filter-show-all"
-            checked={!this.props.filters}
+            // The search-only [Extreme] box doesn't count.
+            checked={
+              this.active.filter(f => f !== EXTREME).join(",") ===
+              DEFAULT_FILTERS
+            }
             onChange={linkEvent(this, i => i.setFilters([DEFAULT_FILTERS]))}
           />
           <label className="form-check-label" htmlFor="filter-show-all">

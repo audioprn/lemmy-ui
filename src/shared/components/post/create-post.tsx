@@ -365,6 +365,7 @@ export class CreatePost extends Component<
                 handleSelectedCommunityChange(this, form)
               }
               selectedCommunityTags={selectedCommunity?.tags}
+              selectedCommunityName={selectedCommunity?.community.name} // audioprn
               initialCommunities={
                 initialCommunitiesRes.state === "success"
                   ? filterCommunitySelection(

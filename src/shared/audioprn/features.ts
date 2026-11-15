@@ -12,6 +12,9 @@ export const SHOW_MULTI_COMMUNITIES = false;
 /** The only community while SHOW_COMMUNITIES is off. */
 export const MAIN_COMMUNITY_NAME = "main";
 
+/** Posts here can be marked "No comments from men are welcome on this post". */
+export const SAPPHIC_COMMUNITY_NAME = "sapphic";
+
 /** The site's title in the top bar and at the top of the right-hand column (page titles keep the
  * plain site name). */
 export const SITE_TITLE = "audioprn: listen for the O";

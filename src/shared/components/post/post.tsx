@@ -125,6 +125,7 @@ import { Action } from "history";
 import { CommentSortDropdown } from "@components/common/sort-dropdown";
 import { CommentViewTypeDropdown } from "@components/common/comment-view-type-dropdown";
 import { removeLocalStorageMarkdown } from "@components/common/markdown-textarea";
+import { NoMenNotice } from "../../audioprn/post-credits"; // audioprn
 
 const commentsShownInterval = 15;
 
@@ -672,6 +673,11 @@ export class Post extends Component<PostRouteProps, PostState> {
                 postListingMode="small_card"
               />
               <div ref={this.commentSectionRef} className="mb-2" />
+              {/* audioprn: sapphic posts that welcome no comments from men */}
+              <NoMenNotice
+                key={res.post_view.post.id}
+                postId={res.post_view.post.id}
+              />
 
               {/* Only show the top level comment form if its not a context view */}
               {!(
