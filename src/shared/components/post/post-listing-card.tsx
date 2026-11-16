@@ -161,7 +161,11 @@ export class PostListingCard extends Component<
               <div className="small">
                 {/* audioprn: the link only shows once the post is opened */}
                 {p.showBody === "full" && (
-                  <UrlLine postView={p.postView} myUserInfo={p.myUserInfo} />
+                  <UrlLine
+                    postView={p.postView}
+                    myUserInfo={p.myUserInfo}
+                    includeDot={false}
+                  />
                 )}
                 <span> </span>
                 <PostBadges

@@ -193,10 +193,7 @@ export function PostCreatedLine({
         />
       )}
       {showUrlLine && postView.post.url && (
-        <>
-          {" · "}
-          <UrlLine postView={postView} myUserInfo={myUserInfo} />
-        </>
+        <UrlLine postView={postView} myUserInfo={myUserInfo} includeDot />
       )}
       {showPublishedTime && (
         <>
@@ -253,9 +250,10 @@ export function withoutLinks(html: { __html: string }) {
 type UrlLineProps = {
   postView: PostView;
   myUserInfo: MyUserInfo | undefined;
+  includeDot: boolean;
 };
 export function UrlLine(
-  { postView, myUserInfo }: UrlLineProps,
+  { postView, myUserInfo, includeDot }: UrlLineProps,
   context: object,
 ): InfernoNode | void {
   const post = postView.post;
@@ -276,6 +274,7 @@ export function UrlLine(
         url &&
         !localUrl && (
           <>
+            {includeDot && " · "}
             <a
               className="fst-italic text-body link-opacity-75 link-opacity-100-hover overflow-wrap-anywhere"
               href={url}
