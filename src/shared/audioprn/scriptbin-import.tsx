@@ -1,5 +1,6 @@
 // audioprn: import scripts from a scriptbin.works export: a zip with, per script, <title>_<id>.txt
-// (title, a #### line, the script) and <title>_<id>.json (dates, address, public or unlisted...).
+// (title, a #### line, then an optional blurb ended by --8<--, then the script) and
+// <title>_<id>.json (dates, address, public or unlisted...).
 // It's read here, in the browser. The creator ticks what to do with each group:
 // - scripts linked from their Script Offer posts: the text is added to the post (members read it
 //   here, watermarked; the link stays);
@@ -31,7 +32,10 @@ type Group = "posts" | "public" | "unlisted";
 interface Script {
   id: string;
   title: string;
+  /** The script itself (after the --8<-- marker, if any). */
   text: string;
+  /** Before the marker: introduction, characters... (new posts' text). */
+  blurb: string;
   date: string;
   slug: string;
   description: string;
@@ -171,6 +175,9 @@ export class ScriptbinImport extends Component<Props, State> {
         previousSlugs: { slug: string }[];
       };
       const [title, , ...lines] = txt.split(/\r?\n/);
+      // scriptbin shows the marker as –8<–; its own placeholder above it is left out.
+      const [blurb, text] = lines.join("\n").split(/[-–—]{1,2}8<[-–—]{1,2}/);
+      const intro = text === undefined ? "" : blurb.trim();
       const slugs = [meta.slug, ...meta.previousSlugs.map(s => s.slug)];
       const linked = posts.filter(p => slugs.includes(p.slug));
       const group: Group = linked.length
@@ -182,7 +189,10 @@ export class ScriptbinImport extends Component<Props, State> {
       scripts.push({
         id,
         title: group === "posts" ? title : postTitle(title, meta.audienceShort),
-        text: lines.join("\n").trim(),
+        text: (text ?? blurb).trim(),
+        blurb: intro.startsWith("If including instructions/introduction")
+          ? ""
+          : intro,
         date: `${meta.created.replace(" ", "T")}Z`,
         slug: meta.slug,
         description: meta.shortDescription ?? "",
@@ -260,7 +270,9 @@ export class ScriptbinImport extends Component<Props, State> {
     if (!community || !flair) throw new Error("No Script Offer flair.");
     const url = `https://scriptbin.works/u/${this.state.username.trim()}/${script.slug}`;
     const [name, moved] = splitTags(script.title);
-    const body = [moved.join(" "), script.description].filter(Boolean);
+    const body = [moved.join(" "), script.description, script.blurb].filter(
+      Boolean,
+    );
     const res = await call<{ post_view: { post: { id: number } } }>(
       "POST",
       "/reddit_import",
