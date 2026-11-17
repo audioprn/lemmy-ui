@@ -1087,19 +1087,7 @@ export class Settings extends Component<SettingsRouteProps, SettingsState> {
             />
           </div>
         </div>
-        <div className="row mb-3">
-          <div className="col">
-            <FilterChipCheckbox
-              option={"show_animated_images"}
-              isChecked={
-                this.state.saveUserSettingsForm.animated_images_enabled ?? false
-              }
-              onCheck={val =>
-                handleEnableAnimatedImagesChange(this, val, myUserInfo)
-              }
-            />
-          </div>
-        </div>
+        {/* audioprn: no "Show animated images" switch (user, 2026-11-17) */}
         <div className="row mb-3">
           <div
             className="col"
@@ -1754,18 +1742,6 @@ function handleShowMediaChange(
     mui.local_user_view.local_user.show_media = val;
   }
   i.setState(s => ((s.saveUserSettingsForm.show_media = val), s));
-}
-
-function handleEnableAnimatedImagesChange(
-  i: Settings,
-  val: boolean,
-  myUserInfo: MyUserInfo | undefined,
-) {
-  const mui = myUserInfo;
-  if (mui) {
-    mui.local_user_view.local_user.animated_images_enabled = val;
-  }
-  i.setState(s => ((s.saveUserSettingsForm.animated_images_enabled = val), s));
 }
 
 function handleHidePostsWithMediaChange(
