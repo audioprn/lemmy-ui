@@ -73,6 +73,7 @@ import { SHOW_COMMUNITIES } from "../../audioprn/features";
 import { CreatorOnly } from "../../audioprn/creator-status";
 import { CreatorFooterSettings } from "../../audioprn/post-footer";
 import { AccessibilityOptions } from "../../audioprn/accessibility";
+import { RecommendationSettings } from "../../audioprn/share-with-creator";
 import { PersonListing } from "./person-listing";
 import { Invites } from "./invites";
 import { InitialFetchRequest } from "@utils/types";
@@ -1259,6 +1260,8 @@ export class Settings extends Component<SettingsRouteProps, SettingsState> {
               <div className="card-body">{this.lookAndFeelCard()}</div>
             </div>
           </div>
+          {/* audioprn: verified creators turn "Share with Creator" recommendations on or off */}
+          <RecommendationSettings />
           {/* audioprn: this card only had the language picker */}
           <div className="col-12 col-md-6 d-none">
             <div className="card mb-3">

@@ -20,11 +20,13 @@ interface Creator {
   /** null when the creator hides it (they always see their own). */
   followers: number | null;
   hide_follower_count: boolean;
+  /** Takes "Share with Creator" script recommendations. */
+  recommendations: boolean;
 }
 
 const followersText = (n: number) => `${n} follower${n === 1 ? "" : "s"}`;
 
-const listCreators = (personId?: number) =>
+export const listCreators = (personId?: number) =>
   call<{ creators: Creator[] }>(
     "GET",
     `/creators${personId ? `?person_id=${personId}` : ""}`,

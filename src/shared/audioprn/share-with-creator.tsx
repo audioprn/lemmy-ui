@@ -1,12 +1,74 @@
 // audioprn: "Share with Creator" at the bottom of Script Offer posts: a listener or creator
 // recommends the script to up to three verified creators, each getting a private message.
-import { setIsoData } from "@utils/app";
+// Creators who turned recommendations off (Settings → Recommendations) aren't sent any.
+import { setIsoData, toast } from "@utils/app";
+import { masonryUpdate } from "@utils/browser";
 import { Component } from "inferno";
 import { PostView } from "lemmy-js-client";
 import { HttpService } from "@services/index";
 import { call } from "./creator-api";
+import { listCreators } from "./creators";
 
 const MAX_CREATORS = 3;
+
+/** Settings card, only for verified creators: take recommendations or not (saved at once). */
+export class RecommendationSettings extends Component<
+  object,
+  { on?: boolean }
+> {
+  private isoData = setIsoData(this.context);
+  state: { on?: boolean } = {};
+
+  async componentDidMount() {
+    const me = this.isoData.myUserInfo?.local_user_view.person.id;
+    if (!me) return;
+    const [creator] = await listCreators(me).catch(() => []);
+    if (creator) {
+      this.setState({ on: creator.recommendations });
+      await masonryUpdate("settings-grid");
+    }
+  }
+
+  async setOn(on: boolean) {
+    this.setState({ on });
+    try {
+      await call("PUT", "/creator_settings", { recommendations: on });
+    } catch (e) {
+      toast((e as Error).message, "danger");
+      this.setState({ on: !on });
+    }
+  }
+
+  render() {
+    const { on } = this.state;
+    if (on === undefined) return null;
+    return (
+      <div className="col-12 col-md-6">
+        <div className="card mb-3">
+          <div className="card-body">
+            <h5 className="card-title">Recommendations</h5>
+            <div className="form-check">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                id="see-recommendations"
+                checked={on}
+                onChange={() => this.setOn(!on)}
+              />
+              <label className="form-check-label" htmlFor="see-recommendations">
+                See posts recommended by users for you
+              </label>
+            </div>
+            <div className="small text-muted mt-1">
+              Script Offers that listeners send you with 🎙️ Share with Creator,
+              as private messages.
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+}
 
 interface State {
   open: boolean;
@@ -30,11 +92,11 @@ export class ShareWithCreator extends Component<{ postView: PostView }, State> {
     const person = await HttpService.client.getPersonDetails({ username });
     if (person.state !== "success") return `${username}: no such user.`;
     const id = person.data.person_view.person.id;
-    const { is_creator } = await call<{ is_creator: boolean }>(
-      "GET",
-      `/creator_pin?person_id=${id}`,
-    ).catch(() => ({ is_creator: false }));
-    if (!is_creator) return `${username}: not a verified creator.`;
+    const [creator] = await listCreators(id).catch(() => []);
+    if (!creator) return `${username}: not a verified creator.`;
+    if (!creator.recommendations) {
+      return `${username}: isn't taking script recommendations.`;
+    }
     const { post } = this.props.postView;
     const res = await HttpService.client.createPrivateMessage({
       recipient_id: id,
