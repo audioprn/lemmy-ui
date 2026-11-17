@@ -1061,24 +1061,6 @@ export class Settings extends Component<SettingsRouteProps, SettingsState> {
           </div>
         </div>
         {/* audioprn: no "Show NSFW" / "Blur NSFW" settings, the whole site is adult content. */}
-        <div className="row mb-3">
-          <div className="col">
-            <FilterChipCheckbox
-              option={"show_avatars"}
-              isChecked={this.state.saveUserSettingsForm.show_avatars ?? false}
-              onCheck={val => handleShowAvatarsChange(this, val, myUserInfo)}
-            />
-          </div>
-        </div>
-        <div className="row mb-3">
-          <div className="col">
-            <FilterChipCheckbox
-              option={"show_media"}
-              isChecked={this.state.saveUserSettingsForm.show_media ?? false}
-              onCheck={val => handleShowMediaChange(this, val, myUserInfo)}
-            />
-          </div>
-        </div>
         {/* audioprn: no "Show animated images", "Hide memes" or "Show bot accounts" (user, 2026-11-17) */}
         <div className="row mb-3">
           <div className="col">
@@ -1146,6 +1128,25 @@ export class Settings extends Component<SettingsRouteProps, SettingsState> {
                   .auto_mark_fetched_posts_as_read ?? false
               }
               onCheck={val => handleAutoMarkFetchedPostsAsReadChange(this, val)}
+            />
+          </div>
+        </div>
+        {/* audioprn: least used, so last */}
+        <div className="row mb-3">
+          <div className="col">
+            <FilterChipCheckbox
+              option={"show_avatars"}
+              isChecked={this.state.saveUserSettingsForm.show_avatars ?? false}
+              onCheck={val => handleShowAvatarsChange(this, val, myUserInfo)}
+            />
+          </div>
+        </div>
+        <div className="row mb-3">
+          <div className="col">
+            <FilterChipCheckbox
+              option={"show_media"}
+              isChecked={this.state.saveUserSettingsForm.show_media ?? false}
+              onCheck={val => handleShowMediaChange(this, val, myUserInfo)}
             />
           </div>
         </div>
