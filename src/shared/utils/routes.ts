@@ -8,6 +8,7 @@ import { OptOutsAdmin, TakedownPage } from "../audioprn/opt-outs";
 import { FlairsAdmin } from "../audioprn/flairs-admin";
 import { Guide } from "../audioprn/guides";
 import { RedditImport } from "../audioprn/reddit-import";
+import { ScriptbinImport } from "../audioprn/scriptbin-import";
 import { MasterlistEditor } from "../audioprn/masterlist";
 import { MasterlistPage } from "../audioprn/masterlist-page";
 import {
@@ -166,6 +167,7 @@ export const routes: IRoutePropsWithFetch<
   { path: `/creators`, component: Creators },
   { path: `/guides/:name`, component: Guide },
   { path: `/reddit_import`, component: RedditImport },
+  { path: `/scriptbin_import`, component: ScriptbinImport },
   { path: `/report`, component: ReportPage },
   { path: `/admin/awards`, component: AwardsAdmin },
   { path: `/admin/opt_outs`, component: OptOutsAdmin },

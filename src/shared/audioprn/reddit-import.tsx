@@ -18,7 +18,7 @@ import { call, CreatorApiError } from "./creator-api";
 import { CreatorOnly } from "./creator-status";
 import { shortLink } from "./news-feed";
 
-const GENDER = /^\[((TF|TM|NB|F|M|A)+4)+(TF|TM|NB|F|M|A)+\]$/i;
+export const GENDER = /^\[((TF|TM|NB|F|M|A)+4)+(TF|TM|NB|F|M|A)+\]$/i;
 const TAG = /\[[^[\]]{1,40}\]/g;
 const DROPPED = /^\[(private )?script (fill|offer)\]$/i;
 const AUDIO_HOSTS = ["soundgasm.net", "hotaudio.net", "whyp.it", "erocast.me"];
