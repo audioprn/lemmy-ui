@@ -43,6 +43,8 @@ const PAGE_SIZE = 50;
 interface CreatorsState {
   creators?: Creator[];
   sort: Sort;
+  /** The search box: part of a username or display name. */
+  q: string;
   page: number;
   more: boolean;
   loading: boolean;
@@ -52,8 +54,10 @@ export class Creators extends Component<WithHead, CreatorsState> {
   private isoData = setIsoData(this.context);
   // The same seed keeps Random's order across pages.
   private seed = String(Math.random());
+  private searchTimer?: ReturnType<typeof setTimeout>;
   state: CreatorsState = {
     sort: "recent",
+    q: "",
     page: 1,
     more: false,
     loading: false,
@@ -63,19 +67,19 @@ export class Creators extends Component<WithHead, CreatorsState> {
     this.load("recent", 1);
   }
 
-  async load(sort: Sort, page: number) {
+  async load(sort: Sort, page: number, q = this.state.q) {
     this.setState({ loading: true });
     const next = await call<{ creators: Creator[] }>(
       "GET",
-      `/creators?sort=${sort}&page=${page}&seed=${this.seed}`,
+      `/creators?sort=${sort}&page=${page}&seed=${this.seed}&q=${encodeURIComponent(q)}`,
     )
       .then(r => r.creators)
       .catch(e => {
         toast(e.message, "danger");
         return [];
       });
-    if (sort !== this.state.sort) {
-      return; // Another sort was picked meanwhile.
+    if (sort !== this.state.sort || q !== this.state.q) {
+      return; // Another sort or search was picked meanwhile.
     }
     this.setState({
       creators: page === 1 ? next : [...(this.state.creators ?? []), ...next],
@@ -91,29 +95,48 @@ export class Creators extends Component<WithHead, CreatorsState> {
       title: `Creators - ${this.isoData.siteRes?.site_view.site.name ?? ""}`,
       context: this.context as RouterContext,
     });
-    const { creators, sort, page, more, loading } = this.state;
+    const { creators, sort, page, more, loading, q } = this.state;
     return (
       <div className="container-lg">
         <h1 className="h4 mb-3">Creators</h1>
-        <div className="btn-group mb-3" role="group" aria-label="Sort">
-          {(Object.keys(SORTS) as Sort[]).map(s => (
-            <button
-              type="button"
-              className={`btn btn-sm ${s === sort ? "btn-secondary" : "btn-outline-secondary"}`}
-              aria-pressed={s === sort}
-              onClick={() => {
-                this.setState({ sort: s, creators: undefined });
-                this.load(s, 1);
-              }}
-            >
-              {SORTS[s]}
-            </button>
-          ))}
+        <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
+          <input
+            type="search"
+            className="form-control form-control-sm"
+            style="max-width: 20rem"
+            placeholder="Search creators"
+            aria-label="Search creators"
+            value={q}
+            onInput={e => {
+              const q = e.currentTarget.value;
+              this.setState({ q });
+              clearTimeout(this.searchTimer);
+              this.searchTimer = setTimeout(
+                () => void this.load(this.state.sort, 1, q),
+                300,
+              );
+            }}
+          />
+          <div className="btn-group" role="group" aria-label="Sort">
+            {(Object.keys(SORTS) as Sort[]).map(s => (
+              <button
+                type="button"
+                className={`btn btn-sm ${s === sort ? "btn-secondary" : "btn-outline-secondary"}`}
+                aria-pressed={s === sort}
+                onClick={() => {
+                  this.setState({ sort: s, creators: undefined });
+                  this.load(s, 1);
+                }}
+              >
+                {SORTS[s]}
+              </button>
+            ))}
+          </div>
         </div>
         {!creators ? (
           <Spinner large />
         ) : creators.length === 0 ? (
-          <p>No creators yet.</p>
+          <p>{q ? "No creators found." : "No creators yet."}</p>
         ) : (
           <ul className="list-unstyled">
             {creators.map(c => (
