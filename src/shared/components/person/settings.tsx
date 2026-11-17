@@ -1061,18 +1061,7 @@ export class Settings extends Component<SettingsRouteProps, SettingsState> {
           </div>
         </div>
         {/* audioprn: no "Show NSFW" / "Blur NSFW" settings, the whole site is adult content. */}
-        {/* audioprn: no "Show animated images", "Hide memes" or "Show bot accounts" (user, 2026-11-17) */}
-        <div className="row mb-3">
-          <div className="col">
-            <FilterChipCheckbox
-              option={"collapse_bot_comments"}
-              isChecked={
-                this.state.saveUserSettingsForm.collapse_bot_comments ?? false
-              }
-              onCheck={val => handleCollapseBotCommentsChange(this, val)}
-            />
-          </div>
-        </div>
+        {/* audioprn: no "Show animated images", "Hide memes", "Show bot accounts" or "Collapse bot comments" (user, 2026-11-17) */}
         <div className="row mb-3">
           <div className="col">
             <FilterChipCheckbox
@@ -1726,10 +1715,6 @@ function handleAutoMarkFetchedPostsAsReadChange(i: Settings, val: boolean) {
   i.setState(
     s => ((s.saveUserSettingsForm.auto_mark_fetched_posts_as_read = val), s),
   );
-}
-
-function handleCollapseBotCommentsChange(i: Settings, val: boolean) {
-  i.setState(s => ((s.saveUserSettingsForm.collapse_bot_comments = val), s));
 }
 
 function handleSendNotificationsToEmailChange(i: Settings, val: boolean) {
