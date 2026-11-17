@@ -25,6 +25,7 @@ import {
   SHOW_MULTI_COMMUNITIES,
   SITE_TITLE,
 } from "../../audioprn/features";
+import { OnlineNow } from "../../audioprn/online-now";
 
 interface NavbarProps {
   siteRes?: GetSiteResponse;
@@ -120,21 +121,25 @@ export class Navbar extends Component<NavbarProps, NavbarState> {
           className="navbar navbar-expand-md navbar-light p-0 px-3 container-lg"
           id="navbar"
         >
-          <NavLink
-            id="navTitle"
-            to="/"
-            title={siteView?.site.summary ?? siteView?.site.name}
-            className="d-flex align-items-center navbar-brand me-md-3 fs-6"
-            onMouseUp={() => handleCollapseClick(this)}
-          >
-            {siteView?.site.icon &&
-              showAvatars(this.props.myUserInfo) &&
-              showMedia(this.props.myUserInfo) && (
-                <PictrsImage src={siteView.site.icon} type="icon" />
-              )}
-            {/* audioprn: title with tagline */}
-            {SITE_TITLE}
-          </NavLink>
+          {/* audioprn: the "Online now" line under the title */}
+          <div className="d-flex flex-column">
+            <NavLink
+              id="navTitle"
+              to="/"
+              title={siteView?.site.summary ?? siteView?.site.name}
+              className="d-flex align-items-center navbar-brand me-md-3 fs-6"
+              onMouseUp={() => handleCollapseClick(this)}
+            >
+              {siteView?.site.icon &&
+                showAvatars(this.props.myUserInfo) &&
+                showMedia(this.props.myUserInfo) && (
+                  <PictrsImage src={siteView.site.icon} type="icon" />
+                )}
+              {/* audioprn: title with tagline */}
+              {SITE_TITLE}
+            </NavLink>
+            <OnlineNow />
+          </div>
           {person && (
             <ul className="navbar-nav d-flex flex-row ms-auto d-md-none">
               {/* Always show the notif button on mobile, but hide the others if the counts are 0. */}
