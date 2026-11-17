@@ -33,26 +33,31 @@ type PostNameProps = {
 };
 export function PostName({ post, showBody }: PostNameProps) {
   const url = post.url;
+  const name =
+    showBody === "full" ? (
+      <a
+        className={
+          !post.featured_community && !post.featured_local
+            ? "text-body"
+            : "link-primary"
+        }
+        href={url}
+        title={url}
+        rel={relTags}
+        dangerouslySetInnerHTML={mdToHtmlInline(post.name)}
+      ></a>
+    ) : (
+      <PostLink post={post} />
+    );
 
   return (
     <>
-      <h1 className="post-name h5 d-inline text-break">
-        {showBody === "full" ? (
-          <a
-            className={
-              !post.featured_community && !post.featured_local
-                ? "text-body"
-                : "link-primary"
-            }
-            href={url}
-            title={url}
-            rel={relTags}
-            dangerouslySetInnerHTML={mdToHtmlInline(post.name)}
-          ></a>
-        ) : (
-          <PostLink post={post} />
-        )}
-      </h1>
+      {/* audioprn: one h1 per page (the opened post); titles in feeds are h2, for screen readers */}
+      {showBody === "full" ? (
+        <h1 className="post-name h5 d-inline text-break">{name}</h1>
+      ) : (
+        <h2 className="post-name h5 d-inline text-break">{name}</h2>
+      )}
       {/* audioprn: credits under the title */}
       <PostCredits postId={post.id} creatorId={post.creator_id} />
     </>

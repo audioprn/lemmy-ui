@@ -310,7 +310,14 @@ export class CreatePost extends Component<
 
     const { siteRes, myUserInfo, showAdultConsentModal } = this.isoData;
 
-    // audioprn: not allowed to post: explain instead of showing the form.
+    htmlTags({
+      head: this.props.head,
+      title: this.documentTitle,
+      context: this.context as RouterContext,
+    });
+
+    // audioprn: not allowed to post: explain instead of showing the form (the page title is
+    // set first, so it has one either way).
     const allowed = canPost(myUserInfo);
     if (allowed === false) {
       return this.notACreator();
@@ -326,12 +333,6 @@ export class CreatePost extends Component<
     const selectedCommunityChoice = selectedCommunity
       ? communityToChoice(selectedCommunity)
       : undefined;
-
-    htmlTags({
-      head: this.props.head,
-      title: this.documentTitle,
-      context: this.context as RouterContext,
-    });
 
     return (
       <div className="create-post container-lg" key={resetCounter}>

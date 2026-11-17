@@ -11,7 +11,9 @@ export function errorPopup(text: string) {
       text,
       gravity: "top",
       position: "center",
-      duration: 10000,
+      // Stays until closed (some people need longer to read it) and is read out at once.
+      duration: -1,
+      ariaLive: "assertive",
       close: true,
       style: { background: "var(--bs-danger)", fontSize: "1.1rem" },
     }).showToast();

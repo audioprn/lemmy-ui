@@ -57,7 +57,7 @@ export class CashBox extends PostFooter {
     if (!support) return null;
     return (
       <div className="col-12">
-        <div className="bg-success-subtle text-success-emphasis border border-success-subtle rounded p-2 my-2">
+        <div className="cash-box bg-success-subtle text-success-emphasis border border-success-subtle rounded p-2 my-2">
           This is a full and free audio/script! If you would like to voluntarily
           support me, here's how:
           <div

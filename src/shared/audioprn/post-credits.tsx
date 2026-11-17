@@ -135,7 +135,14 @@ export class PostCredits extends Component<
             className="badge text-bg-light border fw-normal"
             style="font-size: 1.05em"
           >
-            {CREDIT_ROLES.find(r => r.role === c.role)?.emoji}{" "}
+            {/* Screen readers say "Writer:" rather than the emoji's name. */}
+            <span aria-hidden="true">
+              {CREDIT_ROLES.find(r => r.role === c.role)?.emoji}{" "}
+            </span>
+            <span className="visually-hidden">
+              {CREDIT_ROLES.find(r => r.role === c.role)?.label.slice(0, -1)}
+              :{" "}
+            </span>
             <CreditName name={c.name} />
           </span>
         ))}

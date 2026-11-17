@@ -9,6 +9,7 @@ import { mdToHtml } from "@utils/markdown";
 import { Component } from "inferno";
 import { Link } from "inferno-router";
 import { PostView } from "lemmy-js-client";
+import { Popup } from "./accessibility";
 import { call } from "./creator-api";
 
 export const FILL_TERMS: Record<string, string> = {
@@ -171,6 +172,20 @@ export class ScriptBox extends Component<{ postView: PostView }, State> {
     }
     const loggedIn = !!this.isoData.myUserInfo;
     const creator = postView.creator.display_name ?? postView.creator.name;
+    const text = script?.body && (
+      <>
+        <div
+          className="md-div"
+          dangerouslySetInnerHTML={mdToHtml(script.body, () => {})}
+        />
+        <p className="small text-muted border-top pt-2 mt-3">
+          © {creator}. All rights reserved. Don't repost or copy this script, or
+          use it for AI training. Copies are marked with the reader's account.
+          {script.fill_terms &&
+            ` Fill terms: ${FILL_TERMS[script.fill_terms]}.`}
+        </p>
+      </>
+    );
     return (
       <div className="card card-body my-2">
         <div className="d-flex flex-wrap align-items-center gap-2">
@@ -297,45 +312,28 @@ export class ScriptBox extends Component<{ postView: PostView }, State> {
             </div>
           </div>
         )}
-        {script?.body && !draft && (
-          <div
-            className={
-              reader
-                ? "position-fixed top-0 start-0 w-100 h-100 bg-body overflow-auto p-4"
-                : "mt-3"
-            }
-            style={reader ? "z-index: 2000" : undefined}
+        {text && !draft && !reader && <div className="mt-3">{text}</div>}
+        {text && !draft && reader && (
+          <Popup
+            label="Reader view"
+            onClose={() => this.setState({ reader: false })}
+            className="position-fixed top-0 start-0 w-100 h-100 bg-body overflow-auto p-4"
+            style="z-index: 2000"
           >
             <div
               className="mx-auto"
-              style={
-                reader
-                  ? "max-width: 42rem; font-size: 1.3rem; line-height: 1.7"
-                  : undefined
-              }
+              style="max-width: 42rem; font-size: 1.3rem; line-height: 1.7"
             >
-              {reader && (
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm mb-3"
-                  onClick={() => this.setState({ reader: false })}
-                >
-                  Close reader view
-                </button>
-              )}
-              <div
-                className="md-div"
-                dangerouslySetInnerHTML={mdToHtml(script.body, () => {})}
-              />
-              <p className="small text-muted border-top pt-2 mt-3">
-                © {creator}. All rights reserved. Don't repost or copy this
-                script, or use it for AI training. Copies are marked with the
-                reader's account.
-                {script.fill_terms &&
-                  ` Fill terms: ${FILL_TERMS[script.fill_terms]}.`}
-              </p>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm mb-3"
+                onClick={() => this.setState({ reader: false })}
+              >
+                Close reader view
+              </button>
+              {text}
             </div>
-          </div>
+          </Popup>
         )}
       </div>
     );

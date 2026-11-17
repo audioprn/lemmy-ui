@@ -116,6 +116,7 @@ export class ImageUploadForm extends Component<
           type="file"
           accept="image/*,video/*"
           className="small form-control"
+          aria-label={this.props.uploadTitle} // audioprn: a name for screen readers
           name={this.id}
           disabled={this.props.disabled}
           onChange={event => this.guardedImageUpload(this, event)}

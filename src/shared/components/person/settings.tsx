@@ -7,7 +7,6 @@ import {
   myAuth,
   personToChoice,
   setIsoData,
-  showLocal,
   updateCommunityBlock,
   updateInstanceCommunitiesBlock,
   updateInstancePersonsBlock,
@@ -384,6 +383,8 @@ export class Settings extends Component<SettingsRouteProps, SettingsState> {
     /* eslint-disable jsx-a11y/anchor-has-content, jsx-a11y/anchor-is-valid */
     return (
       <div className="person-settings container-lg">
+        {/* audioprn: the page's main heading, for screen readers */}
+        <h1 className="visually-hidden">{this.documentTitle}</h1>
         <a
           ref={this.exportSettingsLink}
           download={`${I18NextService.i18n.t("export_file_name")}_${new Date()
@@ -1165,7 +1166,8 @@ export class Settings extends Component<SettingsRouteProps, SettingsState> {
                   this.state.saveUserSettingsForm.default_listing_type ??
                   "local"
                 }
-                showLocal={showLocal(this.isoData)}
+                // audioprn: everyone's default is Local, so it must be listed (or the button is blank)
+                showLocal
                 showSubscribed
                 showSuggested={
                   !!this.isoData.siteRes.site_view.local_site

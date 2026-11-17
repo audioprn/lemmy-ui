@@ -560,13 +560,15 @@ export class MasterlistEditor extends Component<Props, EditorState> {
     const { entries, importing, importPaywalled } = this.state;
     const file = (label: string, onChange: (f?: File) => void) => (
       <div className="mb-2">
-        <label className="form-label small mb-0">{label}</label>
-        <input
-          type="file"
-          accept=".csv,text/csv"
-          className="form-control form-control-sm"
-          onChange={e => onChange(e.target.files?.[0])}
-        />
+        <label className="form-label small mb-0 d-block">
+          {label}
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            className="form-control form-control-sm"
+            onChange={e => onChange(e.target.files?.[0])}
+          />
+        </label>
       </div>
     );
     return (
@@ -698,13 +700,15 @@ export class MasterlistEditor extends Component<Props, EditorState> {
       placeholder = "",
     ) => (
       <div className="col-12 col-md-6">
-        <label className="form-label small mb-0">{label}</label>
-        <input
-          className="form-control form-control-sm"
-          placeholder={placeholder}
-          value={d[key]}
-          onInput={e => set({ [key]: e.target.value })}
-        />
+        <label className="form-label small mb-0 d-block">
+          {label}
+          <input
+            className="form-control form-control-sm"
+            placeholder={placeholder}
+            value={d[key]}
+            onInput={e => set({ [key]: e.target.value })}
+          />
+        </label>
       </div>
     );
     return (
@@ -712,74 +716,84 @@ export class MasterlistEditor extends Component<Props, EditorState> {
         <div className="row g-2 mb-2">
           {field("title", "Title")}
           <div className="col-6 col-md-3">
-            <label className="form-label small mb-0">Date</label>
-            <input
-              type="date"
-              className="form-control form-control-sm"
-              value={d.date}
-              onInput={e => set({ date: e.target.value })}
-            />
+            <label className="form-label small mb-0 d-block">
+              Date
+              <input
+                type="date"
+                className="form-control form-control-sm"
+                value={d.date}
+                onInput={e => set({ date: e.target.value })}
+              />
+            </label>
           </div>
           <div className="col-6 col-md-3">
-            <label className="form-label small mb-0">Length</label>
-            <input
-              className="form-control form-control-sm"
-              placeholder="0:16:10"
-              value={d.duration}
-              onInput={e => set({ duration: e.target.value })}
-            />
+            <label className="form-label small mb-0 d-block">
+              Length
+              <input
+                className="form-control form-control-sm"
+                placeholder="0:16:10"
+                value={d.duration}
+                onInput={e => set({ duration: e.target.value })}
+              />
+            </label>
           </div>
           {field("writer", "Written by")}
           <div className="col-12 col-md-6">
-            <label className="form-label small mb-0">Writer&apos;s link</label>
-            <input
-              type="url"
-              className="form-control form-control-sm"
-              value={d.writer_link ?? ""}
-              onInput={e => set({ writer_link: e.target.value })}
-            />
+            <label className="form-label small mb-0 d-block">
+              Writer&apos;s link
+              <input
+                type="url"
+                className="form-control form-control-sm"
+                value={d.writer_link ?? ""}
+                onInput={e => set({ writer_link: e.target.value })}
+              />
+            </label>
           </div>
           {field("credits", "Collaborators", "e.g. edit by …, with …")}
           <div className="col-12 col-md-6">
-            <label className="form-label small mb-0">Script link</label>
-            <input
-              type="url"
-              className="form-control form-control-sm"
-              value={d.script_link ?? ""}
-              onInput={e => set({ script_link: e.target.value })}
-            />
+            <label className="form-label small mb-0 d-block">
+              Script link
+              <input
+                type="url"
+                className="form-control form-control-sm"
+                value={d.script_link ?? ""}
+                onInput={e => set({ script_link: e.target.value })}
+              />
+            </label>
           </div>
           <div className="col-12">
-            <label className="form-label small mb-0">Description</label>
-            <textarea
-              className="form-control form-control-sm"
-              rows={3}
-              value={d.description}
-              onInput={e => set({ description: e.target.value })}
-            />
+            <label className="form-label small mb-0 d-block">
+              Description
+              <textarea
+                className="form-control form-control-sm"
+                rows={3}
+                value={d.description}
+                onInput={e => set({ description: e.target.value })}
+              />
+            </label>
           </div>
           <div className="col-12 col-md-6">
-            <label className="form-label small mb-0">
+            <label className="form-label small mb-0 d-block">
               Tags (comma-separated)
+              <textarea
+                className="form-control form-control-sm"
+                rows={2}
+                placeholder="F4M, Romance, Blowjob"
+                value={d.tags}
+                onInput={e => set({ tags: e.target.value })}
+              />
             </label>
-            <textarea
-              className="form-control form-control-sm"
-              rows={2}
-              placeholder="F4M, Romance, Blowjob"
-              value={d.tags}
-              onInput={e => set({ tags: e.target.value })}
-            />
           </div>
           <div className="col-12 col-md-6">
-            <label className="form-label small mb-0">
+            <label className="form-label small mb-0 d-block">
               Links (one per line: Patreon, SubscribeStar, …)
+              <textarea
+                className="form-control form-control-sm"
+                rows={2}
+                value={d.links}
+                onInput={e => set({ links: e.target.value })}
+              />
             </label>
-            <textarea
-              className="form-control form-control-sm"
-              rows={2}
-              value={d.links}
-              onInput={e => set({ links: e.target.value })}
-            />
           </div>
         </div>
         <div className="form-check mb-2">

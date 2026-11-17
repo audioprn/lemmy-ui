@@ -589,3 +589,8 @@ em-emoji-picker {
   text-decoration: underline;
   pointer-events: none;
 }
+
+/* audioprn: links in a creator's cash box take its dark green text, for contrast on the pale green */
+.cash-box a {
+  color: inherit;
+}

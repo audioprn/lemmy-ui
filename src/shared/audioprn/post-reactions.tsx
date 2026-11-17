@@ -130,6 +130,7 @@ export class PostReactions extends Component<{ postId: number }, object> {
             disabled={!loggedIn}
             title={loggedIn ? undefined : "Log in to react"}
             aria-pressed={mine === name}
+            aria-label={`${emoji} reaction: ${counts[name] ?? 0}`}
             onClick={() =>
               react(this.props.postId, mine === name ? undefined : name).catch(
                 e => toast(e.message, "danger"),
@@ -178,7 +179,11 @@ export class PostAwards extends Component<
               style="font-size: 1.05em"
               title={`${a.name} award`}
             >
-              <AwardIcon type={a} /> {awards[a.kind]}
+              <span aria-hidden="true">
+                <AwardIcon type={a} />
+              </span>
+              <span className="visually-hidden">{a.name} awards: </span>{" "}
+              {awards[a.kind]}
             </span>
           ))}
         {myId !== undefined &&

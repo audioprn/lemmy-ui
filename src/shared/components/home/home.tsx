@@ -461,9 +461,9 @@ export class Home extends Component<HomeRouteProps, HomeState> {
   };
 
   get documentTitle(): string {
-    const { name, summary } = this.state.siteRes.site_view.site;
-
-    return summary ? `${name} - ${summary}` : name;
+    const { name } = this.state.siteRes.site_view.site;
+    // audioprn: say which page it is (browser tab, screen readers)
+    return `${isMyAudioprn(this.props.filters) ? "My audioprn" : "Content"} - ${name}`;
   }
 
   render() {
@@ -514,6 +514,10 @@ export class Home extends Component<HomeRouteProps, HomeState> {
               <GuideLinks />
             </aside>
             <div className="col-12 col-md-6">
+              {/* audioprn: the page's main heading, for screen readers (My audioprn has its own) */}
+              {!isMyAudioprn(this.props.filters) && (
+                <h1 className="visually-hidden">Content</h1>
+              )}
               <DonationDialog
                 myUserInfo={myUserInfo}
                 onHideDialog={() => handleHideDonationDialog(myUserInfo)}

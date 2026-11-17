@@ -9,7 +9,7 @@ import { setIsoData, toast, WithHead } from "@utils/app";
 import { relTags } from "@utils/config";
 import { Component } from "inferno";
 import { Link, RouteComponentProps, RouterContext } from "inferno-router";
-import { AccessibilityOptions } from "./accessibility";
+import { AccessibilityOptions, Popup } from "./accessibility";
 import { call } from "./creator-api";
 import {
   entryCategories,
@@ -565,19 +565,8 @@ export class MasterlistPage extends Component<Props, State> {
     const close = () => this.setState({ open: undefined });
     const { categories } = this.state;
     return (
-      <div
-        className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-start p-3 overflow-auto"
-        style="background: rgba(0, 0, 0, 0.5); z-index: 1050"
-        onClick={close}
-      >
-        <div
-          className="card w-100 my-4"
-          style="max-width: 40rem"
-          role="dialog"
-          aria-modal="true"
-          aria-label={item.title}
-          onClick={e => e.stopPropagation()}
-        >
+      <Popup label={item.title} onClose={close}>
+        <div className="card w-100 my-4" style="max-width: 40rem">
           <div className="card-body">
             <div className="d-flex align-items-start gap-2 mb-2">
               <h2 className="h5 mb-0">{item.title}</h2>
@@ -662,7 +651,7 @@ export class MasterlistPage extends Component<Props, State> {
             </div>
           </div>
         </div>
-      </div>
+      </Popup>
     );
   }
 
@@ -673,6 +662,8 @@ export class MasterlistPage extends Component<Props, State> {
     const long = item.description.length > 220;
     return (
       // A click anywhere on the card opens its details (its own buttons and links do their job).
+      // Keyboard and screen reader users open them with the title, a real button.
+      // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
       <div
         className="card h-100"
         style="cursor: pointer"

@@ -8,11 +8,12 @@ $gray-800: #343a40;
 $gray-900: #212529;
 $black: #222;
 
-$blue: #007bff;
+// audioprn: darker blue, orange, red and green so text on them and in them has 4.5:1 contrast (WCAG AA)
+$blue: #0062cc;
 $indigo: #6610f2;
-$red: #d8486a;
-$orange: #f1641e;
-$green: #00a846;
+$red: #c73a5c;
+$orange: #c2490c;
+$green: #007f35;
 $cyan: #02bdc2;
 
 $primary: $blue;

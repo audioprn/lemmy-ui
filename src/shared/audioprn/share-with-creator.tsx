@@ -8,6 +8,7 @@ import { PostView } from "lemmy-js-client";
 import { HttpService } from "@services/index";
 import { call } from "./creator-api";
 import { listCreators } from "./creators";
+import { Popup } from "./accessibility";
 
 const MAX_CREATORS = 3;
 
@@ -138,18 +139,10 @@ export class ShareWithCreator extends Component<{ postView: PostView }, State> {
           🎙️ Share with Creator
         </button>
         {open && (
-          <div
-            className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-start p-3 overflow-auto"
-            style="background: rgba(0, 0, 0, 0.5); z-index: 1050"
-            onClick={close}
-          >
+          <Popup label="Share with Creator" onClose={close}>
             <form
               className="card w-100 my-4"
               style="max-width: 30rem"
-              role="dialog"
-              aria-modal="true"
-              aria-label="Share with Creator"
-              onClick={e => e.stopPropagation()}
               onSubmit={e => {
                 e.preventDefault();
                 void this.sendAll();
@@ -198,7 +191,7 @@ export class ShareWithCreator extends Component<{ postView: PostView }, State> {
                 )}
               </div>
             </form>
-          </div>
+          </Popup>
         )}
       </div>
     );

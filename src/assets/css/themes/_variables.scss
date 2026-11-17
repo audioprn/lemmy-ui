@@ -1,5 +1,6 @@
 $link-decoration: none;
-$min-contrast-ratio: 3;
+// audioprn: 4.5 (WCAG AA), so badges and buttons get dark text where white is too faint
+$min-contrast-ratio: 4.5;
 $font-size-root: 100%;
 :root {
   --comment-border-width: 2px;
