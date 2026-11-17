@@ -3,7 +3,8 @@ import { getStaticDir } from "@utils/env";
 export const favIconUrl = `${getStaticDir()}/assets/icons/favicon.svg`;
 export const favIconPngUrl = `${getStaticDir()}/assets/icons/apple-touch-icon.png`;
 
-export const repoUrl = "https://github.com/LemmyNet";
+// audioprn: AGPL: link to the code this site runs (our forks).
+export const repoUrl = "https://github.com/audioprn";
 export const joinLemmyUrl = "https://join-lemmy.org";
 export const donateLemmyUrl = `${joinLemmyUrl}/donate`;
 export const docsUrl = `${joinLemmyUrl}/docs/en/index.html`;
