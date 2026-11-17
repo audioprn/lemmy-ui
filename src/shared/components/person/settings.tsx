@@ -984,15 +984,7 @@ export class Settings extends Component<SettingsRouteProps, SettingsState> {
             </p>
           </>
         </CreatorOnly>
-        <div className="row mb-3">
-          <div className="col">
-            <FilterChipCheckbox
-              option={"bot_account"}
-              isChecked={this.state.saveUserSettingsForm.bot_account ?? false}
-              onCheck={val => handleBotAccountChange(this, val)}
-            />
-          </div>
-        </div>
+        {/* audioprn: no "Bot account" switch (admins can still mark one) */}
       </>
     );
   }
@@ -1087,34 +1079,7 @@ export class Settings extends Component<SettingsRouteProps, SettingsState> {
             />
           </div>
         </div>
-        {/* audioprn: no "Show animated images" switch (user, 2026-11-17) */}
-        <div className="row mb-3">
-          <div
-            className="col"
-            data-tippy-content={I18NextService.i18n.t("hide_memes_description")}
-          >
-            <FilterChipCheckbox
-              option={"hide_memes"}
-              isChecked={
-                this.state.saveUserSettingsForm.hide_posts_with_media ?? false
-              }
-              onCheck={val =>
-                handleHidePostsWithMediaChange(this, val, myUserInfo)
-              }
-            />
-          </div>
-        </div>
-        <div className="row mb-3">
-          <div className="col">
-            <FilterChipCheckbox
-              option={"show_bot_accounts"}
-              isChecked={
-                this.state.saveUserSettingsForm.show_bot_accounts ?? false
-              }
-              onCheck={val => handleShowBotAccountsChange(this, val)}
-            />
-          </div>
-        </div>
+        {/* audioprn: no "Show animated images", "Hide memes" or "Show bot accounts" (user, 2026-11-17) */}
         <div className="row mb-3">
           <div className="col">
             <FilterChipCheckbox
@@ -1742,26 +1707,6 @@ function handleShowMediaChange(
     mui.local_user_view.local_user.show_media = val;
   }
   i.setState(s => ((s.saveUserSettingsForm.show_media = val), s));
-}
-
-function handleHidePostsWithMediaChange(
-  i: Settings,
-  val: boolean,
-  myUserInfo: MyUserInfo | undefined,
-) {
-  const mui = myUserInfo;
-  if (mui) {
-    mui.local_user_view.local_user.hide_posts_with_media = val;
-  }
-  i.setState(s => ((s.saveUserSettingsForm.hide_posts_with_media = val), s));
-}
-
-function handleBotAccountChange(i: Settings, val: boolean) {
-  i.setState(s => ((s.saveUserSettingsForm.bot_account = val), s));
-}
-
-function handleShowBotAccountsChange(i: Settings, val: boolean) {
-  i.setState(s => ((s.saveUserSettingsForm.show_bot_accounts = val), s));
 }
 
 function handleShowReadPostsChange(i: Settings, val: boolean) {
