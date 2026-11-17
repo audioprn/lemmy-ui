@@ -46,6 +46,11 @@ import { PaginatorCursor } from "@components/common/paginator-cursor";
 import { ResponsiveTableRowHeader, TableHr } from "@components/common/tables";
 import { CreateCommunityButton } from "@components/common/content-actions/create-item-buttons";
 import { ListingTypeDropdown } from "@components/common/listing-type-dropdown";
+import {
+  CommunityCards,
+  CommunityViewSwitch,
+  savedCommunityCards,
+} from "../../audioprn/community-cards";
 
 type CommunitiesData = RouteDataResponse<{
   listCommunitiesResponse: PagedResponse<CommunityView>;
@@ -55,6 +60,7 @@ interface CommunitiesState {
   listCommunitiesResponse: RequestState<PagedResponse<CommunityView>>;
   searchText: string;
   isIsomorphic: boolean;
+  cards: boolean; // audioprn: Cards or List view
 }
 
 interface CommunitiesProps {
@@ -102,7 +108,26 @@ export class Communities extends Component<
     listCommunitiesResponse: EMPTY_REQUEST,
     searchText: "",
     isIsomorphic: false,
+    cards: true,
   };
+
+  // audioprn: the saved view is only known in the browser, so it's applied after the first render.
+  componentDidMount() {
+    this.setState({ cards: savedCommunityCards() });
+  }
+
+  subscribeButton(cv: CommunityView) {
+    return (
+      <SubscribeButton
+        followState={cv.community_actions?.follow_state}
+        apId={cv.community.ap_id}
+        onFollow={() => handleFollow(this, cv.community.id, true)}
+        onUnFollow={() => handleFollow(this, cv.community.id, false)}
+        isLink
+        showRemoteFetch={!this.isoData.myUserInfo}
+      />
+    );
+  }
 
   loadingSettled() {
     return resourcesSettled([this.state.listCommunitiesResponse]);
@@ -152,6 +177,15 @@ export class Communities extends Component<
           </h5>
         );
       case "success": {
+        if (this.state.cards) {
+          return (
+            <CommunityCards
+              items={this.state.listCommunitiesResponse.data.items}
+              myUserInfo={this.isoData.myUserInfo}
+              subscribe={cv => this.subscribeButton(cv)}
+            />
+          );
+        }
         return (
           <div id="community_table">
             <div className="d-none d-md-block">
@@ -202,18 +236,7 @@ export class Communities extends Component<
                   <div className={countCols}>
                     {numToSI(cv.community.comments)}
                   </div>
-                  <div className={countCols}>
-                    <SubscribeButton
-                      followState={cv.community_actions?.follow_state}
-                      apId={cv.community.ap_id}
-                      onFollow={() => handleFollow(this, cv.community.id, true)}
-                      onUnFollow={() =>
-                        handleFollow(this, cv.community.id, false)
-                      }
-                      isLink
-                      showRemoteFetch={!this.isoData.myUserInfo}
-                    />
-                  </div>
+                  <div className={countCols}>{this.subscribeButton(cv)}</div>
                 </div>
                 <hr />
               </>
@@ -281,6 +304,12 @@ export class Communities extends Component<
               >
                 <Icon icon="shuffle" />
               </button>
+            </div>
+            <div className="col">
+              <CommunityViewSwitch
+                cards={this.state.cards}
+                onChange={cards => this.setState({ cards })}
+              />
             </div>
             <div className="col">{this.searchForm()}</div>
           </div>
