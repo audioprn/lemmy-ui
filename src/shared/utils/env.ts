@@ -20,7 +20,9 @@ export function getHttpBaseInternal() {
 }
 
 export function getBackendHostExternal() {
-  return !hosts ? window.isoData.lemmyBackend : hosts.backendExternal;
+  // audioprn: browsers reach the backend at the address the page came from, so the
+  // site works at localhost and through the tunnel (audioprn.net) at the same time.
+  return !hosts ? window.location.origin : hosts.backendExternal;
 }
 
 export function getBaseUrl(host: string) {
