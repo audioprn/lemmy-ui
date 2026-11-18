@@ -25,6 +25,13 @@ export function getBackendHostExternal() {
   return !hosts ? window.location.origin : hosts.backendExternal;
 }
 
+// audioprn: pictures on our own backend load from the page's address, not the
+// address the backend saved them with (localhost in dev, which other people can't reach).
+export function localImageSrc(src: string) {
+  const backend = !hosts ? window.isoData.lemmyBackend : hosts.backendExternal;
+  return src.startsWith(backend + "/") ? src.slice(backend.length) : src;
+}
+
 export function getBaseUrl(host: string) {
   const hasProtocol = /^https?:\/\//.test(host);
   const defaultProtocol =

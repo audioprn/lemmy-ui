@@ -5,7 +5,7 @@ import { Component } from "inferno";
 
 import { setIsoData } from "@utils/app";
 import { IsoData } from "@utils/types";
-import { getStaticDir } from "@utils/env";
+import { getStaticDir, localImageSrc } from "@utils/env";
 import { masonryUpdatePostListings } from "@utils/browser";
 import { ImageDetails } from "lemmy-js-client";
 import { createRef } from "inferno";
@@ -210,7 +210,7 @@ export function buildPictrsSrc(src: string, type: PictrsImageType): string {
       break;
   }
 
-  return url.href;
+  return localImageSrc(url.href); // audioprn
 }
 
 function blurryPlaceholder(width: number | string, height: number | string) {

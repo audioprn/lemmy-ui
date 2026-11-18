@@ -2,6 +2,7 @@
 // description, counts, Join), next to Lemmy's list. The choice is remembered in this browser.
 import { CommunityLink } from "@components/community/community-link";
 import { numToSI } from "@utils/helpers";
+import { localImageSrc } from "@utils/env";
 import { InfernoNode } from "inferno";
 import { CommunityView, MyUserInfo } from "lemmy-js-client";
 
@@ -75,7 +76,7 @@ export function CommunityCards({
           <div className="card h-100">
             {cv.community.banner && (
               <img
-                src={cv.community.banner}
+                src={localImageSrc(cv.community.banner)}
                 alt=""
                 className="card-img-top object-fit-cover"
                 style="height: 6rem"

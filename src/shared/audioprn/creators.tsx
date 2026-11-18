@@ -2,6 +2,7 @@
 // and the Follow / "Post on my page" buttons on a creator's profile (their Creator page).
 // Creator page posts go to the `creators` community, which Content doesn't show.
 import { reportToast, setIsoData, toast, WithHead } from "@utils/app";
+import { localImageSrc } from "@utils/env";
 import { Component } from "inferno";
 import { Link, RouterContext } from "inferno-router";
 import { htmlTags } from "@components/common/html-tags";
@@ -148,7 +149,7 @@ export class Creators extends Component<WithHead, CreatorsState> {
                   <li className="d-flex align-items-center gap-2 mb-2">
                     {c.avatar && (
                       <img
-                        src={c.avatar}
+                        src={localImageSrc(c.avatar)}
                         alt=""
                         width={32}
                         height={32}
