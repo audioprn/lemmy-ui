@@ -87,7 +87,7 @@ export class CreatorPin extends Component<
         >
           📜 {this.isMe ? "Your masterlist" : "Masterlist"}
           <span className="d-block fs-6 fw-normal">
-            Every audio in one place
+            Browse all my published works
           </span>
         </Link>
         {this.pinCard()}
