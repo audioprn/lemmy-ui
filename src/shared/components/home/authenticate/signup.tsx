@@ -514,9 +514,8 @@ async function handleRegisterSubmit(
             );
           }
 
-          // audioprn: listeners get their recovery code first (no email); creators land on the
-          // home page (an admin resets their password if they forget it).
-          i.props.history.replace(i.isCreator ? "/" : "/recovery_code");
+          // audioprn: new accounts get their recovery code first (no email).
+          i.props.history.replace("/recovery_code");
         } else {
           if (data.verify_email_sent) {
             toast(I18NextService.i18n.t("verify_email_sent"));

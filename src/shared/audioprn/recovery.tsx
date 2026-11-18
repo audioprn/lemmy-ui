@@ -1,16 +1,12 @@
-// audioprn: no email (user, 2026-11-18), so no password reset emails. Listeners keep a recovery
-// code, shown once, to set a new password at /login_reset. Verified creators and admins ask an
-// admin, who sets a temporary password for them from their profile. The wording is placeholder.
+// audioprn: no email (user, 2026-11-18), so no password reset emails. Everyone keeps a recovery
+// code, shown once, to set a new password at /login_reset. A creator who lost the code too asks
+// an admin (the backup), who sets a temporary password from their profile. Admins don't use
+// codes. The wording is placeholder.
 import { setIsoData, toast, WithHead } from "@utils/app";
 import { Component } from "inferno";
 import { Link, RouterContext } from "inferno-router";
 import { htmlTags } from "@components/common/html-tags";
 import { call } from "./creator-api";
-import {
-  creatorStatus,
-  loadCreatorStatus,
-  subscribeCreatorStatus,
-} from "./creator-status";
 
 /** The code, big, with a copy button. */
 function ShowCode({ code }: { code: string }) {
@@ -48,17 +44,7 @@ export class RecoveryCodePage extends Component<
   { code?: string; busy: boolean }
 > {
   private isoData = setIsoData(this.context);
-  private unsubscribe?: () => void;
   state: { code?: string; busy: boolean } = { busy: false };
-
-  componentDidMount() {
-    this.unsubscribe = subscribeCreatorStatus(() => this.forceUpdate());
-    loadCreatorStatus(this.isoData.myUserInfo);
-  }
-
-  componentWillUnmount() {
-    this.unsubscribe?.();
-  }
 
   async make() {
     this.setState({ busy: true });
@@ -73,9 +59,6 @@ export class RecoveryCodePage extends Component<
 
   render() {
     const mui = this.isoData.myUserInfo;
-    const askAdmin =
-      mui?.local_user_view.local_user.admin ||
-      creatorStatus(mui) === "approved";
     htmlTags({
       head: this.props.head,
       title: `Recovery code - ${this.isoData.siteRes?.site_view.site.name ?? ""}`,
@@ -88,10 +71,10 @@ export class RecoveryCodePage extends Component<
           <p>
             <Link to="/login">Log in</Link> first.
           </p>
-        ) : askAdmin ? (
+        ) : mui.local_user_view.local_user.admin ? (
           <p>
-            Creators and admins don't use recovery codes. If you forget your
-            password, ask an admin to reset it.
+            Admins don't use recovery codes: a lost admin password is reset on
+            the server.
           </p>
         ) : this.state.code ? (
           <>
@@ -104,8 +87,12 @@ export class RecoveryCodePage extends Component<
           <>
             <p>
               audioprn doesn't use email. If you forget your password, your
-              recovery code is the only way back into your account: with your
+              recovery code is the way back into your account: with your
               username and the code, you can set a new password.
+            </p>
+            <p className="small text-muted">
+              Listeners who lose both can't get back in. Creators who lose both
+              can, as a last resort, ask an admin to reset their password.
             </p>
             <p className="small text-muted">
               Making a code replaces any code you had before.
@@ -214,8 +201,8 @@ export class AccountRecovery extends Component<WithHead, RecoverState> {
               signed up, and choose a new password.
             </p>
             <p className="small text-muted">
-              Creators: recovery codes aren't for creator accounts. Ask an admin
-              to reset your password.
+              Creators who've lost their recovery code too: ask an admin to
+              reset your password.
             </p>
             {field("username", "Username")}
             {field("code", "Recovery code")}

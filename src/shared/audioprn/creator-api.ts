@@ -45,8 +45,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   invalid_url_scheme: "Links must start with https:// or http://",
   already_exists: "You already have a creator application.",
   invalid_recovery_code: "That username and recovery code don't match.",
-  creators_ask_an_admin:
-    "Creators and admins can't use a recovery code: please ask an admin to reset your password.",
+  admins_dont_use_codes:
+    "Admins don't use recovery codes: a lost admin password is reset on the server.",
   invalid_password: "Passwords must be 10 to 60 characters long.",
   cant_reset_an_admin: "Admins' passwords can't be reset here.",
   rate_limit_error: "Too many tries. Please wait a while and try again.",
