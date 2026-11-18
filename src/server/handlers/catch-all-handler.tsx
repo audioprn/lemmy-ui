@@ -72,6 +72,12 @@ export default async (req: Request, res: Response) => {
       tryUser = await client.getMyUser();
     }
 
+    // audioprn: creator page posts' cummunity has no page; its posts show on each creator's profile
+    if (path === "/c/creators") {
+      res.redirect("/creators");
+      return;
+    }
+
     if (!auth && isAuthPath(path)) {
       res.redirect(`/login${getQueryString({ prev: url })}`);
       return;

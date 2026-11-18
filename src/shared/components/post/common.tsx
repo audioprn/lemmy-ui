@@ -162,18 +162,21 @@ export function PostCreatedLine({
 }: PostCreatedLineProps) {
   return (
     <div className="small mb-1 mb-md-0">
-      {SHOW_COMMUNITIES && showCommunity && (
-        <>
-          <CommunityLink
-            community={postView.community}
-            myUserInfo={myUserInfo}
-            muted={muteCommunityName}
-          />
-          <span className="mx-1 small text-muted">
-            {I18NextService.i18n.t("by")}
-          </span>
-        </>
-      )}
+      {/* audioprn: creator page posts just show their creator (no "Creator pages by") */}
+      {SHOW_COMMUNITIES &&
+        showCommunity &&
+        postView.community.name !== "creators" && (
+          <>
+            <CommunityLink
+              community={postView.community}
+              myUserInfo={myUserInfo}
+              muted={muteCommunityName}
+            />
+            <span className="mx-1 small text-muted">
+              {I18NextService.i18n.t("by")}
+            </span>
+          </>
+        )}
       <PersonListing
         person={postView.creator}
         banned={

@@ -86,6 +86,8 @@ export function communityLink(
   const local = community.local === null ? true : community.local;
 
   if (local) {
+    // audioprn: creator page posts' cummunity isn't a page of its own; the Creators list is
+    if (community.name === "creators") return { link: "/creators" };
     return { link: `/c/${community.name}` };
   } else {
     const serverStr = `@${hostname(community.ap_id)}`;
