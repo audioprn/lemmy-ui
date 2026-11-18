@@ -31,6 +31,9 @@ export interface CreatorApplicationView {
 
 /** Readable messages for the backend's creator error codes. */
 const ERROR_MESSAGES: Record<string, string> = {
+  username_already_taken: "That username is taken. Try another.",
+  invalid_name:
+    "Usernames use letters, numbers and _ only (no spaces), 2 to 20 characters.",
   creator_three_content_links_required:
     "Please add exactly 3 links to your audios or scripts.",
   creator_content_links_must_be_different:
@@ -155,11 +158,12 @@ export async function call<T>(
 export function submitCreatorApplication(
   content_links: string[],
   social_links: string[],
+  username?: string,
 ) {
   return call<{ creator_application: CreatorApplication }>(
     "POST",
     "/creator_application",
-    { content_links, social_links },
+    { content_links, social_links, username },
   );
 }
 

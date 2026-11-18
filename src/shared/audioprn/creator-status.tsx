@@ -128,6 +128,8 @@ function markApplied() {
 interface ApplyState {
   content: string[];
   social: string;
+  /** Their creator username; the account is renamed to it (user, 2026-11-18). */
+  username?: string;
   sending: boolean;
 }
 
@@ -158,6 +160,8 @@ export class CreatorSignupLoggedIn extends Component<
   async apply(event: Event) {
     event.preventDefault();
     this.setState({ sending: true });
+    const oldName = this.props.myUserInfo.local_user_view.person.name;
+    const username = this.state.username?.trim();
     try {
       await submitCreatorApplication(
         this.state.content.map(l => l.trim()),
@@ -165,7 +169,13 @@ export class CreatorSignupLoggedIn extends Component<
           .split("\n")
           .map(l => l.trim())
           .filter(Boolean),
+        username,
       );
+      // A new username: reload so the whole site shows it.
+      if (username && username !== oldName) {
+        location.reload();
+        return;
+      }
       markApplied();
     } catch (e) {
       toast((e as Error).message, "danger");
@@ -213,6 +223,25 @@ export class CreatorSignupLoggedIn extends Component<
                 ? "Your creator application wasn't approved. You can apply again with other links."
                 : `You're logged in as ${name}. Apply to post as a creator with this account:`}
             </p>
+            <label className="form-label h6" htmlFor="apply-username">
+              Creator username
+            </label>
+            <p className="text-muted small mb-1">
+              The name listeners will know you by: your login, your page address
+              (/u/name) and how credits name you. Keep {name} or pick a new one.
+            </p>
+            <input
+              type="text"
+              id="apply-username"
+              className="form-control mb-3"
+              required
+              minLength={2}
+              maxLength={20}
+              pattern="[A-Za-z0-9_]+"
+              title="Letters, numbers and _ only"
+              value={this.state.username ?? name}
+              onInput={e => this.setState({ username: e.target.value })}
+            />
             <fieldset className="mb-3">
               <legend className="h6">Your work</legend>
               <p className="text-muted small">

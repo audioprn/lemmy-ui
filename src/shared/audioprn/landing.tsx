@@ -4,9 +4,24 @@ import { setIsoData, WithHead } from "@utils/app";
 import { Component } from "inferno";
 import { Link, RouterContext } from "inferno-router";
 import { htmlTags } from "@components/common/html-tags";
+import {
+  canPost,
+  loadCreatorStatus,
+  subscribeCreatorStatus,
+} from "./creator-status";
 
 export class Landing extends Component<WithHead, object> {
   private isoData = setIsoData(this.context);
+  private unsubscribe?: () => void;
+
+  componentDidMount() {
+    this.unsubscribe = subscribeCreatorStatus(() => this.forceUpdate());
+    loadCreatorStatus(this.isoData.myUserInfo);
+  }
+
+  componentWillUnmount() {
+    this.unsubscribe?.();
+  }
 
   render() {
     htmlTags({
@@ -32,7 +47,8 @@ export class Landing extends Component<WithHead, object> {
           post, any registered user may comment. All links must be to full and
           free audios and scripts.
         </p>
-        {/* New visitors get the two signups (user, 2026-11-18); members, Content and Creators */}
+        {/* New visitors get the two signups (user, 2026-11-18); members, Content and Creators,
+            plus Become a creator for those who can't post yet */}
         <div className="d-flex flex-wrap justify-content-center gap-3">
           {this.isoData.myUserInfo ? (
             <>
@@ -42,6 +58,14 @@ export class Landing extends Component<WithHead, object> {
               <Link className="btn btn-lg btn-primary px-5" to="/creators">
                 Creators
               </Link>
+              {canPost(this.isoData.myUserInfo) === false && (
+                <Link
+                  className="btn btn-lg btn-primary px-5"
+                  to="/signup/creator"
+                >
+                  Become a creator
+                </Link>
+              )}
             </>
           ) : (
             <>
