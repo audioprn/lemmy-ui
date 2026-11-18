@@ -151,7 +151,7 @@ interface Props {
   /** A search problem from the backend, already in words. */
   error?: string;
   compact: boolean;
-  /** Search results include the dark cummunity's tags ([Extreme], slurs). */
+  /** Search results include very taboo tags ([Extreme], slurs…: the admins' list). */
   extreme: boolean;
   onExtreme: (on: boolean) => void;
   onSearch: (q: string | undefined) => void;
@@ -448,7 +448,7 @@ export class SearchPanel extends Component<Props, State> {
               htmlFor="search-extreme"
               title="These posts never show on the Content page itself, only in search results."
             >
-              Include [Extreme] and slur tags
+              Include very taboo tags ([Extreme], slurs…)
             </label>
           </div>
           {saved?.saved_query && (

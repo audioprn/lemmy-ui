@@ -101,6 +101,13 @@ function messageFor(code?: string): string | undefined {
   if (code?.startsWith("opted_out:")) {
     return `u/${code.slice("opted_out:".length)} has opted out of audioprn, so posts can't mention them.`;
   }
+  // "very_taboo:tag:dark, gay": the tag and the cummunities that allow it.
+  if (code?.startsWith("very_taboo:")) {
+    const rest = code.slice("very_taboo:".length);
+    const at = rest.lastIndexOf(":");
+    const where = rest.slice(at + 1);
+    return `[${rest.slice(0, at)}] is a very taboo tag: it can only be posted ${where ? `in ${where} or ` : ""}on your creator page.`;
+  }
   return code && Object.hasOwn(ERROR_MESSAGES, code)
     ? ERROR_MESSAGES[code]
     : undefined;

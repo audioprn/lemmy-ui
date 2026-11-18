@@ -27,7 +27,7 @@ const STORAGE_KEY = "audioprn_content_filters";
  * and posts kept off Content, then these filters (none = the defaults, which show everything).
  */
 export function contentFilters(filters?: string, q?: string) {
-  // The dark cummunity's tags only ever show in search results.
+  // Very taboo tags only ever show in search results on the Content page.
   const list = (filters ?? DEFAULT_FILTERS)
     .split(",")
     .filter(f => q || f !== EXTREME);
@@ -37,7 +37,7 @@ export function contentFilters(filters?: string, q?: string) {
   };
 }
 
-/** Search results also show posts with the dark cummunity's tags ([Extreme], slurs). */
+/** Search results also show posts with very taboo tags ([Extreme], slurs…: the admins' list). */
 export const EXTREME = "extreme";
 
 /** The filters with `name` turned on or off, as kept in the URL (and remembered). */
@@ -165,8 +165,91 @@ export class ContentFilters extends Component<Props, object> {
             </label>
           </div>
         ))}
-        {amAdmin(this.isoData.myUserInfo) && <TabooEditor />}
+        {amAdmin(this.isoData.myUserInfo) && (
+          <>
+            <TabooEditor />
+            <VeryTabooEditor />
+          </>
+        )}
       </div>
+    );
+  }
+}
+
+interface VeryTaboo {
+  tags: string[];
+  communities: string[];
+}
+
+/**
+ * Admins: very taboo tags, which can only be posted in the cummunities listed (and on creator
+ * pages) and never show on the Content page (user, 2026-11-18).
+ */
+class VeryTabooEditor extends Component<
+  object,
+  { tags?: string; communities?: string }
+> {
+  state: { tags?: string; communities?: string } = {};
+
+  show({ tags, communities }: VeryTaboo) {
+    this.setState({
+      tags: tags.map(t => `[${t}]`).join(", "),
+      communities: communities.join(", "),
+    });
+  }
+
+  async load() {
+    if (this.state.tags === undefined) {
+      this.show(await call<VeryTaboo>("GET", "/very_taboo"));
+    }
+  }
+
+  async save() {
+    try {
+      this.show(
+        await call<VeryTaboo>("PUT", "/very_taboo", {
+          tags: (this.state.tags ?? "").split(","),
+          communities: (this.state.communities ?? "").split(","),
+        }),
+      );
+      toast("Very taboo tags saved.");
+    } catch (e) {
+      toast((e as Error).message, "danger");
+    }
+  }
+
+  render() {
+    return (
+      <details className="small mt-2" onToggle={() => this.load()}>
+        <summary className="text-muted">Very taboo tags (admins)</summary>
+        <p className="text-muted mt-1 mb-1">
+          Only allowed in the cummunities below and on creator pages; never on
+          the Content page.
+        </p>
+        <textarea
+          className="form-control form-control-sm"
+          rows={3}
+          aria-label="Very taboo tags, comma-separated"
+          value={this.state.tags ?? ""}
+          onInput={e => this.setState({ tags: e.target.value })}
+        />
+        <label className="d-block mt-1">
+          Allowed in cummunities (names, comma-separated)
+          <input
+            className="form-control form-control-sm"
+            value={this.state.communities ?? ""}
+            onInput={e => this.setState({ communities: e.target.value })}
+          />
+        </label>
+        <button
+          type="button"
+          className="btn btn-sm btn-secondary mt-1"
+          disabled={this.state.tags === undefined}
+          onClick={() => this.save()}
+        >
+          Save
+        </button>
+      </details>
     );
   }
 }
