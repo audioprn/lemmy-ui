@@ -101,7 +101,8 @@ export class ShareWithCreator extends Component<{ postView: PostView }, State> {
     const { post } = this.props.postView;
     const res = await HttpService.client.createPrivateMessage({
       recipient_id: id,
-      content: `I think you'd love this script: [${post.name.replace(/[[\]]/g, "\\$&")}](${location.origin}/post/${post.id})`,
+      // A link on this site (no address), so it opens wherever the creator reads it.
+      content: `I think you'd love this script: [${post.name.replace(/[[\]]/g, "\\$&")}](/post/${post.id})`,
     });
     return res.state === "success"
       ? `${username}: sent.`
