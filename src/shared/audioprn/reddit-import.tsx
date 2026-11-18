@@ -4,7 +4,7 @@
 // [Script Fill], [Private Script Fill] and [Script Offer] leave the title (the flair says it) and
 // tags past the 7th move to the top of the text, so titles meet the Content page rule. Credits
 // come only from "script by" / "written by" (writer) and "edited by" / "edit by" (editor) followed
-// by a username. A post with a scriptbin link and no audio link is a script offer even untagged.
+// by a username, maybe after a few words ("script by the wonderful u/name"). A post with a scriptbin link and no audio link is a script offer even untagged.
 // Posts keep their Reddit date and say where they were first posted. Cross-posts (same title, tags
 // aside) become one post: the newest copy, as the script may have been updated since; the other
 // copies' Reddit ids are remembered with it.
@@ -97,6 +97,11 @@ export function parseCsv(s: string): string[][] {
   return rows;
 }
 
+// Up to 10 words may come before the first name, in the same sentence: "script by the very
+// wonderful and talented u/name", "by my collab partner, u/name", "by me & u/name". Not across
+// words that start something else: "script by me, voiced by u/name", "with help from u/name".
+const WORDS =
+  /\s*:?\s*\**\s*(?:[*_]*(?!(?:by|from|for|with|to|thanks|i)\b)[\p{L}'’-]+[*_]*,?\s+|&\s+){0,10}/iuy;
 const NAME =
   /\s*:?\s*\**\s*(?:\[[^\]]*\]\(https?:\/\/(?:www\.|old\.)?reddit\.com\/u(?:ser)?\/([\w-]+)\/?\)|\/?u\/([\w\\-]+))/y;
 const SEPARATOR = /\s*(?:,|&|\band\b)/y;
@@ -105,13 +110,15 @@ const SEPARATOR = /\s*(?:,|&|\band\b)/y;
 function namesAfter(body: string, phrase: RegExp): string {
   const names = new Set<string>();
   for (const m of body.matchAll(phrase)) {
-    let i = (m.index ?? 0) + m[0].length;
+    WORDS.lastIndex = (m.index ?? 0) + m[0].length;
+    WORDS.exec(body);
+    let i = WORDS.lastIndex;
     for (;;) {
       NAME.lastIndex = i;
       const n = NAME.exec(body);
       if (!n) break;
       names.add((n[1] ?? n[2]).replace(/\\/g, ""));
-      SEPARATOR.lastIndex = i = NAME.lastIndex;
+      SEPARATOR.lastIndex = NAME.lastIndex;
       if (!SEPARATOR.exec(body)) break;
       i = SEPARATOR.lastIndex;
     }
@@ -403,8 +410,9 @@ export class RedditImport extends Component<Props, State> {
             titles (the flair shows it), and tags after the 7th move to the top
             of the post text. Writers and editors are taken from &ldquo;script
             by&rdquo;, &ldquo;written by&rdquo;, &ldquo;edited by&rdquo; or
-            &ldquo;edit by&rdquo; followed by a username: check them before
-            importing. Posts keep their Reddit date and link back to Reddit.
+            &ldquo;edit by&rdquo; followed by a username (&ldquo;script by the
+            wonderful u/name&rdquo; works too): check them before importing.
+            Posts keep their Reddit date and link back to Reddit.
           </p>
           {/* audioprn: placeholder wording for the multi-voice rule (to be rewritten) */}
           <p className="small text-muted">
