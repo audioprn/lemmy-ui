@@ -6,6 +6,7 @@ import { mdToHtml } from "@utils/markdown";
 import { Component } from "inferno";
 import { batchLoader } from "./batch-loader";
 import { call } from "./creator-api";
+import { getPostCredits } from "./post-credits";
 
 interface Footer {
   person_id: number;
@@ -50,10 +51,36 @@ export class PostFooter extends Component<{ creatorId: number }, object> {
   }
 }
 
-/** The creator's optional cash box (their support links), inside their Content posts at the bottom. */
-export class CashBox extends PostFooter {
+/** A creator's default cash box text (Settings), for the post form. */
+export const defaultCashBox = (creatorId: number) =>
+  getFooters([creatorId]).then(r => r.footers[0]?.support ?? "");
+
+/** The creator's optional cash box (their support links), inside their Content posts at the
+ * bottom: the post's own text if they changed it on the post form, else their default. */
+export class CashBox extends Component<
+  { creatorId: number; postId: number },
+  { own?: string | null }
+> {
+  state: { own?: string | null } = {};
+  private unsubscribe?: () => void;
+
+  async componentDidMount() {
+    this.unsubscribe = footers.subscribe(() => this.forceUpdate());
+    footers.request(this.props.creatorId);
+    const { cash_boxes } = await getPostCredits(this.props.postId).catch(
+      () => ({ cash_boxes: [] }),
+    );
+    this.setState({ own: cash_boxes[0]?.text ?? null });
+  }
+
+  componentWillUnmount() {
+    this.unsubscribe?.();
+  }
+
   render() {
-    const support = footers.get(this.props.creatorId)?.support;
+    const { own } = this.state;
+    if (own === undefined) return null;
+    const support = own ?? footers.get(this.props.creatorId)?.support;
     if (!support) return null;
     return (
       <div className="col-12">

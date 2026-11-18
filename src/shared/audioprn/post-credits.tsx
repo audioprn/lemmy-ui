@@ -32,20 +32,26 @@ const credits = batchLoader<PostCredit[]>(async ids => {
   return byPost;
 }, []);
 
-/** A post's credits, whether it's kept off the Content page, and whether it welcomes no men. */
-export async function getPostCredits(
-  postId: number,
-): Promise<{ credits: PostCredit[]; off_content: number[]; no_men: number[] }> {
+/** A post's credits, whether it's kept off the Content page, whether it welcomes no men, and its
+ * own cash box text (none: its creator's default from Settings). */
+export async function getPostCredits(postId: number): Promise<{
+  credits: PostCredit[];
+  off_content: number[];
+  no_men: number[];
+  cash_boxes: { post_id: number; text: string }[];
+}> {
   const res = await fetch(`${api()}?post_ids=${postId}`);
   return res.json();
 }
 
-/** Replaces a post's credits (and sets off_content, no_men). Throws if the backend refuses. */
+/** Replaces a post's credits (and sets off_content, no_men and its cash box text, when given).
+ * Throws if the backend refuses. */
 export async function savePostCredits(
   postId: number,
   list: PostCredit[],
   offContent?: boolean,
   noMen?: boolean,
+  cashBox?: string,
 ) {
   const res = await fetch(api(), {
     method: "PUT",
@@ -58,6 +64,7 @@ export async function savePostCredits(
       credits: list,
       off_content: offContent,
       no_men: noMen,
+      cash_box: cashBox,
     }),
   });
   if (!res.ok) throw new Error("Couldn't save the credits.");

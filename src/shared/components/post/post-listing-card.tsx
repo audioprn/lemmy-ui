@@ -205,7 +205,10 @@ export class PostListingCard extends Component<
             {/* audioprn: the creator's cash box, inside Content posts at the bottom (post page) */}
             {p.showBody === "full" &&
               p.postView.community.name !== "creators" && (
-                <CashBox creatorId={p.postView.creator.id} />
+                <CashBox
+                  creatorId={p.postView.creator.id}
+                  postId={p.postView.post.id}
+                />
               )}
           </div>
           {/* audioprn: the script (Script Offer posts) and the creator's footer on the post page */}

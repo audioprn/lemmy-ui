@@ -101,6 +101,7 @@ import {
   parseCredits,
   savePostCredits,
 } from "../../audioprn/post-credits";
+import { defaultCashBox } from "../../audioprn/post-footer";
 import {
   getScriptFill,
   saveScriptFill,
@@ -187,6 +188,8 @@ interface PostFormState {
   offContent?: boolean;
   /** audioprn: sapphic, "No comments from men are welcome on this post" (also off Content) */
   noMen?: boolean;
+  /** audioprn: the post's cash box text (starts as the creator's default from Settings) */
+  cashBox?: string;
   /** audioprn: the post's credits were loaded, so saving an edit may replace them */
   creditsLoaded?: boolean;
   /** audioprn: rich text mode for the body */
@@ -302,16 +305,27 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
     if (this.props.draftId) {
       await loadDraft(this, this.props.draftId); // audioprn
     }
+    // audioprn: a new post's cash box starts as the creator's default (a draft keeps its own).
+    const me = this.props.myUserInfo?.local_user_view.person.id;
+    if (!this.props.post_view && me && this.state.cashBox === undefined) {
+      const cashBox = await defaultCashBox(me).catch(() => "");
+      this.setState(s => ({ cashBox: s.cashBox ?? cashBox }));
+    }
     // audioprn: load the post's credits when editing.
     const pv = this.props.post_view;
     if (pv) {
-      const { credits, off_content, no_men } = await getPostCredits(pv.post.id);
+      const { credits, off_content, no_men, cash_boxes } = await getPostCredits(
+        pv.post.id,
+      );
       this.setState({
         credits: Object.fromEntries(
           CREDIT_ROLES.map(({ role }) => [role, creditsText(credits, role)]),
         ),
         offContent: off_content.includes(pv.post.id),
         noMen: no_men.includes(pv.post.id),
+        cashBox:
+          cash_boxes[0]?.text ??
+          (await defaultCashBox(pv.creator.id).catch(() => "")),
         creditsLoaded: true,
       });
       const fill = await getScriptFill(pv.post.id).catch(() => undefined);
@@ -338,6 +352,14 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
       (this.props.post_view?.community.name ??
         this.props.selectedCommunityName) === SAPPHIC_COMMUNITY_NAME
     );
+  }
+
+  /** audioprn: the cash box text to save (creator page posts have none; unchanged if not loaded). */
+  get cashBoxToSave(): string | undefined {
+    const creatorPage =
+      this.props.creatorPage ||
+      this.props.post_view?.community.name === "creators";
+    return creatorPage ? undefined : this.state.cashBox;
   }
 
   /** audioprn: what to save as no_men: only for sapphic posts. */
@@ -414,6 +436,29 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
                   </label>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+        {/* audioprn: the green cash box at the bottom of Content posts, editable per post */}
+        {!creatorPage && this.state.cashBox !== undefined && (
+          <div className="mb-3 row">
+            <label className="col-sm-2 col-form-label" htmlFor="post-cash-box">
+              Cash box
+            </label>
+            <div className="col-sm-10">
+              <textarea
+                id="post-cash-box"
+                className="form-control"
+                rows={3}
+                maxLength={500}
+                value={this.state.cashBox}
+                onInput={e => this.setState({ cashBox: e.target.value })}
+              />
+              <div className="small text-muted mt-1">
+                Your support links, in a pale green box at the bottom of this
+                post. It starts as your default from Settings; leave it empty
+                for no box on this post.
+              </div>
             </div>
           </div>
         )}
@@ -1340,6 +1385,7 @@ function handlePostSubmit(i: PostForm, event: FormEvent<HTMLFormElement>) {
             credits,
             !!i.state.offContent,
             i.noMen,
+            i.cashBoxToSave,
           ).catch(e => toast(e.message, "danger"));
         }
         // audioprn: the script this fills, when changed
@@ -1389,7 +1435,13 @@ function handlePostSubmit(i: PostForm, event: FormEvent<HTMLFormElement>) {
         // Each part is saved on its own, so one failing doesn't lose the others.
         const failed = (
           await Promise.allSettled([
-            savePostCredits(postId, credits, !!i.state.offContent, i.noMen),
+            savePostCredits(
+              postId,
+              credits,
+              !!i.state.offContent,
+              i.noMen,
+              i.cashBoxToSave,
+            ),
             i.scriptOffer &&
               script &&
               (script.body.trim() || script.link.trim()) &&
@@ -1421,7 +1473,8 @@ function handlePostSubmit(i: PostForm, event: FormEvent<HTMLFormElement>) {
 }
 // audioprn: save the whole form as a draft (JSON), or update the open draft.
 async function handleSaveDraft(i: PostForm) {
-  const { form, credits, offContent, noMen, richText, poll, script } = i.state;
+  const { form, credits, offContent, noMen, cashBox, richText, poll, script } =
+    i.state;
   try {
     const { id } = await saveDraft(
       i.state.draftId,
@@ -1431,6 +1484,7 @@ async function handleSaveDraft(i: PostForm) {
         credits,
         offContent,
         noMen,
+        cashBox,
         richText,
         poll,
         script,
@@ -1452,6 +1506,7 @@ async function loadDraft(i: PostForm, id: number) {
       | "credits"
       | "offContent"
       | "noMen"
+      | "cashBox"
       | "richText"
       | "poll"
       | "script"
