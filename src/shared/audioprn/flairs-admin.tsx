@@ -1,42 +1,33 @@
 // audioprn: admins' Flairs page (/admin/flairs): the Content page's post flairs (wording, colour,
-// new ones). Creators' pages have the same flairs, so every change is made there too. A flair's
-// name (used in links and by the site) can't change; its display name can. Cummunity mods manage
-// their own flairs in their cummunity's settings (Flairs tab).
+// new ones). Creator page posts have no flairs (user, 2026-11-18). A flair's name (used in links
+// and by the site) can't change; its display name can. Cummunity mods manage their own flairs in
+// their cummunity's settings (Flairs tab).
 import { CommunityTagForm } from "@components/community/community-tag-form";
 import { htmlTags } from "@components/common/html-tags";
 import { setIsoData, toast, WithHead } from "@utils/app";
 import { amAdmin } from "@utils/roles";
 import { Component } from "inferno";
 import { RouterContext } from "inferno-router";
-import { CommunityView, CommunityTag } from "lemmy-js-client";
+import { CommunityView } from "lemmy-js-client";
 import { HttpService } from "../services";
 
-type Communities = Partial<Record<"main" | "creators", CommunityView>>;
-
-export class FlairsAdmin extends Component<WithHead, Communities> {
+export class FlairsAdmin extends Component<WithHead, { main?: CommunityView }> {
   private isoData = setIsoData(this.context);
-  state: Communities = {};
+  state: { main?: CommunityView } = {};
 
   componentDidMount() {
-    this.load();
+    void this.load();
   }
 
   async load() {
-    for (const name of ["main", "creators"] as const) {
-      const res = await HttpService.client.getCommunity({ name });
-      if (res.state === "success") {
-        this.setState({ [name]: res.data.community_view });
-      }
+    const res = await HttpService.client.getCommunity({ name: "main" });
+    if (res.state === "success") {
+      this.setState({ main: res.data.community_view });
     }
   }
 
-  /** The creators' page flair with the same name. */
-  twin(tag: CommunityTag) {
-    return this.state.creators?.tags.find(t => t.name === tag.name);
-  }
-
-  async done(results: { state: string }[], message: string) {
-    if (results.every(r => r.state === "success")) toast(message);
+  async done(result: { state: string }, message: string) {
+    if (result.state === "success") toast(message);
     else toast("That didn't work, try again.", "danger");
     await this.load();
   }
@@ -50,15 +41,15 @@ export class FlairsAdmin extends Component<WithHead, Communities> {
     if (!amAdmin(this.isoData.myUserInfo)) {
       return <div className="container-lg">Only admins can see this page.</div>;
     }
-    const { main, creators } = this.state;
+    const { main } = this.state;
     const myUserInfo = this.isoData.myUserInfo;
     return (
       <div className="container-lg">
         <h1 className="h4 mb-1">Flairs</h1>
         <p className="small text-muted mb-3">
-          The post flairs on the Content page and creators' pages. Change the
-          display name (the wording people see) and the colour. Cummunity
-          moderators manage their own cummunity's flairs in its settings.
+          The post flairs on the Content page. Change the display name (the
+          wording people see) and the colour. Cummunity moderators manage their
+          own cummunity's flairs in its settings.
         </p>
         {/* Deleted flairs last (they can be restored). */}
         {[...(main?.tags ?? [])]
@@ -69,42 +60,21 @@ export class FlairsAdmin extends Component<WithHead, Communities> {
               tag={tag}
               createOrEditLoading={false}
               myUserInfo={myUserInfo}
-              onEdit={async form => {
-                const twin = this.twin(tag);
-                const results = await Promise.all([
-                  HttpService.client.editCommunityTag(form),
-                  ...(twin
-                    ? [
-                        HttpService.client.editCommunityTag({
-                          ...form,
-                          tag_id: twin.id,
-                        }),
-                      ]
-                    : []),
-                ]);
-                await this.done(results, "Flair saved.");
-              }}
-              onDeleteOrRestore={async form => {
-                const twin = this.twin(tag);
-                const results = await Promise.all([
-                  HttpService.client.deleteCommunityTag(form),
-                  ...(twin
-                    ? [
-                        HttpService.client.deleteCommunityTag({
-                          ...form,
-                          tag_id: twin.id,
-                        }),
-                      ]
-                    : []),
-                ]);
-                await this.done(
-                  results,
+              onEdit={async form =>
+                this.done(
+                  await HttpService.client.editCommunityTag(form),
+                  "Flair saved.",
+                )
+              }
+              onDeleteOrRestore={async form =>
+                this.done(
+                  await HttpService.client.deleteCommunityTag(form),
                   form.delete ? "Flair deleted." : "Flair restored.",
-                );
-              }}
+                )
+              }
             />
           ))}
-        {main && creators && (
+        {main && (
           <>
             <h2 className="h5 mt-4">New flair</h2>
             <CommunityTagForm
@@ -112,16 +82,12 @@ export class FlairsAdmin extends Component<WithHead, Communities> {
               communityId={main.community.id}
               createOrEditLoading={false}
               myUserInfo={myUserInfo}
-              onCreate={async form => {
-                const results = await Promise.all([
-                  HttpService.client.createCommunityTag(form),
-                  HttpService.client.createCommunityTag({
-                    ...form,
-                    community_id: creators.community.id,
-                  }),
-                ]);
-                await this.done(results, "Flair created.");
-              }}
+              onCreate={async form =>
+                this.done(
+                  await HttpService.client.createCommunityTag(form),
+                  "Flair created.",
+                )
+              }
             />
           </>
         )}

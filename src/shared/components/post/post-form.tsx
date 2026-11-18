@@ -387,30 +387,33 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
       : this.props.contentPageOnly;
     return (
       <>
-        <div className="mb-3 row">
-          <div className="col-sm-2 col-form-label">Credits</div>
-          <div className="col-sm-10">
-            {CREDIT_ROLES.map(({ role, emoji, label }) => (
-              <div className="input-group mb-2">
-                <span className="input-group-text">
-                  {emoji} {label}
-                </span>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="u/username or name, comma-separated"
-                  aria-label={label}
-                  value={this.state.credits[role] ?? ""}
-                  onInput={e =>
-                    this.setState(s => ({
-                      credits: { ...s.credits, [role]: e.target.value },
-                    }))
-                  }
-                />
-              </div>
-            ))}
+        {/* Creator page posts have no credits (user, 2026-11-18). */}
+        {!creatorPage && (
+          <div className="mb-3 row">
+            <div className="col-sm-2 col-form-label">Credits</div>
+            <div className="col-sm-10">
+              {CREDIT_ROLES.map(({ role, emoji, label }) => (
+                <div className="input-group mb-2">
+                  <span className="input-group-text">
+                    {emoji} {label}
+                  </span>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="u/username or name, comma-separated"
+                    aria-label={label}
+                    value={this.state.credits[role] ?? ""}
+                    onInput={e =>
+                      this.setState(s => ({
+                        credits: { ...s.credits, [role]: e.target.value },
+                      }))
+                    }
+                  />
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
         {!creatorPage && !contentPageOnly && (
           <div className="mb-3 row">
             <div className="col-sm-10 offset-sm-2">
@@ -1130,33 +1133,33 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
             </div>
           </div>
         )}
-        {this.props.selectedCommunityTags &&
-          this.props.selectedCommunityTags.length > 0 && (
-            <div className="mb-3 row">
-              <label className="col-sm-2 col-form-label" htmlFor="post-tags">
-                Flair
-              </label>
-              <div className="col-sm-10">
-                {/* audioprn: exactly one flair per post */}
-                <FilterChipSelect
-                  label={"tags"}
-                  multiple={false}
-                  allOptions={this.props.selectedCommunityTags
-                    .filter(t => !t.deleted)
-                    .map(tag => {
-                      return {
-                        value: tag.id.toString(),
-                        label: communityTagName(tag),
-                      };
-                    })}
-                  selectedOptions={(this.state.form.tags ?? []).map(t =>
-                    t.toString(),
-                  )}
-                  onSelect={choices => handleTagsChange(this, choices)}
-                />
-              </div>
+        {/* audioprn: not when all are deleted (creator page posts have none) */}
+        {this.props.selectedCommunityTags?.some(t => !t.deleted) && (
+          <div className="mb-3 row">
+            <label className="col-sm-2 col-form-label" htmlFor="post-tags">
+              Flair
+            </label>
+            <div className="col-sm-10">
+              {/* audioprn: exactly one flair per post */}
+              <FilterChipSelect
+                label={"tags"}
+                multiple={false}
+                allOptions={this.props.selectedCommunityTags
+                  .filter(t => !t.deleted)
+                  .map(tag => {
+                    return {
+                      value: tag.id.toString(),
+                      label: communityTagName(tag),
+                    };
+                  })}
+                selectedOptions={(this.state.form.tags ?? []).map(t =>
+                  t.toString(),
+                )}
+                onSelect={choices => handleTagsChange(this, choices)}
+              />
             </div>
-          )}
+          </div>
+        )}
         <input
           tabIndex={-1}
           autoComplete="false"

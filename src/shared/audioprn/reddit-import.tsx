@@ -403,11 +403,14 @@ export class RedditImport extends Component<Props, State> {
               reddit_id: current.id,
               also_reddit_ids: current.also.map(a => a.id),
               date: current.date,
-              credits: [
-                ...toCredits("writer", current.writers),
-                ...toCredits("editor", current.editors),
-                ...toCredits("voice_actor", current.voiceActors),
-              ],
+              // Creator page posts have no credits (or flairs: it has none).
+              credits: this.state.creatorPage
+                ? []
+                : [
+                    ...toCredits("writer", current.writers),
+                    ...toCredits("editor", current.editors),
+                    ...toCredits("voice_actor", current.voiceActors),
+                  ],
               post: {
                 name: current.title,
                 community_id: community.community.id,

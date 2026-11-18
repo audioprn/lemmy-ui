@@ -127,8 +127,7 @@ const GROUPS: Record<Group, string> = {
 interface State {
   scripts: Script[];
   username: string;
-  creatorPage: boolean;
-  communities: Partial<Record<"main" | "creators", CommunityView>>;
+  communities: Partial<Record<"main", CommunityView>>;
   importing?: { done: number; total: number };
 }
 
@@ -139,12 +138,11 @@ export class ScriptbinImport extends Component<Props, State> {
   state: State = {
     scripts: [],
     username: "",
-    creatorPage: false,
     communities: {},
   };
 
   async componentDidMount() {
-    for (const name of ["main", "creators"] as const) {
+    for (const name of ["main"] as const) {
       const res = await HttpService.client.getCommunity({ name });
       if (res.state === "success") {
         this.setState(s => ({
@@ -262,8 +260,7 @@ export class ScriptbinImport extends Component<Props, State> {
       }
       return;
     }
-    const community =
-      this.state.communities[this.state.creatorPage ? "creators" : "main"];
+    const community = this.state.communities.main; // Script Offers can't be creator page posts (no flairs)
     const flair = community?.tags.find(
       t => t.name === "script_offer" && !t.deleted,
     );
@@ -396,7 +393,7 @@ export class ScriptbinImport extends Component<Props, State> {
       title: `Import from scriptbin - ${this.isoData.siteRes?.site_view.site.name ?? ""}`,
       context: this.context as RouterContext,
     });
-    const { scripts, username, creatorPage, importing } = this.state;
+    const { scripts, username, importing } = this.state;
     const selected = scripts.filter(s => s.selected).length;
     const busy = !!importing && importing.done < importing.total;
     return (
@@ -444,23 +441,6 @@ export class ScriptbinImport extends Component<Props, State> {
                             this.setState({ username: e.target.value })
                           }
                         />
-                        <div className="form-check mb-0">
-                          <input
-                            className="form-check-input"
-                            type="checkbox"
-                            id={`scriptbin-creator-page-${group}`}
-                            checked={creatorPage}
-                            onChange={e =>
-                              this.setState({ creatorPage: e.target.checked })
-                            }
-                          />
-                          <label
-                            className="form-check-label"
-                            htmlFor={`scriptbin-creator-page-${group}`}
-                          >
-                            Post on my creator page instead of the Content page
-                          </label>
-                        </div>
                       </div>
                     )}
                     <div className="d-flex gap-2 mb-2">
