@@ -1,5 +1,6 @@
-// audioprn: the top bar's "Online now" line. Calling the backend also counts this tab as online,
-// so it's called every minute while the site is open (in the browser only, never server-side).
+// audioprn: the "Online now" line, under the news box on Content and My audioprn (user, 2026-11-18).
+// Calling the backend also counts this tab as online, so the top bar keeps a hidden one on every
+// page, calling every minute while the site is open (in the browser only, never server-side).
 import { Component } from "inferno";
 import { call } from "./creator-api";
 
@@ -11,7 +12,10 @@ interface Online {
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
-export class OnlineNow extends Component<object, { online?: Online }> {
+export class OnlineNow extends Component<
+  { show?: boolean },
+  { online?: Online }
+> {
   state: { online?: Online } = {};
   private timer?: ReturnType<typeof setInterval>;
 
@@ -31,12 +35,12 @@ export class OnlineNow extends Component<object, { online?: Online }> {
 
   render() {
     const o = this.state.online;
-    if (!o) return null;
+    if (!o || !this.props.show) return null;
     return (
-      <span className="small text-muted text-nowrap me-md-3">
+      <div className="small text-muted mb-3">
         Online now: {plural(o.creators, "creator")} ·{" "}
         {plural(o.members, "member")} · {plural(o.guests, "guest")}
-      </span>
+      </div>
     );
   }
 }

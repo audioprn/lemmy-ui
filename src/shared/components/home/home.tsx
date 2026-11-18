@@ -146,6 +146,7 @@ import {
   MyFeedPrefs,
 } from "../../audioprn/my-feed";
 import { NewsFeed } from "../../audioprn/news-feed";
+import { OnlineNow } from "../../audioprn/online-now";
 import { GuideLinks } from "../../audioprn/guides";
 import {
   ExpandChipCheckbox,
@@ -495,6 +496,7 @@ export class Home extends Component<HomeRouteProps, HomeState> {
                 key={this.props.filters === MY_FEED ? "my" : "site"}
                 my={this.props.filters === MY_FEED}
               />
+              <OnlineNow show />
               {isMyAudioprn(this.props.filters) ? (
                 <MyFeedPrefs
                   list={this.props.filters}

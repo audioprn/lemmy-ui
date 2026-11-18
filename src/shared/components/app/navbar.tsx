@@ -122,7 +122,7 @@ export class Navbar extends Component<NavbarProps, NavbarState> {
           className="navbar navbar-expand-md navbar-light p-0 px-3 container-lg"
           id="navbar"
         >
-          {/* audioprn: the "Online now" line under the title */}
+          {/* audioprn: OnlineNow shows nothing here, it counts visitors on every page */}
           <div className="d-flex flex-column">
             <NavLink
               id="navTitle"
