@@ -279,6 +279,8 @@ interface State {
   subreddit: string;
   shown: number;
   creatorPage: boolean;
+  /** Import every post hidden, to unhide later (user, 2026-11-18). */
+  hideAll: boolean;
   communities: Partial<Record<"main" | "creators", CommunityView>>;
   importing?: { done: number; total: number };
 }
@@ -294,6 +296,7 @@ export class RedditImport extends Component<Props, State> {
     subreddit: "",
     shown: PAGE,
     creatorPage: false,
+    hideAll: false,
     communities: {},
   };
 
@@ -418,6 +421,7 @@ export class RedditImport extends Component<Props, State> {
                 body: importBody(current),
                 tags: flair ? [flair.id] : undefined,
               },
+              hidden: this.state.hideAll,
             },
           );
           hidden = res.post_view.post.deleted;
@@ -548,6 +552,19 @@ export class RedditImport extends Component<Props, State> {
                     htmlFor="import-creator-page"
                   >
                     Import to my creator page instead of the Content page
+                  </label>
+                </div>
+                <div className="form-check mb-0">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id="import-hide-all"
+                    checked={this.state.hideAll}
+                    onChange={e => this.setState({ hideAll: e.target.checked })}
+                  />
+                  <label className="form-check-label" htmlFor="import-hide-all">
+                    Import them all hidden (unhide them later from 🙈 Hidden
+                    posts on My audioprn)
                   </label>
                 </div>
               </div>

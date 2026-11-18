@@ -128,6 +128,8 @@ interface State {
   scripts: Script[];
   username: string;
   communities: Partial<Record<"main", CommunityView>>;
+  /** Import the new posts hidden, to unhide later (user, 2026-11-18). */
+  hideAll?: boolean;
   importing?: { done: number; total: number };
 }
 
@@ -288,6 +290,13 @@ export class ScriptbinImport extends Component<Props, State> {
     );
     this.update(script, { postId: res.post_view.post.id });
     await this.saveText(res.post_view.post.id, script.text, url);
+    // Hidden once its script is saved (Hide is Lemmy's delete).
+    if (this.state.hideAll) {
+      await HttpService.client.deletePost({
+        post_id: res.post_view.post.id,
+        deleted: true,
+      });
+    }
   }
 
   async importSelected() {
@@ -441,6 +450,24 @@ export class ScriptbinImport extends Component<Props, State> {
                             this.setState({ username: e.target.value })
                           }
                         />
+                        <div className="form-check mb-0">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            id={`scriptbin-hide-all-${group}`}
+                            checked={!!this.state.hideAll}
+                            onChange={e =>
+                              this.setState({ hideAll: e.target.checked })
+                            }
+                          />
+                          <label
+                            className="form-check-label"
+                            htmlFor={`scriptbin-hide-all-${group}`}
+                          >
+                            Import them all hidden (unhide them later from 🙈
+                            Hidden posts on My audioprn)
+                          </label>
+                        </div>
                       </div>
                     )}
                     <div className="d-flex gap-2 mb-2">
