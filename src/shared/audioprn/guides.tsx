@@ -14,6 +14,8 @@ const GUIDES: Record<string, { title: string; file?: string }> = {
   "getting-started": { title: "Getting Started Guide" },
   tagging: { title: "Tagging Guide", file: "tagging.md" },
   search: { title: "Search Guide", file: "search.md" },
+  // Adding audioprn to a phone's home screen (2026-11-18; wording is placeholder).
+  install: { title: "Install the app", file: "install.md" },
 };
 
 // Same as Slug in guide-from-docx.ps1, so links in the guide match the heading ids.

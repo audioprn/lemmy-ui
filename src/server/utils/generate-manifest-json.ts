@@ -60,32 +60,12 @@ export default async function (site: Site) {
     background_color: "#222222",
     theme_color: "#222222",
     icons,
+    // audioprn: the site's own pages, and no Lemmy app suggested (2026-11-18)
     shortcuts: [
-      {
-        name: "Search",
-        short_name: "Search",
-        description: "Perform a search.",
-        url: "/search",
-      },
-      {
-        name: "communities",
-        url: "/communities",
-        short_name: "communities",
-        description: "Browse communities",
-      },
-      {
-        name: "Create Post",
-        url: "/create_post",
-        short_name: "Create Post",
-        description: "Create a post.",
-      },
-    ],
-    related_applications: [
-      {
-        platform: "f-droid",
-        url: "https://f-droid.org/packages/com.jerboa/",
-        id: "com.jerboa",
-      },
+      { name: "Content", short_name: "Content", url: "/content" },
+      { name: "My audioprn", short_name: "My audioprn", url: "/my" },
+      { name: "Creators", short_name: "Creators", url: "/creators" },
+      { name: "Search", short_name: "Search", url: "/content#search" },
     ],
   };
 }
