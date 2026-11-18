@@ -5,7 +5,6 @@ import {
   MyUserInfo,
   PostView,
 } from "lemmy-js-client";
-import { PostThumbnail } from "./post-thumbnail";
 import { PostCreatedLine, PostName } from "./common";
 import { CrossPosts } from "./cross-posts";
 import { CommentsButton } from "./post-action-bar";
@@ -34,7 +33,6 @@ export function PostListingList({
   crossPosts,
   allLanguages,
   showCommunity,
-  hideImage,
   myUserInfo,
   showCrossPosts,
   onScrollIntoCommentsClick,
@@ -71,13 +69,7 @@ export function PostListingList({
             <PostTools postView={postView} />
           </div>
         </div>
-        <div className="col-auto">
-          <PostThumbnail
-            postView={postView}
-            hideImage={hideImage}
-            myUserInfo={myUserInfo}
-          />
-        </div>
+        {/* audioprn: no "Open post" tile on the right: clicking the post opens it */}
       </article>
       <CrossPosts
         crossPosts={crossPosts}

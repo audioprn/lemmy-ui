@@ -608,3 +608,15 @@ em-emoji-picker {
   padding: 0.5rem 0.75rem;
   margin-bottom: 0.75rem;
 }
+
+/* audioprn: clicking a feed post opens it; the whole box counts, so its padding sits on the post */
+.post-box {
+  padding: 0;
+}
+.post-box > .post-listing {
+  margin: 0 !important;
+  padding: 0.5rem 0.75rem;
+}
+.post-clickable {
+  cursor: pointer;
+}

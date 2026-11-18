@@ -51,7 +51,6 @@ import { CashBox, PostFooter } from "../../audioprn/post-footer";
 import { ScriptBox } from "../../audioprn/post-script";
 import { FillLine } from "../../audioprn/script-fills"; // audioprn
 import { ShareWithCreator } from "../../audioprn/share-with-creator";
-import { PostThumbnail } from "./post-thumbnail";
 import classNames from "classnames";
 import { MetadataCard } from "./metadata-card";
 import { hideAnimatedImage, showMedia } from "@utils/app";
@@ -123,11 +122,6 @@ export class PostListingCard extends Component<
     const p = this.props;
 
     const isImagePost = p.postView.post.url && isImage(p.postView.post.url);
-    const showThumbnail =
-      // If its a small card, only show the thumb for url posts
-      (p.smallCard && !!p.postView.post.url) ||
-      // If its a large card, only show it for url posts that aren't also images
-      (!p.smallCard && !isImagePost && p.postView.post.url);
 
     return (
       <div>
@@ -175,15 +169,7 @@ export class PostListingCard extends Component<
                 />
               </div>
             </div>
-            {showThumbnail && (
-              <div className="col-auto">
-                <PostThumbnail
-                  postView={p.postView}
-                  hideImage={p.hideImage}
-                  myUserInfo={p.myUserInfo}
-                />
-              </div>
-            )}
+            {/* audioprn: no "Open post" tile on the right: clicking the post opens it */}
           </div>
           {!p.smallCard && isImagePost && (
             <PostImg

@@ -166,10 +166,15 @@ export class PostListing extends Component<PostListingProps, PostListingState> {
 
   render() {
     const p = this.props;
+    // audioprn: in feeds, clicking the post opens it (instead of a tile on the right)
+    const clickable = p.showBody !== "full" && !this.state.showEdit;
     return (
+      // The title link stays the way in for keyboards and screen readers; the click is extra.
+      // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
       <div
         id={`post-listing-${p.postView.post.id}`}
-        className="post-listing my-2"
+        className={`post-listing my-2${clickable ? " post-clickable" : ""}`}
+        onClick={clickable ? e => handleOpenPost(this, e) : undefined}
       >
         {!this.state.showEdit ? (
           this.renderListingMode()
@@ -271,6 +276,25 @@ export class PostListing extends Component<PostListingProps, PostListingState> {
           />
         );
     }
+  }
+}
+
+/** audioprn: a click on a feed post opens it, unless it was on a link, button or form field, or
+ * the reader was selecting text. Ctrl/Cmd-click opens it in a new tab. */
+function handleOpenPost(i: PostListing, e: MouseEvent) {
+  const interactive =
+    "a, button, input, textarea, select, label, summary, [role=button], [role=dialog], .modal";
+  if (
+    (e.target as HTMLElement).closest(interactive) ||
+    getSelection()?.toString()
+  ) {
+    return;
+  }
+  const to = `/post/${i.props.postView.post.id}`;
+  if (e.ctrlKey || e.metaKey) {
+    window.open(to, "_blank");
+  } else {
+    (i.context as RouterContext).router.history.push(to);
   }
 }
 
