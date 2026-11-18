@@ -824,12 +824,14 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
                     {I18NextService.i18n.t("invalid_post_title")}
                   </div>
                 )}
-                {/* audioprn: gender tag first, at most 7 other tags */}
+                {/* audioprn: gender tag first, at most 7 other tags; the user's help text while empty */}
                 {this.titleTagError && (
                   <div
                     className={`small ${this.state.form.name ? "text-danger" : "text-muted"}`}
                   >
-                    {this.titleTagError}
+                    {this.state.form.name
+                      ? this.titleTagError
+                      : "Input your gender tag, title, and up to 7 tags here."}
                   </div>
                 )}
                 {this.renderSuggestedPosts()}
