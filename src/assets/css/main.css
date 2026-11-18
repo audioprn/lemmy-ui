@@ -620,3 +620,9 @@ em-emoji-picker {
 .post-clickable {
   cursor: pointer;
 }
+
+/* audioprn: every emoji in one colour, following the text colour (user, 2026-11-18). The
+   "audioprn emoji" font (declared in the page head) only covers emoji, so it goes first. */
+html body {
+  font-family: "audioprn emoji", var(--bs-body-font-family);
+}

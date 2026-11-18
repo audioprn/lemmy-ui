@@ -140,7 +140,21 @@ export async function createSsrHtml(
   
     <!-- Styles -->
     <link rel="stylesheet" type="text/css" href="${getStaticDir()}/styles/styles.css" />
-  
+    <!-- audioprn: emoji in one colour (Noto Emoji, OFL licence in assets/fonts), only for emoji
+         characters, so letters and digits keep the site font. Used in main.css. -->
+    <style>
+      @font-face {
+        font-family: "audioprn emoji";
+        src: url("${getStaticDir()}/assets/fonts/NotoEmoji.ttf") format("truetype");
+        font-weight: 300 700;
+        font-display: swap;
+        /* Not arrows, ™ or shapes like ▶ ▪: Noto draws those as tiles, and they're used as text. */
+        unicode-range: U+200D, U+203C, U+2049, U+231A-231B, U+2328, U+23CF, U+23E9-23F3,
+          U+23F8-23FA, U+2600-27BF, U+2B1B-2B1C, U+2B50, U+2B55, U+3030, U+303D, U+3297,
+          U+3299, U+FE0F, U+1F000-1FAFF, U+E0020-E007F;
+      }
+    </style>
+
     </head>
   
     <body ${headPayload.bodyAttrs}>
