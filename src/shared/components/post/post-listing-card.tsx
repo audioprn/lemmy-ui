@@ -122,6 +122,7 @@ export class PostListingCard extends Component<
     const p = this.props;
 
     const isImagePost = p.postView.post.url && isImage(p.postView.post.url);
+    const scriptOffer = p.postView.tags.some(t => t.name === "script_offer"); // audioprn
 
     return (
       <div>
@@ -153,8 +154,9 @@ export class PostListingCard extends Component<
             <div className="col flex-grow-1">
               <PostName post={p.postView.post} showBody={p.showBody} />
               <div className="small">
-                {/* audioprn: the link only shows once the post is opened */}
-                {p.showBody === "full" && (
+                {/* audioprn: the link only shows once the post is opened; on Script Offers
+                    after the flair, "Read script on …" (user, 2026-11-18) */}
+                {p.showBody === "full" && !scriptOffer && (
                   <UrlLine
                     postView={p.postView}
                     myUserInfo={p.myUserInfo}
@@ -167,6 +169,14 @@ export class PostListingCard extends Component<
                   tags={p.postView.tags}
                   allLanguages={p.allLanguages}
                 />
+                {p.showBody === "full" && scriptOffer && (
+                  <UrlLine
+                    postView={p.postView}
+                    myUserInfo={p.myUserInfo}
+                    includeDot={false}
+                    readScript
+                  />
+                )}
               </div>
             </div>
             {/* audioprn: no "Open post" tile on the right: clicking the post opens it */}

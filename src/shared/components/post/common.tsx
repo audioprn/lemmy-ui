@@ -260,9 +260,11 @@ type UrlLineProps = {
   postView: PostView;
   myUserInfo: MyUserInfo | undefined;
   includeDot: boolean;
+  /** audioprn: a Script Offer's link, "Read script on scriptbin.works". */
+  readScript?: boolean;
 };
 export function UrlLine(
-  { postView, myUserInfo, includeDot }: UrlLineProps,
+  { postView, myUserInfo, includeDot, readScript }: UrlLineProps,
   context: object,
 ): InfernoNode | void {
   const post = postView.post;
@@ -285,13 +287,19 @@ export function UrlLine(
           <>
             {includeDot && " · "}
             <a
-              className="fst-italic text-body link-opacity-75 link-opacity-100-hover overflow-wrap-anywhere"
+              className={
+                readScript
+                  ? "fs-6 fw-semibold overflow-wrap-anywhere"
+                  : "fst-italic text-body link-opacity-75 link-opacity-100-hover overflow-wrap-anywhere"
+              }
               href={url}
               title={url}
               rel={relTags}
               target={linkTarget(myUserInfo)}
             >
-              {linkName}
+              {readScript
+                ? `Read script on ${linkName.replace(/^www\./, "").replace(/^archiveofourown\.org$/, "AO3")}`
+                : linkName}
             </a>
           </>
         )
