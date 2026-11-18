@@ -626,3 +626,14 @@ em-emoji-picker {
 html body {
   font-family: "audioprn emoji", var(--bs-body-font-family);
 }
+
+/* audioprn: the top bar's white search bar: a readable grey placeholder on white */
+.nav-search::placeholder {
+  color: #5c636a;
+  opacity: 1;
+}
+
+/* audioprn: top bar menu labels stay on one line; the search bar next to the logo shrinks instead */
+.navbar .nav-link {
+  white-space: nowrap;
+}

@@ -163,7 +163,7 @@ interface Props {
 
 interface State {
   text: string;
-  /** Opened with the top bar's Search button (it also shows while there's a search). */
+  /** Opened by an empty top bar search (it also shows while there's a search). */
   open: boolean;
   expanded: boolean;
   form: Form;
@@ -206,7 +206,7 @@ export class SearchPanel extends Component<Props, State> {
     this.openFromLink();
   }
 
-  /** The top bar's Search button links to /content#search: open the search there, expanded. */
+  /** An empty search in the top bar goes to /content#search: open the search there, expanded. */
   openFromLink() {
     if (!isBrowser() || location.hash !== "#search") return;
     history.replaceState(
@@ -446,7 +446,7 @@ export class SearchPanel extends Component<Props, State> {
     const { text, expanded, tags, open } = this.state;
     const { q, error } = this.props;
     const upperQ = (q ?? "").toUpperCase();
-    // Off the Content page until the top bar's Search button opens it (user, 2026-11-18).
+    // Off the Content page until a top bar search opens it (user, 2026-11-18).
     if (!open && !q) {
       return (
         <div className="d-flex flex-wrap align-items-center gap-2 small mb-2">

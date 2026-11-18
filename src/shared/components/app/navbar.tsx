@@ -123,7 +123,7 @@ export class Navbar extends Component<NavbarProps, NavbarState> {
           id="navbar"
         >
           {/* audioprn: OnlineNow shows nothing here, it counts visitors on every page */}
-          <div className="d-flex align-items-center">
+          <div className="d-flex align-items-center" style="flex: 1 1 0;">
             <NavLink
               id="navTitle"
               to="/"
@@ -143,14 +143,24 @@ export class Navbar extends Component<NavbarProps, NavbarState> {
                 height={32}
               />
             </NavLink>
-            {/* audioprn: a big Search button opens the Content page's search (user, 2026-11-18) */}
-            <NavLink
-              to="/content#search"
-              className="btn btn-primary fw-bold px-3 me-2"
-              onMouseUp={() => handleCollapseClick(this)}
+            {/* audioprn: a search bar next to the logo searches the Content page; empty, it
+                opens the search there, expanded (user, 2026-11-18) */}
+            <form
+              role="search"
+              className="me-2"
+              style="flex: 0 1 22rem; min-width: 8rem;"
+              onSubmit={e => handleNavSearch(this, e)}
             >
-              Search
-            </NavLink>
+              {/* White, so it stands out on the dark top bar (and the border on light themes) */}
+              <input
+                type="search"
+                name="q"
+                className="form-control form-control-sm bg-white text-dark border-secondary nav-search"
+                style="height: 30px;"
+                aria-label="Search the Content page"
+                placeholder="Search audios and scripts"
+              />
+            </form>
             <OnlineNow />
           </div>
           {person && (
@@ -523,6 +533,20 @@ export class Navbar extends Component<NavbarProps, NavbarState> {
     const context = this.context as RouterContext;
     return context.router.history.location.pathname;
   }
+}
+
+/** audioprn: the top bar's search: show the results on the Content page (empty: open its search). */
+function handleNavSearch(i: Navbar, e: Event) {
+  e.preventDefault();
+  const input = (e.target as HTMLFormElement).elements.namedItem(
+    "q",
+  ) as HTMLInputElement;
+  const q = input.value.trim();
+  input.value = "";
+  input.blur();
+  (i.context as RouterContext).router.history.push(
+    q ? `/content?q=${encodeURIComponent(q)}` : "/content#search",
+  );
 }
 
 function handleCollapseClick(i: Navbar) {
