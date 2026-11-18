@@ -136,12 +136,11 @@ export class Navbar extends Component<NavbarProps, NavbarState> {
                 showMedia(this.props.myUserInfo) && (
                   <PictrsImage src={siteView.site.icon} type="icon" />
                 )}
-              {/* audioprn: the logo (on white, so it reads in dark mode too) */}
+              {/* audioprn: the logo (see-through, orange, so it reads in light and dark) */}
               <img
-                src={`${getStaticDir()}/assets/images/audioprn-logo.png`}
+                src={`${getStaticDir()}/assets/images/audioprn-logo.svg`}
                 alt={SITE_TITLE}
                 height={32}
-                className="rounded"
               />
             </NavLink>
             <OnlineNow />
