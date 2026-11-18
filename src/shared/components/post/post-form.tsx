@@ -394,7 +394,10 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
           <div className="mb-3 row">
             <div className="col-sm-2 col-form-label">Credits</div>
             <div className="col-sm-10">
-              {CREDIT_ROLES.map(({ role, emoji, label }) => (
+              {/* audioprn: a Script Offer is only by its writer (user, 2026-11-18) */}
+              {CREDIT_ROLES.filter(
+                ({ role }) => !this.scriptOffer || role === "writer",
+              ).map(({ role, emoji, label }) => (
                 <div className="input-group mb-2">
                   <span className="input-group-text">
                     {emoji} {label}
@@ -1381,9 +1384,9 @@ function handlePostSubmit(i: PostForm, event: FormEvent<HTMLFormElement>) {
     pForm.scheduled_publish_time_at,
   );
   // audioprn: credits from the three inputs
-  const credits = CREDIT_ROLES.flatMap(({ role }) =>
-    parseCredits(role, i.state.credits[role] ?? ""),
-  );
+  const credits = CREDIT_ROLES.filter(
+    ({ role }) => !i.scriptOffer || role === "writer",
+  ).flatMap(({ role }) => parseCredits(role, i.state.credits[role] ?? ""));
 
   if (pv) {
     if (i.editorType === "creator") {
