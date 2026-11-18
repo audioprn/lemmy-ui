@@ -9,7 +9,8 @@ import { PostView } from "lemmy-js-client";
 import { call } from "./creator-api";
 import { lengthMinutes } from "./masterlist";
 
-const VIEW_KEY = "audioprn_search_view";
+// A new name (user, 2026-11-18) forgot everyone's earlier choice once, so all start on Cards.
+const VIEW_KEY = "audioprn_feed_view";
 
 /** Compact (one line per post) or cards, remembered in this browser. */
 export function savedCompact(): boolean {
