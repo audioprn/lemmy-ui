@@ -44,6 +44,7 @@ interface Row {
   flair: string;
   writers: string;
   editors: string;
+  voiceActors: string;
   selected: boolean;
   /** "imported", or why it failed. */
   status?: string;
@@ -102,29 +103,78 @@ export function parseCsv(s: string): string[][] {
 // words that start something else: "script by me, voiced by u/name", "with help from u/name".
 const WORDS =
   /\s*:?\s*\**\s*(?:[*_]*(?!(?:by|from|for|with|to|thanks|i)\b)[\p{L}'’-]+[*_]*,?\s+|&\s+){0,10}/iuy;
-const NAME =
-  /\s*:?\s*\**\s*(?:\[[^\]]*\]\(https?:\/\/(?:www\.|old\.)?reddit\.com\/u(?:ser)?\/([\w-]+)\/?\)|\/?u\/([\w\\-]+))/y;
+// u/name, /u/name or a link to the Reddit profile: [Anna](https://reddit.com/u/anna).
+const USER = String.raw`(?:\[[^\]]*\]\(https?:\/\/(?:www\.|old\.)?reddit\.com\/u(?:ser)?\/([\w-]+)\/?\)|\/?u\/([\w\\-]+))`;
+const NAME = new RegExp(String.raw`\s*:?\s*\**\s*${USER}`, "y");
 const SEPARATOR = /\s*(?:,|&|\band\b)/y;
+
+// Voice actors, on posts with two or more voices (user, 2026-11-18). Checked against Lurkydip's
+// titles, which name them. "Starring u/name" (a few words may come first: "Starring Paul aka
+// u/name"), "Cast:", "Voices:", "featuring", "played by", "voiced by"; "with u/name" and "collab
+// with u/name" (only emoji between, as "with" is a common word); and anywhere "u/name as Role"
+// ("u/anna as **Green**", "u/bo as the Maid") or "u/name and I".
+const CAST =
+  /\b(?:(starring|cast|voices|featuring|(?:played|voiced)\s+by)|(?:collab(?:orat(?:ion|ed))?\s+)?with)\b/gi;
+const EMOJI = /[\s\p{Extended_Pictographic}️]*/uy;
+// Between names in a cast list: maybe "as Role", then a comma, & or "and".
+const CAST_SEPARATOR = /(?:\s*,?\s+as\s+[^,&\n]{1,60}?)?\s*(?:,|&|\band\b)/iy;
+const AS = new RegExp(String.raw`${USER}\s*,?\s+as\s+(?=\*|the\b|[A-Z])`, "g");
+const AND_I = new RegExp(String.raw`${USER}\s+(?:and|&)\s+(?:I|me)\b`, "g");
+
+const skip = (re: RegExp, body: string, from: number) => {
+  re.lastIndex = from;
+  re.exec(body);
+  return re.lastIndex;
+};
+
+/** Adds the names listed from `from` on: "u/anna, u/bo and u/cy". */
+function nameList(
+  body: string,
+  from: number,
+  separator: RegExp,
+  names: Set<string>,
+) {
+  let i = from;
+  for (;;) {
+    NAME.lastIndex = i;
+    const n = NAME.exec(body);
+    if (!n) return;
+    names.add((n[1] ?? n[2]).replace(/\\/g, ""));
+    separator.lastIndex = NAME.lastIndex;
+    if (!separator.exec(body)) return;
+    i = separator.lastIndex;
+  }
+}
 
 /** Usernames right after a phrase like "script by", e.g. "script by u/anna and u/bo". */
 function namesAfter(body: string, phrase: RegExp): string {
   const names = new Set<string>();
   for (const m of body.matchAll(phrase)) {
-    WORDS.lastIndex = (m.index ?? 0) + m[0].length;
-    WORDS.exec(body);
-    let i = WORDS.lastIndex;
-    for (;;) {
-      NAME.lastIndex = i;
-      const n = NAME.exec(body);
-      if (!n) break;
-      names.add((n[1] ?? n[2]).replace(/\\/g, ""));
-      SEPARATOR.lastIndex = NAME.lastIndex;
-      if (!SEPARATOR.exec(body)) break;
-      i = SEPARATOR.lastIndex;
-    }
+    const i = skip(WORDS, body, (m.index ?? 0) + m[0].length);
+    nameList(body, i, SEPARATOR, names);
   }
   return [...names].join(", ");
 }
+
+/** The voice actors named in the text, besides the poster. */
+function voiceActors(body: string, poster: string): string {
+  const names = new Set<string>();
+  for (const m of body.matchAll(CAST)) {
+    const i = skip(EMOJI, body, (m.index ?? 0) + m[0].length);
+    nameList(body, m[1] ? skip(WORDS, body, i) : i, CAST_SEPARATOR, names);
+  }
+  for (const m of [...body.matchAll(AS), ...body.matchAll(AND_I)]) {
+    names.add((m[1] ?? m[2]).replace(/\\/g, ""));
+  }
+  return [...names]
+    .filter(n => n.toLowerCase() !== poster.toLowerCase())
+    .join(", ");
+}
+
+/** Two or more voices in the gender tag: [FF4M], [M4F4M] (TF, TM and NB are one voice each). */
+const multiVoice = (tag: string) =>
+  (tag.slice(1, tag.lastIndexOf("4")).match(/TF|TM|NB|F|M|A/gi) ?? []).length >
+  1;
 
 /** The first audio link in the text (scriptbin for script offers). */
 function firstLink(body: string, flair: string): string | undefined {
@@ -141,7 +191,10 @@ function firstLink(body: string, flair: string): string | undefined {
 }
 
 /** A post from the export, ready to review; none if its title doesn't start with a gender tag. */
-function toRow(get: (column: string) => string): Row | undefined {
+function toRow(
+  get: (column: string) => string,
+  poster: string,
+): Row | undefined {
   const original = get("title").trim();
   const tags = original.match(TAG) ?? [];
   if (!tags[0] || !original.startsWith(tags[0]) || !GENDER.test(tags[0])) {
@@ -189,6 +242,7 @@ function toRow(get: (column: string) => string): Row | undefined {
       body,
       /\bedit(?:ed)?\s*\**(?:\]\([^)]*\))?\**\s*by\b/gi,
     ),
+    voiceActors: multiVoice(tags[0]) ? voiceActors(body, poster) : "",
     selected: false,
     also: [],
   };
@@ -265,7 +319,12 @@ export class RedditImport extends Component<Props, State> {
     // Only the columns used here are read; the rest of the export (like ip) is never kept.
     const all = lines
       .filter(line => line.length === header.length)
-      .map(line => toRow(name => line[col(name)] ?? ""));
+      .map(line =>
+        toRow(
+          name => line[col(name)] ?? "",
+          this.isoData.myUserInfo?.local_user_view.person.name ?? "",
+        ),
+      );
     const found = all.filter((r): r is Row => !!r);
     found.sort((a, b) => b.date.localeCompare(a.date));
     // Newest first, so each cross-post group keeps its newest copy.
@@ -347,6 +406,7 @@ export class RedditImport extends Component<Props, State> {
               credits: [
                 ...toCredits("writer", current.writers),
                 ...toCredits("editor", current.editors),
+                ...toCredits("voice_actor", current.voiceActors),
               ],
               post: {
                 name: current.title,
@@ -411,8 +471,11 @@ export class RedditImport extends Component<Props, State> {
             of the post text. Writers and editors are taken from &ldquo;script
             by&rdquo;, &ldquo;written by&rdquo;, &ldquo;edited by&rdquo; or
             &ldquo;edit by&rdquo; followed by a username (&ldquo;script by the
-            wonderful u/name&rdquo; works too): check them before importing.
-            Posts keep their Reddit date and link back to Reddit.
+            wonderful u/name&rdquo; works too). On posts with more than one
+            voice, voice actors are taken from &ldquo;starring u/name&rdquo;,
+            &ldquo;with u/name&rdquo;, &ldquo;u/name as Role&rdquo; and the
+            like. Check them all before importing. Posts keep their Reddit date
+            and link back to Reddit.
           </p>
           {/* audioprn: placeholder wording for the multi-voice rule (to be rewritten) */}
           <p className="small text-muted">
@@ -545,6 +608,15 @@ export class RedditImport extends Component<Props, State> {
                             value={row.editors}
                             onInput={e =>
                               this.update(row, { editors: e.target.value })
+                            }
+                          />
+                          <input
+                            className="form-control form-control-sm w-auto"
+                            placeholder="🎙️ Voice actors"
+                            aria-label="Voice actors"
+                            value={row.voiceActors}
+                            onInput={e =>
+                              this.update(row, { voiceActors: e.target.value })
                             }
                           />
                         </div>
