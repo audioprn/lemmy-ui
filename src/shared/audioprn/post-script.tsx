@@ -14,6 +14,7 @@ import { call } from "./creator-api";
 
 export const FILL_TERMS: Record<string, string> = {
   ask_first: "Ask first",
+  license_fee: "One-time license fee for monetisation",
   paywall_ok: "Fine to paywall with credit given and copy sent",
   temporary_paywall: "Temporary paywalling only",
   no_paywall: "No paywalled fills",
