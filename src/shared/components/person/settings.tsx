@@ -560,6 +560,34 @@ export class Settings extends Component<SettingsRouteProps, SettingsState> {
               </div>
             </div>
           </div>
+          {/* audioprn: the creators' importers too, where people look for them (user, 2026-11-18) */}
+          <CreatorOnly>
+            <div className="card mb-3">
+              <div className="card-body">
+                <h5 className="card-title">Import your work</h5>
+                <p className="small text-muted">
+                  The file above backs up your settings. To bring your posts,
+                  scripts and masterlist over from other sites:
+                </p>
+                <ul className="mb-0">
+                  <li>
+                    <a href="/reddit_import">Import your posts from Reddit</a>
+                  </li>
+                  <li>
+                    <a href="/scriptbin_import">
+                      Import your scripts from scriptbin
+                    </a>
+                  </li>
+                  <li>
+                    <a href="/masterlist/edit">
+                      Import your masterlist spreadsheet
+                    </a>{" "}
+                    (in the masterlist editor)
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </CreatorOnly>
         </div>
       )
     );
