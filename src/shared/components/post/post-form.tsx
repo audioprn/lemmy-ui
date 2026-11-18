@@ -64,6 +64,8 @@ import {
   RequestState,
 } from "../../services/HttpService";
 import { toast } from "@utils/app";
+import { RouterContext } from "inferno-router"; // audioprn
+import { call } from "../../audioprn/creator-api"; // audioprn
 import { Icon, Spinner } from "../common/icon";
 import { LanguageSelect } from "../common/language-select";
 import { MarkdownTextArea } from "../common/markdown-textarea";
@@ -1208,6 +1210,17 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
             )}
           </div>
         </div>
+        {/* audioprn: the creator can delete their post for good (user, 2026-11-18) */}
+        {this.props.post_view?.creator.id ===
+          this.props.myUserInfo?.local_user_view.person.id && (
+          <button
+            type="button"
+            className="btn btn-danger btn-lg w-100 mb-3"
+            onClick={() => handleDeleteForGood(this)}
+          >
+            🗑️ Delete post
+          </button>
+        )}
       </form>
     );
   }
@@ -1453,7 +1466,11 @@ function handlePostSubmit(i: PostForm, event: FormEvent<HTMLFormElement>) {
         honeypot: pForm.honeypot,
         custom_thumbnail: pForm.custom_thumbnail,
         alt_text: pForm.alt_text,
-        tags: pForm.tags,
+        // audioprn: only flairs of the chosen cummunity. A flair picked before switching
+        // cummunity was sent along, and Lemmy saved the post and then refused it (2026-11-18).
+        tags: pForm.tags?.filter(id =>
+          i.props.selectedCommunityTags?.some(t => t.id === id && !t.deleted),
+        ),
         scheduled_publish_time_at,
       },
       () => {
@@ -1682,6 +1699,29 @@ function handleCustomThumbnailChange(
 
 function handleCancel(i: PostForm) {
   i.props.onCancel?.();
+}
+
+/** audioprn: delete the post for good, after asking; then go to the creator's page. */
+async function handleDeleteForGood(i: PostForm) {
+  const pv = i.props.post_view;
+  if (
+    !pv ||
+    !confirm(
+      "Delete this post for good? Its comments, reactions and awards go with it. This can't be undone.",
+    )
+  ) {
+    return;
+  }
+  try {
+    await call("POST", "/post_delete", { post_id: pv.post.id });
+    toast("Post deleted.");
+    // No "leave this page?" question: the post is gone.
+    i.setState({ bypassNavWarning: true }, () =>
+      (i.context as RouterContext).router.history.push(`/u/${pv.creator.name}`),
+    );
+  } catch (e) {
+    toast((e as Error).message, "danger");
+  }
 }
 
 async function handleImageUploadPaste(
