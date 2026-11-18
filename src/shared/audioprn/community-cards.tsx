@@ -7,6 +7,15 @@ import { CommunityView, MyUserInfo } from "lemmy-js-client";
 
 const VIEW_KEY = "audioprn_communities_view";
 
+/** Listed first, in this order (user, 2026-11-18); the rest follow in the chosen sort. */
+const FIRST = ["main", "dark", "sapphic", "gay"];
+const rank = (cv: CommunityView) => {
+  const i = FIRST.indexOf(cv.community.name);
+  return i < 0 ? FIRST.length : i;
+};
+export const firstCommunities = (items: CommunityView[]) =>
+  [...items].sort((a, b) => rank(a) - rank(b));
+
 export function savedCommunityCards(): boolean {
   try {
     return localStorage.getItem(VIEW_KEY) !== "list";

@@ -49,6 +49,7 @@ import { ListingTypeDropdown } from "@components/common/listing-type-dropdown";
 import {
   CommunityCards,
   CommunityViewSwitch,
+  firstCommunities,
   savedCommunityCards,
 } from "../../audioprn/community-cards";
 
@@ -177,10 +178,14 @@ export class Communities extends Component<
           </h5>
         );
       case "success": {
+        // audioprn: all the smut, dark, sapphic and gay first.
+        const items = firstCommunities(
+          this.state.listCommunitiesResponse.data.items,
+        );
         if (this.state.cards) {
           return (
             <CommunityCards
-              items={this.state.listCommunitiesResponse.data.items}
+              items={items}
               myUserInfo={this.isoData.myUserInfo}
               subscribe={cv => this.subscribeButton(cv)}
             />
@@ -209,7 +214,7 @@ export class Communities extends Component<
               </div>
               <TableHr />
             </div>
-            {this.state.listCommunitiesResponse.data.items.map(cv => (
+            {items.map(cv => (
               <>
                 <div className="row">
                   <ResponsiveTableRowHeader title={"name"} />
