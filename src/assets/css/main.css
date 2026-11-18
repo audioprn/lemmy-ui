@@ -621,12 +621,6 @@ em-emoji-picker {
   cursor: pointer;
 }
 
-/* audioprn: every emoji in one colour, following the text colour (user, 2026-11-18). The
-   "audioprn emoji" font (declared in the page head) only covers emoji, so it goes first. */
-html body {
-  font-family: "audioprn emoji", var(--bs-body-font-family);
-}
-
 /* audioprn: the top bar's white search bar: a readable grey placeholder on white */
 .nav-search::placeholder {
   color: #5c636a;

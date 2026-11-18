@@ -6,9 +6,9 @@ import { Component, createRef, InfernoNode } from "inferno";
 const KEY = "audioprn_accessibility";
 const FONTS: Record<string, string> = {
   Default: "",
-  Arial: '"audioprn emoji", Arial, Helvetica, sans-serif',
-  Times: '"audioprn emoji", "Times New Roman", Times, serif',
-  Verdana: '"audioprn emoji", Verdana, Geneva, sans-serif',
+  Arial: "Arial, Helvetica, sans-serif",
+  Times: '"Times New Roman", Times, serif',
+  Verdana: "Verdana, Geneva, sans-serif",
 };
 const SIZES = [80, 90, 100, 110, 125, 150, 175];
 
