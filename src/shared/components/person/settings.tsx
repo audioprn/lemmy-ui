@@ -1049,7 +1049,10 @@ export class Settings extends Component<SettingsRouteProps, SettingsState> {
 
     return (
       <>
-        <h5 className="card-title">{I18NextService.i18n.t("look_and_feel")}</h5>
+        {/* audioprn: changes here need the Save button (user, 2026-11-18) */}
+        <h5 className="card-title">
+          {I18NextService.i18n.t("look_and_feel")} (Remember to Save!)
+        </h5>
         {/* audioprn: text size and font for the whole site, kept in this browser */}
         <div className="mb-3">
           <AccessibilityOptions />
