@@ -42,7 +42,12 @@ function NewsBody({ body }: { body: string }) {
     <>
       {parts.map((part, i) =>
         i % 2 ? (
-          <a href={part} rel={relTags} title={part}>
+          <a
+            href={part}
+            rel={relTags}
+            title={part}
+            className="text-decoration-underline"
+          >
             {shortLink(part)}
           </a>
         ) : (

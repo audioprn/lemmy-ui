@@ -594,3 +594,9 @@ em-emoji-picker {
 .cash-box a {
   color: inherit;
 }
+
+/* audioprn: links in written text (posts, comments, sidebar, guides, cash box) are underlined, so
+   they stand out from plain text by more than colour */
+.md-div a {
+  text-decoration: underline;
+}
