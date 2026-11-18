@@ -98,14 +98,16 @@ export class MarkdownTextArea extends Component<
 
   async componentDidMount() {
     if (isBrowser()) {
+      // audioprn: the text goes in first, so it shows even if the mention/emoji helper
+      // (loaded next) fails, e.g. on a page open from before the site was updated.
+      const content: string | undefined =
+        this.props.initialContent ??
+        localStorage.getItem(LOCAL_STORAGE_KEY) ??
+        undefined;
+      this.setState({ content });
       const tribute = await setupTribute();
       const textarea = this.textAreaRef.current;
       if (textarea) {
-        const content: string | undefined =
-          this.props.initialContent ??
-          localStorage.getItem(LOCAL_STORAGE_KEY) ??
-          undefined;
-        this.setState({ content });
         autosize(textarea);
         tribute.attach(textarea);
         textarea.addEventListener("tribute-replaced", () => {

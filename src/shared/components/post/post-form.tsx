@@ -225,6 +225,7 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
     metadataRes: EMPTY_REQUEST,
     form: {},
     credits: {},
+    richText: true, // audioprn: the body editor opens in Rich text (Markdown is the other tab)
     imageLoading: false,
     uploadedImage: undefined,
     communitySearchLoading: false,
@@ -980,7 +981,7 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
               <div className="col-sm-10">
                 {/* audioprn: markdown or rich text mode, both store markdown */}
                 <div className="btn-group btn-group-sm mb-2" role="group">
-                  {[false, true].map(rich => (
+                  {[true, false].map(rich => (
                     <button
                       type="button"
                       className={`btn ${!!this.state.richText === rich ? "btn-secondary" : "btn-outline-secondary"}`}
