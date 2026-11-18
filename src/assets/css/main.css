@@ -600,3 +600,11 @@ em-emoji-picker {
 .md-div a {
   text-decoration: underline;
 }
+
+/* audioprn: each post in feeds sits in a rounded box in the logo's orange (user, 2026-11-18) */
+.post-box {
+  border: 2px solid #fc9603;
+  border-radius: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+}

@@ -151,58 +151,60 @@ export class PersonDetails extends Component<PersonDetailsProps, never> {
         );
       }
       case "post": {
+        // audioprn: in a rounded orange box like the other feeds (no top line)
         return (
-          <PostListing
-            key={i.post.id}
-            postView={i}
-            showCrossPosts="show_separately"
-            admins={this.props.admins}
-            communityTags={[]}
-            postListingMode="small_card"
-            showCommunity
-            topBorder
-            crossPosts={[]}
-            showBody={"preview"}
-            hideImage={false}
-            viewOnly={false}
-            disableAutoMarkAsRead={false}
-            editLoading={false}
-            markReadLoading={false}
-            mutePersonName
-            muteCommunityName={false}
-            hideAvatar
-            voteLoading={this.props.votePostLoading === i.post.id}
-            enableNsfw={this.props.enableNsfw}
-            showAdultConsentModal={this.props.showAdultConsentModal}
-            allLanguages={this.props.allLanguages}
-            siteLanguages={this.props.siteLanguages}
-            myUserInfo={this.props.myUserInfo}
-            localSite={this.props.localSite}
-            onPostEdit={this.props.onPostEdit}
-            onPostModEdit={this.props.onPostModEdit}
-            onPostVote={this.props.onPostVote}
-            onPostReport={this.props.onPostReport}
-            onBlockPerson={this.props.onBlockPerson}
-            onBlockCommunity={this.props.onBlockCommunity}
-            onLockPost={this.props.onLockPost}
-            onWarnPost={this.props.onWarnPost}
-            onDeletePost={this.props.onDeletePost}
-            onRemovePost={this.props.onRemovePost}
-            onSavePost={this.props.onSavePost}
-            onFeaturePost={this.props.onFeaturePost}
-            onPurgePerson={this.props.onPurgePerson}
-            onPurgePost={this.props.onPurgePost}
-            onBanPersonFromCommunity={this.props.onBanPersonFromCommunity}
-            onBanPerson={this.props.onBanPerson}
-            onAddModToCommunity={this.props.onAddModToCommunity}
-            onAddAdmin={this.props.onAddAdmin}
-            onTransferCommunity={this.props.onTransferCommunity}
-            onHidePost={this.props.onHidePost}
-            showMarkRead="dropdown"
-            onMarkPostAsRead={this.props.onMarkPostAsRead}
-            onPersonNote={this.props.onPersonNote}
-            onScrollIntoCommentsClick={() => {}}
-          />
+          <div className="post-box" key={i.post.id}>
+            <PostListing
+              postView={i}
+              showCrossPosts="show_separately"
+              admins={this.props.admins}
+              communityTags={[]}
+              postListingMode="small_card"
+              showCommunity
+              topBorder={false}
+              crossPosts={[]}
+              showBody={"preview"}
+              hideImage={false}
+              viewOnly={false}
+              disableAutoMarkAsRead={false}
+              editLoading={false}
+              markReadLoading={false}
+              mutePersonName
+              muteCommunityName={false}
+              hideAvatar
+              voteLoading={this.props.votePostLoading === i.post.id}
+              enableNsfw={this.props.enableNsfw}
+              showAdultConsentModal={this.props.showAdultConsentModal}
+              allLanguages={this.props.allLanguages}
+              siteLanguages={this.props.siteLanguages}
+              myUserInfo={this.props.myUserInfo}
+              localSite={this.props.localSite}
+              onPostEdit={this.props.onPostEdit}
+              onPostModEdit={this.props.onPostModEdit}
+              onPostVote={this.props.onPostVote}
+              onPostReport={this.props.onPostReport}
+              onBlockPerson={this.props.onBlockPerson}
+              onBlockCommunity={this.props.onBlockCommunity}
+              onLockPost={this.props.onLockPost}
+              onWarnPost={this.props.onWarnPost}
+              onDeletePost={this.props.onDeletePost}
+              onRemovePost={this.props.onRemovePost}
+              onSavePost={this.props.onSavePost}
+              onFeaturePost={this.props.onFeaturePost}
+              onPurgePerson={this.props.onPurgePerson}
+              onPurgePost={this.props.onPurgePost}
+              onBanPersonFromCommunity={this.props.onBanPersonFromCommunity}
+              onBanPerson={this.props.onBanPerson}
+              onAddModToCommunity={this.props.onAddModToCommunity}
+              onAddAdmin={this.props.onAddAdmin}
+              onTransferCommunity={this.props.onTransferCommunity}
+              onHidePost={this.props.onHidePost}
+              showMarkRead="dropdown"
+              onMarkPostAsRead={this.props.onMarkPostAsRead}
+              onPersonNote={this.props.onPersonNote}
+              onScrollIntoCommentsClick={() => {}}
+            />
+          </div>
         );
       }
     }

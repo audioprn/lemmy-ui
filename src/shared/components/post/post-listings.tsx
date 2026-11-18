@@ -97,61 +97,65 @@ export class PostListings extends Component<PostListingsProps, never> {
       <div className="post-listings">
         {this.posts.length > 0 ? (
           <div className="row post-listings-grid">
-            {this.posts.map((postView, idx) => (
+            {this.posts.map(postView => (
               <div className={postListingModeCols(this.props.postListingMode)}>
-                <PostListing
-                  postView={postView}
-                  crossPosts={this.duplicatesMap.get(postView.post.id) ?? []}
-                  showCrossPosts={this.props.showCrossPosts}
-                  showCommunity={this.props.showCommunity}
-                  enableNsfw={this.props.enableNsfw}
-                  showAdultConsentModal={this.props.showAdultConsentModal}
-                  viewOnly={this.props.viewOnly}
-                  allLanguages={this.props.allLanguages}
-                  siteLanguages={this.props.siteLanguages}
-                  communityTags={[]}
-                  myUserInfo={this.props.myUserInfo}
-                  localSite={this.props.localSite}
-                  admins={this.props.admins}
-                  showBody={"preview"}
-                  hideImage={false}
-                  topBorder={false}
-                  disableAutoMarkAsRead={false}
-                  editLoading={false}
-                  markReadLoading={false}
-                  voteLoading={this.props.voteLoading === postView.post.id}
-                  mutePersonName={this.props.mutePersonName}
-                  muteCommunityName={this.props.muteCommunityName}
-                  hideAvatar={this.props.hideAvatar}
-                  onPostEdit={this.props.onPostEdit}
-                  onPostModEdit={this.props.onPostModEdit}
-                  onPostVote={this.props.onPostVote}
-                  onPostReport={this.props.onPostReport}
-                  onBlockPerson={this.props.onBlockPerson}
-                  onBlockCommunity={this.props.onBlockCommunity}
-                  onLockPost={this.props.onLockPost}
-                  onWarnPost={this.props.onWarnPost}
-                  onDeletePost={this.props.onDeletePost}
-                  onRemovePost={this.props.onRemovePost}
-                  onSavePost={this.props.onSavePost}
-                  onFeaturePost={this.props.onFeaturePost}
-                  onPurgePerson={this.props.onPurgePerson}
-                  onPurgePost={this.props.onPurgePost}
-                  onBanPersonFromCommunity={this.props.onBanPersonFromCommunity}
-                  onBanPerson={this.props.onBanPerson}
-                  onAddModToCommunity={this.props.onAddModToCommunity}
-                  onAddAdmin={this.props.onAddAdmin}
-                  onTransferCommunity={this.props.onTransferCommunity}
-                  onHidePost={this.props.onHidePost}
-                  showMarkRead={this.props.showMarkRead}
-                  onMarkPostAsRead={this.props.onMarkPostAsRead}
-                  onPersonNote={this.props.onPersonNote}
-                  postListingMode={this.props.postListingMode}
-                  onScrollIntoCommentsClick={
-                    this.props.onScrollIntoCommentsClick
-                  }
-                />
-                {idx + 1 !== this.posts.length && <hr className="my-2" />}
+                {/* audioprn: each post in a rounded orange box instead of lines between them */}
+                <div className="post-box">
+                  <PostListing
+                    postView={postView}
+                    crossPosts={this.duplicatesMap.get(postView.post.id) ?? []}
+                    showCrossPosts={this.props.showCrossPosts}
+                    showCommunity={this.props.showCommunity}
+                    enableNsfw={this.props.enableNsfw}
+                    showAdultConsentModal={this.props.showAdultConsentModal}
+                    viewOnly={this.props.viewOnly}
+                    allLanguages={this.props.allLanguages}
+                    siteLanguages={this.props.siteLanguages}
+                    communityTags={[]}
+                    myUserInfo={this.props.myUserInfo}
+                    localSite={this.props.localSite}
+                    admins={this.props.admins}
+                    showBody={"preview"}
+                    hideImage={false}
+                    topBorder={false}
+                    disableAutoMarkAsRead={false}
+                    editLoading={false}
+                    markReadLoading={false}
+                    voteLoading={this.props.voteLoading === postView.post.id}
+                    mutePersonName={this.props.mutePersonName}
+                    muteCommunityName={this.props.muteCommunityName}
+                    hideAvatar={this.props.hideAvatar}
+                    onPostEdit={this.props.onPostEdit}
+                    onPostModEdit={this.props.onPostModEdit}
+                    onPostVote={this.props.onPostVote}
+                    onPostReport={this.props.onPostReport}
+                    onBlockPerson={this.props.onBlockPerson}
+                    onBlockCommunity={this.props.onBlockCommunity}
+                    onLockPost={this.props.onLockPost}
+                    onWarnPost={this.props.onWarnPost}
+                    onDeletePost={this.props.onDeletePost}
+                    onRemovePost={this.props.onRemovePost}
+                    onSavePost={this.props.onSavePost}
+                    onFeaturePost={this.props.onFeaturePost}
+                    onPurgePerson={this.props.onPurgePerson}
+                    onPurgePost={this.props.onPurgePost}
+                    onBanPersonFromCommunity={
+                      this.props.onBanPersonFromCommunity
+                    }
+                    onBanPerson={this.props.onBanPerson}
+                    onAddModToCommunity={this.props.onAddModToCommunity}
+                    onAddAdmin={this.props.onAddAdmin}
+                    onTransferCommunity={this.props.onTransferCommunity}
+                    onHidePost={this.props.onHidePost}
+                    showMarkRead={this.props.showMarkRead}
+                    onMarkPostAsRead={this.props.onMarkPostAsRead}
+                    onPersonNote={this.props.onPersonNote}
+                    postListingMode={this.props.postListingMode}
+                    onScrollIntoCommentsClick={
+                      this.props.onScrollIntoCommentsClick
+                    }
+                  />
+                </div>
               </div>
             ))}
           </div>
