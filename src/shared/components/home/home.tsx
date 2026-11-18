@@ -931,7 +931,8 @@ export class Home extends Component<HomeRouteProps, HomeState> {
               }
               showCommunity
               multiCommunity={false}
-              showCrossPosts="small"
+              // audioprn: posts sharing a link each show (no cross-post folding)
+              showCrossPosts="show_separately"
               showMarkRead="dropdown"
               viewOnly={false}
               enableNsfw={enableNsfw(siteRes)}

@@ -610,7 +610,8 @@ export class Post extends Component<PostRouteProps, PostState> {
             <div className="col-12 col-md-8 col-lg-9 mb-3">
               <PostListing
                 postView={res.post_view}
-                crossPosts={res.cross_posts}
+                // audioprn: no cross-posts list; posts sharing a link are separate posts
+                crossPosts={[]}
                 communityTags={res.community_view.tags}
                 showCrossPosts="expanded"
                 showBody="full"
