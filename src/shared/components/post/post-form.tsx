@@ -532,14 +532,13 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
 
   /**
    * audioprn: Content and community titles start with a gender tag ([F4M], [M4F4M], [TF4A]…:
-   * F, M, A, TF, TM, NB joined by 4) and have at most 7 other [tags]. Creator page posts and admins
-   * are exempt. The backend checks the same.
+   * F, M, A, TF, TM, NB joined by 4) and have at most 7 other [tags]. Creator page posts are exempt;
+   * admins need no gender tag but keep the limit (user, 2026-11-18). The backend checks the same.
    */
   get titleTagError(): string | undefined {
     if (
       this.props.creatorPage ||
-      this.props.post_view?.community.name === "creators" ||
-      amAdmin(this.props.myUserInfo)
+      this.props.post_view?.community.name === "creators"
     ) {
       return undefined;
     }
@@ -547,7 +546,10 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
     const gender = /^\[((TF|TM|NB|F|M|A)+4)+(TF|TM|NB|F|M|A)+\]$/i;
     const tags = title.match(/\[[^[\]]{1,40}\]/g) ?? [];
     const first = tags[0] ?? "";
-    if (!first || !title.startsWith(first) || !gender.test(first)) {
+    if (
+      !amAdmin(this.props.myUserInfo) &&
+      (!first || !title.startsWith(first) || !gender.test(first))
+    ) {
       return "Start the title with a gender tag like [F4M], [M4F] or [F4A].";
     }
     if (tags.filter(t => !gender.test(t)).length > 7) {
