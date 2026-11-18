@@ -46,7 +46,9 @@ export class SiteSidebar extends Component<SiteSidebarProps, SiteSidebarState> {
 
   render() {
     return (
-      <div className="site-sidebar accordion">
+      <div className="site-sidebar accordion d-flex flex-column gap-3">
+        {/* audioprn: Create post first in the column, for creators only (user, 2026-11-18) */}
+        <CreatePostButton myUserInfo={this.props.myUserInfo} />
         <section id="sidebarInfo" className="card mb-3">
           <header className="card-header" id="sidebarInfoHeader">
             {this.siteName()}
@@ -115,8 +117,8 @@ export class SiteSidebar extends Component<SiteSidebarProps, SiteSidebarState> {
             )}
           />
         )}
-        {/* audioprn: no language labels (English only), no Create cummunity button */}
-        <CreatePostButton myUserInfo={myUserInfo} />
+        {/* audioprn: no language labels (English only), no Create cummunity button; Create post
+            is at the top of the column */}
         <CreateMultiCommunityButton myUserInfo={myUserInfo} blockButton />
         <Link
           className="btn btn-light border-light-subtle d-block w-100"

@@ -41,15 +41,13 @@ export function CreatePostButton({
   communityView,
   myUserInfo,
 }: CreatePostButtonProps) {
-  const classes = classNames(
-    "btn btn-light border-light-subtle d-block w-100",
-    {
-      "no-click":
-        communityView?.community.deleted ||
-        communityView?.community.removed ||
-        userNotLoggedInOrBanned(myUserInfo),
-    },
-  );
+  // audioprn: blue, so it stands out at the top of the column
+  const classes = classNames("btn btn-primary d-block w-100", {
+    "no-click":
+      communityView?.community.deleted ||
+      communityView?.community.removed ||
+      userNotLoggedInOrBanned(myUserInfo),
+  });
 
   const link = communityView
     ? "/create_post" +
