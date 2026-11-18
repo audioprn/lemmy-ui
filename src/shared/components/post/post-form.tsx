@@ -772,6 +772,33 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
             <PostName post={this.props.post_view.post} showBody={"preview"} />
           </div>
         )}
+        {/* audioprn: not when all are deleted (creator page posts have none); above the title (user, 2026-11-18) */}
+        {this.props.selectedCommunityTags?.some(t => !t.deleted) && (
+          <div className="mb-3 row">
+            <label className="col-sm-2 col-form-label" htmlFor="post-tags">
+              Flair
+            </label>
+            <div className="col-sm-10">
+              {/* audioprn: exactly one flair per post */}
+              <FilterChipSelect
+                label={"tags"}
+                multiple={false}
+                allOptions={this.props.selectedCommunityTags
+                  .filter(t => !t.deleted)
+                  .map(tag => {
+                    return {
+                      value: tag.id.toString(),
+                      label: communityTagName(tag),
+                    };
+                  })}
+                selectedOptions={(this.state.form.tags ?? []).map(t =>
+                  t.toString(),
+                )}
+                onSelect={choices => handleTagsChange(this, choices)}
+              />
+            </div>
+          </div>
+        )}
         {this.editorType === "creator" && (
           <>
             <div className="mb-3 row">
@@ -1131,33 +1158,6 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
                 id="post-schedule"
                 className="form-control mb-3"
                 onInput={e => handlePostScheduleChange(this, e)}
-              />
-            </div>
-          </div>
-        )}
-        {/* audioprn: not when all are deleted (creator page posts have none) */}
-        {this.props.selectedCommunityTags?.some(t => !t.deleted) && (
-          <div className="mb-3 row">
-            <label className="col-sm-2 col-form-label" htmlFor="post-tags">
-              Flair
-            </label>
-            <div className="col-sm-10">
-              {/* audioprn: exactly one flair per post */}
-              <FilterChipSelect
-                label={"tags"}
-                multiple={false}
-                allOptions={this.props.selectedCommunityTags
-                  .filter(t => !t.deleted)
-                  .map(tag => {
-                    return {
-                      value: tag.id.toString(),
-                      label: communityTagName(tag),
-                    };
-                  })}
-                selectedOptions={(this.state.form.tags ?? []).map(t =>
-                  t.toString(),
-                )}
-                onSelect={choices => handleTagsChange(this, choices)}
               />
             </div>
           </div>
