@@ -100,6 +100,8 @@ function toMarkdown(node: Node): string {
 interface Props {
   initialMarkdown: string;
   onChange: (markdown: string) => void;
+  /** Grey text shown while the box is empty. */
+  placeholder?: string;
 }
 
 export class RichTextEditor extends Component<Props, object> {
@@ -111,6 +113,11 @@ export class RichTextEditor extends Component<Props, object> {
       () => {},
     ).__html;
     document.execCommand("defaultParagraphSeparator", false, "p");
+    this.markEmpty(this.props.initialMarkdown);
+  }
+
+  markEmpty(md: string) {
+    this.box.current!.toggleAttribute("data-empty", !md.trim());
   }
 
   // The box is edited by the browser; re-rendering would reset it.
@@ -123,6 +130,7 @@ export class RichTextEditor extends Component<Props, object> {
     const md = toMarkdown(this.box.current!)
       .replace(/\n[ \t]+\n/g, "\n\n")
       .replace(/\n{3,}/g, "\n\n");
+    this.markEmpty(md);
     this.props.onChange(md.trim());
   }
 
@@ -155,8 +163,9 @@ export class RichTextEditor extends Component<Props, object> {
         </div>
         <div
           ref={this.box}
-          className="form-control border-0 rounded-top-0 md-div"
+          className="form-control border-0 rounded-top-0 md-div rte-box"
           style="min-height: 8rem"
+          data-placeholder={this.props.placeholder}
           contentEditable
           role="textbox"
           aria-multiline="true"

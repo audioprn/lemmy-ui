@@ -115,6 +115,9 @@ const MAX_POST_TITLE_LENGTH = 300; // audioprn: spec allows 300 characters
 
 // audioprn: a new poll, ending a week from now (as a datetime-local value).
 const NEW_POLL = { question: "", options: ["", ""] };
+// audioprn: the user's guidance in the empty post text (2026-11-18)
+const BODY_HINT =
+  "Anything you add in [square brackets] will count as a tag for the audioprn search";
 function inAWeek() {
   const d = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000)
@@ -1044,11 +1047,12 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
                   <RichTextEditor
                     initialMarkdown={this.state.form.body ?? ""}
                     onChange={val => handlePostBodyChange(this, val)}
+                    placeholder={BODY_HINT}
                   />
                 ) : (
                   <MarkdownTextArea
                     initialContent={this.state.form.body}
-                    placeholder={I18NextService.i18n.t("optional")}
+                    placeholder={BODY_HINT}
                     onContentChange={val => handlePostBodyChange(this, val)}
                     onContentBlur={val => handlePostBodyBlur(this, val)}
                     allLanguages={this.props.allLanguages}
