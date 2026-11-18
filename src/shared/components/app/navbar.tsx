@@ -1,5 +1,6 @@
 import { showAvatars, showMedia } from "@utils/app";
 import { isBrowser } from "@utils/browser";
+import { getStaticDir } from "@utils/env";
 import { numToSI } from "@utils/helpers";
 import {
   amAdmin,
@@ -135,8 +136,13 @@ export class Navbar extends Component<NavbarProps, NavbarState> {
                 showMedia(this.props.myUserInfo) && (
                   <PictrsImage src={siteView.site.icon} type="icon" />
                 )}
-              {/* audioprn: title with tagline */}
-              {SITE_TITLE}
+              {/* audioprn: the logo (on white, so it reads in dark mode too) */}
+              <img
+                src={`${getStaticDir()}/assets/images/audioprn-logo.png`}
+                alt={SITE_TITLE}
+                height={32}
+                className="rounded"
+              />
             </NavLink>
             <OnlineNow />
           </div>
