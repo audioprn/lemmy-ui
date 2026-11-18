@@ -56,7 +56,8 @@ export function PostName({ post, showBody }: PostNameProps) {
       {showBody === "full" ? (
         <h1 className="post-name h5 d-inline text-break">{name}</h1>
       ) : (
-        <h2 className="post-name h5 d-inline text-break">{name}</h2>
+        // audioprn: smaller in feeds, so more posts fit on screen (user, 2026-11-18)
+        <h2 className="post-name h6 d-inline text-break">{name}</h2>
       )}
       {/* audioprn: credits under the title */}
       <PostCredits postId={post.id} creatorId={post.creator_id} />

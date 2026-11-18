@@ -52,6 +52,8 @@ export async function getFeedPosts(
   if (filters !== MY_FEED) {
     return client.getPosts({
       ...form,
+      // The Content page shows 50 posts at a time, the most Lemmy allows (user, 2026-11-18).
+      limit: 50,
       ...contentFilters(filters, form.search_term),
     });
   }
