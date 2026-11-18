@@ -87,7 +87,7 @@ import {
 } from "../../utils/browser";
 import { getHttpBaseInternal } from "../../utils/env";
 import { IRoutePropsWithFetch } from "@utils/routes";
-import { RouteComponentProps, RouterContext } from "inferno-router";
+import { Link, RouteComponentProps, RouterContext } from "inferno-router";
 import { simpleScrollMixin } from "../mixins/scroll-mixin";
 import {
   ALL_TIME_INTERVAL,
@@ -908,20 +908,11 @@ export class Settings extends Component<SettingsRouteProps, SettingsState> {
             />
           </div>
         </div>
+        {/* audioprn: no email; a recovery code instead (creators ask an admin) */}
         <div className="mb-3 row">
-          <label className="col-sm-3 col-form-label" htmlFor="user-email">
-            {I18NextService.i18n.t("email")}
-          </label>
-          <div className="col-sm-9">
-            <input
-              type="email"
-              id="user-email"
-              className="form-control"
-              placeholder={I18NextService.i18n.t("optional")}
-              value={this.state.saveUserSettingsForm.email}
-              onInput={e => handleEmailChange(this, e)}
-              minLength={3}
-            />
+          <div className="col-sm-3 col-form-label">Forgot password</div>
+          <div className="col-sm-9 col-form-label">
+            <Link to="/recovery_code">Make a new recovery code</Link>
           </div>
         </div>
         <div className="mb-3 row">
@@ -1074,18 +1065,6 @@ export class Settings extends Component<SettingsRouteProps, SettingsState> {
                 this.state.saveUserSettingsForm.show_read_posts ?? false
               }
               onCheck={val => handleShowReadPostsChange(this, val)}
-            />
-          </div>
-        </div>
-        <div className="row mb-3">
-          <div className="col">
-            <FilterChipCheckbox
-              option={"send_notifications_to_email"}
-              isChecked={
-                this.state.saveUserSettingsForm.send_notifications_to_email ??
-                false
-              }
-              onCheck={val => handleSendNotificationsToEmailChange(this, val)}
             />
           </div>
         </div>
@@ -1724,12 +1703,6 @@ function handleAutoMarkFetchedPostsAsReadChange(i: Settings, val: boolean) {
   );
 }
 
-function handleSendNotificationsToEmailChange(i: Settings, val: boolean) {
-  i.setState(
-    s => ((s.saveUserSettingsForm.send_notifications_to_email = val), s),
-  );
-}
-
 function handleThemeChange(i: Settings, theme: string) {
   i.setState(s => ((s.saveUserSettingsForm.theme = theme), s));
   setThemeOverride(theme);
@@ -1777,10 +1750,6 @@ function handleItemsPerPageChange(
 ) {
   const items = event.target.value ? Number(event.target.value) : undefined;
   i.setState(s => ((s.saveUserSettingsForm.default_items_per_page = items), s));
-}
-
-function handleEmailChange(i: Settings, event: FormEvent<HTMLInputElement>) {
-  i.setState(s => ((s.saveUserSettingsForm.email = event.target.value), s));
 }
 
 function handleBioChange(i: Settings, val: string) {

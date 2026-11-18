@@ -48,7 +48,7 @@ import {
   LoginFetchConfig,
   getLoginQueryParams,
 } from "@components/home/authenticate/login";
-import { LoginReset } from "@components/home/authenticate/login-reset";
+import { AccountRecovery, RecoveryCodePage } from "../audioprn/recovery";
 import { Setup } from "@components/home/setup";
 import {
   Signup,
@@ -237,9 +237,14 @@ export const routes: IRoutePropsWithFetch<
     component: Login,
     getQueryParams: getLoginQueryParams,
   } as LoginFetchConfig,
+  // audioprn: no email: "Forgot password?" uses a recovery code
   {
     path: `/login_reset`,
-    component: LoginReset,
+    component: AccountRecovery,
+  },
+  {
+    path: `/recovery_code`,
+    component: RecoveryCodePage,
   },
   // audioprn: creator signup (same form plus 3 content links and social links)
   {

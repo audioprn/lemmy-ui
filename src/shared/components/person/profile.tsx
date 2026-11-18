@@ -114,6 +114,7 @@ import {
 import { CreatorPageActions, CreditedOn } from "../../audioprn/creators";
 import { CreatorPin, CreatorStats } from "../../audioprn/creator-page";
 import { MyBlocks } from "../../audioprn/blocks";
+import { AdminResetPassword } from "../../audioprn/recovery";
 import { NewsFeed } from "../../audioprn/news-feed";
 import { withPagePins } from "../../audioprn/page-pins";
 import { PersonDetails } from "./person-details";
@@ -1075,6 +1076,16 @@ export class Profile extends Component<ProfileRouteProps, ProfileState> {
                       {capitalizeFirstLetter(I18NextService.i18n.t("unban"))}
                     </button>
                   ))}
+                {/* audioprn: no email, so admins set a temporary password */}
+                {amAdmin(myUserInfo) &&
+                  pv.person.local &&
+                  !pv.is_admin &&
+                  !this.amCurrentUser && (
+                    <AdminResetPassword
+                      personId={pv.person.id}
+                      name={pv.person.name}
+                    />
+                  )}
                 {amAdmin(myUserInfo) && pv.person.local && (
                   <>
                     <button

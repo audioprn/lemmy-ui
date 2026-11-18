@@ -1,6 +1,6 @@
 import { setIsoData, updateMyUserInfo, WithHead } from "@utils/app";
 import { isBrowser, refreshTheme } from "@utils/browser";
-import { resourcesSettled, validEmail } from "@utils/helpers";
+import { resourcesSettled } from "@utils/helpers";
 import { Component, FormEvent, InfernoNode } from "inferno";
 import {
   CaptchaResponse,
@@ -281,36 +281,7 @@ export class Signup extends Component<SignupRouteProps, State> {
           </div>
         </div>
 
-        <div className="mb-3 row">
-          <label className="col-sm-2 col-form-label" htmlFor="register-email">
-            {I18NextService.i18n.t("email")}
-          </label>
-          <div className="col-sm-10">
-            <input
-              type="email"
-              id="register-email"
-              className="form-control"
-              placeholder={
-                siteView?.local_site.email_verification_required
-                  ? I18NextService.i18n.t("required")
-                  : I18NextService.i18n.t("optional")
-              }
-              value={this.state.form.email}
-              autoComplete="email"
-              onInput={e => handleRegisterEmailChange(this, e)}
-              required={siteView?.local_site.email_verification_required}
-              minLength={3}
-            />
-            {!siteView?.local_site.email_verification_required &&
-              this.state.form.email &&
-              !validEmail(this.state.form.email) && (
-                <div className="mt-2 mb-0 alert alert-warning" role="alert">
-                  <Icon icon="alert-triangle" classes="icon-inline me-2" />
-                  {I18NextService.i18n.t("no_password_reset")}
-                </div>
-              )}
-          </div>
-        </div>
+        {/* audioprn: no email field (no email: recovery codes instead) */}
         <div className="mb-3">
           <PasswordInput
             id="register-password"
@@ -543,8 +514,9 @@ async function handleRegisterSubmit(
             );
           }
 
-          // audioprn: communities are hidden, so new users land on the home page.
-          i.props.history.replace("/");
+          // audioprn: listeners get their recovery code first (no email); creators land on the
+          // home page (an admin resets their password if they forget it).
+          i.props.history.replace(i.isCreator ? "/" : "/recovery_code");
         } else {
           if (data.verify_email_sent) {
             toast(I18NextService.i18n.t("verify_email_sent"));
@@ -570,17 +542,6 @@ function handleRegisterUsernameChange(
   event: FormEvent<HTMLInputElement>,
 ) {
   i.state.form.username = event.target.value.trim();
-  i.setState(i.state);
-}
-
-function handleRegisterEmailChange(
-  i: Signup,
-  event: FormEvent<HTMLInputElement>,
-) {
-  i.state.form.email = event.target.value;
-  if (i.state.form.email === "") {
-    i.state.form.email = undefined;
-  }
   i.setState(i.state);
 }
 

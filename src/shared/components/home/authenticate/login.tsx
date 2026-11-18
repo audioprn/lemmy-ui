@@ -114,7 +114,8 @@ export class Login extends Component<LoginRouteProps, State> {
               className="col-sm-2 col-form-label"
               htmlFor="login-email-or-username"
             >
-              {I18NextService.i18n.t("email_or_username")}
+              {/* audioprn: no email */}
+              {I18NextService.i18n.t("username")}
             </label>
             <div className="col-sm-10">
               <input
@@ -123,7 +124,7 @@ export class Login extends Component<LoginRouteProps, State> {
                 id="login-email-or-username"
                 value={this.state.form.username_or_email}
                 onInput={e => handleLoginUsernameChange(this, e)}
-                autoComplete="email"
+                autoComplete="username"
                 required
                 minLength={3}
               />
