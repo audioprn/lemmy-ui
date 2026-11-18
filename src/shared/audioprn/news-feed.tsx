@@ -1,12 +1,14 @@
 // audioprn: news flashes. Site news (admins) at the top of the Content left column; community news
 // (the community's mods) on community pages, which admins can also show in the site news; a
 // creator's own news on their profile. My audioprn shows the site news plus news from followed
-// creators and joined communities. Up to 300 characters, every link counts as 23 and shows
-// shortened. Whoever can post sees Bluesky and X links to share a flash there too.
+// creators and joined communities; the Creators page every creator's news. Up to 300 characters,
+// every link counts as 23 and shows shortened. Whoever can post sees Bluesky and X links to share
+// a flash there too.
 import { amAdmin } from "@utils/roles";
 import { setIsoData, toast } from "@utils/app";
 import { relTags } from "@utils/config";
 import { Component } from "inferno";
+import { Link } from "inferno-router";
 import { call } from "./creator-api";
 
 interface NewsFlash {
@@ -18,6 +20,7 @@ interface NewsFlash {
   community_title: string | null;
   person_id: number | null;
   creator_name: string | null;
+  creator_username: string | null;
 }
 
 const MAX_LENGTH = 300;
@@ -66,6 +69,8 @@ interface Props {
   personId?: number;
   /** My audioprn: site news plus followed creators' and joined communities' news. */
   my?: boolean;
+  /** The Creators page: every creator's news (they post it on their own page). */
+  creators?: boolean;
 }
 
 const shareLinks = (body: string) => [
@@ -84,14 +89,14 @@ export class NewsFeed extends Component<
   state = { news: [] as NewsFlash[], draft: "", canPostOwn: false };
 
   async componentDidMount() {
-    const { communityId, personId, my } = this.props;
+    const { communityId, personId, my, creators } = this.props;
     const res = await call<{ news: NewsFlash[]; can_post: boolean }>(
       "GET",
       communityId
         ? `/news?community_id=${communityId}`
         : personId
           ? `/news?person_id=${personId}`
-          : `/news${my ? "?my=true" : ""}`,
+          : `/news${my ? "?my=true" : creators ? "?creators=true" : ""}`,
     ).catch(() => ({ news: [], can_post: false }));
     this.setState({ news: res.news, canPostOwn: res.can_post });
   }
@@ -103,6 +108,7 @@ export class NewsFeed extends Component<
   get canPost() {
     const { communityId, personId } = this.props;
     if (personId) return this.state.canPostOwn;
+    if (this.props.creators) return false;
     const mui = this.isoData.myUserInfo;
     return (
       amAdmin(mui) ||
@@ -153,7 +159,7 @@ export class NewsFeed extends Component<
           📣{" "}
           {this.props.communityId
             ? "Cummunity news"
-            : this.props.personId
+            : this.props.personId || this.props.creators
               ? "Creator news"
               : "News"}
         </h2>
@@ -189,7 +195,14 @@ export class NewsFeed extends Component<
               !this.props.personId &&
               (n.community_title ?? n.creator_name) && (
                 <div className="text-muted">
-                  {n.community_title ?? n.creator_name}:
+                  {n.creator_username ? (
+                    <Link to={`/u/${n.creator_username}`}>
+                      {n.creator_name}
+                    </Link>
+                  ) : (
+                    n.community_title
+                  )}
+                  :
                 </div>
               )}
             <NewsBody body={n.body} />

@@ -9,6 +9,7 @@ import { Spinner } from "@components/common/icon";
 import { MomentTime } from "@components/common/moment-time";
 import { HttpService } from "../services";
 import { call } from "./creator-api";
+import { NewsFeed } from "./news-feed";
 
 interface Creator {
   id: number;
@@ -100,83 +101,92 @@ export class Creators extends Component<WithHead, CreatorsState> {
     const { creators, sort, page, more, loading, q } = this.state;
     return (
       <div className="container-lg">
-        <h1 className="h4 mb-3">Creators</h1>
-        <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
-          <input
-            type="search"
-            className="form-control form-control-sm"
-            style="max-width: 20rem"
-            placeholder="Search creators"
-            aria-label="Search creators"
-            value={q}
-            onInput={e => {
-              const q = e.currentTarget.value;
-              this.setState({ q });
-              clearTimeout(this.searchTimer);
-              this.searchTimer = setTimeout(
-                () => void this.load(this.state.sort, 1, q),
-                300,
-              );
-            }}
-          />
-          <div className="btn-group" role="group" aria-label="Sort">
-            {(Object.keys(SORTS) as Sort[]).map(s => (
+        <div className="row">
+          <div className="col-12 col-md-8">
+            <h1 className="h4 mb-3">Creators</h1>
+            <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
+              <input
+                type="search"
+                className="form-control form-control-sm"
+                style="max-width: 20rem"
+                placeholder="Search creators"
+                aria-label="Search creators"
+                value={q}
+                onInput={e => {
+                  const q = e.currentTarget.value;
+                  this.setState({ q });
+                  clearTimeout(this.searchTimer);
+                  this.searchTimer = setTimeout(
+                    () => void this.load(this.state.sort, 1, q),
+                    300,
+                  );
+                }}
+              />
+              <div className="btn-group" role="group" aria-label="Sort">
+                {(Object.keys(SORTS) as Sort[]).map(s => (
+                  <button
+                    type="button"
+                    className={`btn btn-sm ${s === sort ? "btn-secondary" : "btn-outline-secondary"}`}
+                    aria-pressed={s === sort}
+                    onClick={() => {
+                      this.setState({ sort: s, creators: undefined });
+                      this.load(s, 1);
+                    }}
+                  >
+                    {SORTS[s]}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {!creators ? (
+              <Spinner large />
+            ) : creators.length === 0 ? (
+              <p>{q ? "No creators found." : "No creators yet."}</p>
+            ) : (
+              <ul className="list-unstyled">
+                {creators.map(c => (
+                  <li className="d-flex align-items-center gap-2 mb-2">
+                    {c.avatar && (
+                      <img
+                        src={c.avatar}
+                        alt=""
+                        width={32}
+                        height={32}
+                        className="rounded-circle object-fit-cover"
+                      />
+                    )}
+                    <Link to={`/u/${c.name}`}>{c.display_name ?? c.name}</Link>
+                    <span className="small text-muted">
+                      @{c.name}
+                      {c.followers !== null &&
+                        ` · ${followersText(c.followers)}`}
+                      {c.last_post_at && (
+                        <>
+                          {" · last posted "}
+                          <MomentTime published={c.last_post_at} showAgo />
+                        </>
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {creators && more && (
               <button
                 type="button"
-                className={`btn btn-sm ${s === sort ? "btn-secondary" : "btn-outline-secondary"}`}
-                aria-pressed={s === sort}
-                onClick={() => {
-                  this.setState({ sort: s, creators: undefined });
-                  this.load(s, 1);
-                }}
+                className="btn btn-sm btn-outline-secondary"
+                disabled={loading}
+                onClick={() => this.load(sort, page + 1)}
               >
-                {SORTS[s]}
+                {loading ? <Spinner /> : "Load more"}
               </button>
-            ))}
+            )}
+          </div>
+          {/* Every creator's news flashes, newest first (user, 2026-11-18). */}
+          <div className="col-12 col-md-4 mt-3 mt-md-0">
+            <NewsFeed creators />
           </div>
         </div>
-        {!creators ? (
-          <Spinner large />
-        ) : creators.length === 0 ? (
-          <p>{q ? "No creators found." : "No creators yet."}</p>
-        ) : (
-          <ul className="list-unstyled">
-            {creators.map(c => (
-              <li className="d-flex align-items-center gap-2 mb-2">
-                {c.avatar && (
-                  <img
-                    src={c.avatar}
-                    alt=""
-                    width={32}
-                    height={32}
-                    className="rounded-circle object-fit-cover"
-                  />
-                )}
-                <Link to={`/u/${c.name}`}>{c.display_name ?? c.name}</Link>
-                <span className="small text-muted">
-                  @{c.name}
-                  {c.followers !== null && ` · ${followersText(c.followers)}`}
-                  {c.last_post_at && (
-                    <>
-                      {" · last posted "}
-                      <MomentTime published={c.last_post_at} showAgo />
-                    </>
-                  )}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-        {creators && more && (
-          <button
-            type="button"
-            className="btn btn-sm btn-outline-secondary"
-            disabled={loading}
-            onClick={() => this.load(sort, page + 1)}
-          >
-            {loading ? <Spinner /> : "Load more"}
-          </button>
-        )}
       </div>
     );
   }
