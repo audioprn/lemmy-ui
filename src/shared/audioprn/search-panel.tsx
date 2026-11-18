@@ -163,6 +163,8 @@ interface Props {
 
 interface State {
   text: string;
+  /** Opened with the top bar's Search button (it also shows while there's a search). */
+  open: boolean;
   expanded: boolean;
   form: Form;
   tags: Tag[];
@@ -175,6 +177,7 @@ export class SearchPanel extends Component<Props, State> {
   private inputRef = createRef<HTMLInputElement>();
   state: State = {
     text: this.props.q ?? "",
+    open: false,
     expanded: false,
     form: EMPTY_FORM,
     tags: [],
@@ -203,7 +206,7 @@ export class SearchPanel extends Component<Props, State> {
     this.openFromLink();
   }
 
-  /** The top bar's search icon links to /content#search: open Expanded search there. */
+  /** The top bar's Search button links to /content#search: open the search there, expanded. */
   openFromLink() {
     if (!isBrowser() || location.hash !== "#search") return;
     history.replaceState(
@@ -211,8 +214,9 @@ export class SearchPanel extends Component<Props, State> {
       "",
       location.pathname + location.search,
     );
-    this.setState({ expanded: true });
-    this.inputRef.current?.focus();
+    this.setState({ open: true, expanded: true }, () =>
+      this.inputRef.current?.focus(),
+    );
   }
 
   search(text: string) {
@@ -390,10 +394,67 @@ export class SearchPanel extends Component<Props, State> {
     );
   }
 
+  /** Turn the saved search on or off (it applies whether the search is open or not). */
+  savedTick() {
+    const saved = this.state.saved;
+    return (
+      saved?.saved_query && (
+        <div className="form-check mb-0">
+          <input
+            className="form-check-input"
+            type="checkbox"
+            id="search-use-saved"
+            checked={saved.use_saved}
+            onChange={() =>
+              this.saveSaved({ ...saved, use_saved: !saved.use_saved })
+            }
+          />
+          <label
+            className="form-check-label"
+            htmlFor="search-use-saved"
+            title={saved.saved_query}
+          >
+            Use my saved search
+          </label>
+        </div>
+      )
+    );
+  }
+
+  viewSwitch() {
+    const compact = this.props.compact;
+    return (
+      <div className="btn-group btn-group-sm ms-auto" role="group">
+        {[false, true].map(c => (
+          <button
+            type="button"
+            className={`btn ${c === compact ? "btn-secondary" : "btn-outline-secondary"} py-0`}
+            aria-pressed={c === compact}
+            onClick={() => {
+              saveCompact(c);
+              this.props.onCompact(c);
+            }}
+          >
+            {c ? "Compact" : "Cards"}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
   render() {
-    const { text, expanded, tags, saved } = this.state;
-    const { q, error, compact } = this.props;
+    const { text, expanded, tags, open } = this.state;
+    const { q, error } = this.props;
     const upperQ = (q ?? "").toUpperCase();
+    // Off the Content page until the top bar's Search button opens it (user, 2026-11-18).
+    if (!open && !q) {
+      return (
+        <div className="d-flex flex-wrap align-items-center gap-2 small mb-2">
+          {this.savedTick()}
+          {this.viewSwitch()}
+        </div>
+      );
+    }
     return (
       <div className="mb-3">
         <form
@@ -436,6 +497,16 @@ export class SearchPanel extends Component<Props, State> {
               Clear search
             </button>
           )}
+          <button
+            type="button"
+            className="btn btn-link btn-sm p-0"
+            onClick={() => {
+              this.setState({ open: false, expanded: false });
+              if (q) this.search("");
+            }}
+          >
+            Close search
+          </button>
           <div className="form-check mb-0">
             <input
               className="form-check-input"
@@ -452,41 +523,8 @@ export class SearchPanel extends Component<Props, State> {
               Include very taboo tags ([Extreme], slurs…)
             </label>
           </div>
-          {saved?.saved_query && (
-            <div className="form-check mb-0">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                id="search-use-saved"
-                checked={saved.use_saved}
-                onChange={() =>
-                  this.saveSaved({ ...saved, use_saved: !saved.use_saved })
-                }
-              />
-              <label
-                className="form-check-label"
-                htmlFor="search-use-saved"
-                title={saved.saved_query}
-              >
-                Use my saved search
-              </label>
-            </div>
-          )}
-          <div className="btn-group btn-group-sm ms-auto" role="group">
-            {[false, true].map(c => (
-              <button
-                type="button"
-                className={`btn ${c === compact ? "btn-secondary" : "btn-outline-secondary"} py-0`}
-                aria-pressed={c === compact}
-                onClick={() => {
-                  saveCompact(c);
-                  this.props.onCompact(c);
-                }}
-              >
-                {c ? "Compact" : "Cards"}
-              </button>
-            ))}
-          </div>
+          {this.savedTick()}
+          {this.viewSwitch()}
         </div>
         {error && <div className="alert alert-danger py-1 small">{error}</div>}
         {/* Popular tags only in Expanded search: they take a lot of room. */}

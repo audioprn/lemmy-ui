@@ -123,7 +123,7 @@ export class Navbar extends Component<NavbarProps, NavbarState> {
           id="navbar"
         >
           {/* audioprn: OnlineNow shows nothing here, it counts visitors on every page */}
-          <div className="d-flex flex-column">
+          <div className="d-flex align-items-center">
             <NavLink
               id="navTitle"
               to="/"
@@ -142,6 +142,14 @@ export class Navbar extends Component<NavbarProps, NavbarState> {
                 alt={SITE_TITLE}
                 height={32}
               />
+            </NavLink>
+            {/* audioprn: a big Search button opens the Content page's search (user, 2026-11-18) */}
+            <NavLink
+              to="/content#search"
+              className="btn btn-primary fw-bold px-3 me-2"
+              onMouseUp={() => handleCollapseClick(this)}
+            >
+              Search
             </NavLink>
             <OnlineNow />
           </div>
@@ -295,20 +303,7 @@ export class Navbar extends Component<NavbarProps, NavbarState> {
               {/* audioprn: no Support Lemmy heart (linked from the right column's "How we use AI") */}
             </ul>
             <ul id="navbarIcons" className="navbar-nav">
-              <li id="navSearch" className="nav-item">
-                {/* audioprn: the Content page's Expanded search */}
-                <NavLink
-                  to="/content#search"
-                  className="nav-link d-inline-flex align-items-center d-md-inline-block"
-                  title={I18NextService.i18n.t("search")}
-                  onMouseUp={() => handleCollapseClick(this)}
-                >
-                  <Icon icon="search" />
-                  <span className="d-inline ms-1 d-md-none ms-md-0">
-                    {I18NextService.i18n.t("search")}
-                  </span>
-                </NavLink>
-              </li>
+              {/* audioprn: no search icon: the Search button is next to the logo */}
               {person ? (
                 <>
                   <li id="navMessages" className="nav-item">
