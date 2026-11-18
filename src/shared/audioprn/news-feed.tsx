@@ -151,7 +151,8 @@ export class NewsFeed extends Component<
     const admin = amAdmin(this.isoData.myUserInfo);
     const canPost = this.canPost;
     const { news, draft } = this.state;
-    if (!canPost && news.length === 0) return null;
+    // The Creators page always shows its box (user, 2026-11-18).
+    if (!canPost && news.length === 0 && !this.props.creators) return null;
     const left = MAX_LENGTH - countedLength(draft.trim());
     return (
       <section className="card card-body mb-3 p-2">
@@ -188,6 +189,9 @@ export class NewsFeed extends Component<
               </button>
             </div>
           </form>
+        )}
+        {news.length === 0 && (
+          <p className="small text-muted mb-0">No creator news yet.</p>
         )}
         {news.map(n => (
           <div className="small border-top pt-1 mt-1">
