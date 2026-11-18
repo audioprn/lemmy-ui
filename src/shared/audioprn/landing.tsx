@@ -1,5 +1,5 @@
 // audioprn: the landing page at `/`. Tagline and rules from the spec, then
-// the Content and Creators buttons. The post feed moved to `/content`.
+// the Content and Creators buttons (new visitors: Become a creator / Sign up as a user). The post feed moved to `/content`.
 import { setIsoData, WithHead } from "@utils/app";
 import { Component } from "inferno";
 import { Link, RouterContext } from "inferno-router";
@@ -32,13 +32,30 @@ export class Landing extends Component<WithHead, object> {
           post, any registered user may comment. All links must be to full and
           free audios and scripts.
         </p>
-        <div className="d-flex justify-content-center gap-3">
-          <Link className="btn btn-lg btn-primary px-5" to="/content">
-            Content
-          </Link>
-          <Link className="btn btn-lg btn-primary px-5" to="/creators">
-            Creators
-          </Link>
+        {/* New visitors get the two signups (user, 2026-11-18); members, Content and Creators */}
+        <div className="d-flex flex-wrap justify-content-center gap-3">
+          {this.isoData.myUserInfo ? (
+            <>
+              <Link className="btn btn-lg btn-primary px-5" to="/content">
+                Content
+              </Link>
+              <Link className="btn btn-lg btn-primary px-5" to="/creators">
+                Creators
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                className="btn btn-lg btn-primary px-5"
+                to="/signup/creator"
+              >
+                Become a creator
+              </Link>
+              <Link className="btn btn-lg btn-primary px-5" to="/signup">
+                Sign up as a user
+              </Link>
+            </>
+          )}
         </div>
       </div>
     );

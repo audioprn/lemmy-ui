@@ -525,6 +525,21 @@ export class Navbar extends Component<NavbarProps, NavbarState> {
             </ul>
           </div>
         </nav>
+        {/* audioprn: on phones the menu hides Sign up and Login, so logged-out visitors get
+            them in a row under the top bar on every page (user, 2026-11-18) */}
+        {!person && (
+          <div className="d-flex d-md-none flex-wrap justify-content-center align-items-center gap-2 py-2 border-bottom">
+            <NavLink className="btn btn-sm btn-primary" to="/signup/creator">
+              Become a creator
+            </NavLink>
+            <NavLink className="btn btn-sm btn-primary" to="/signup">
+              Sign up as a user
+            </NavLink>
+            <NavLink className="btn btn-sm btn-link" to="/login">
+              Log in
+            </NavLink>
+          </div>
+        )}
       </div>
     );
   }
