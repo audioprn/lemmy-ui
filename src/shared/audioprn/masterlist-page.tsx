@@ -114,10 +114,12 @@ function fromPost(p: MasterlistPost, cats: MasterlistCategory[]): Item {
     ...creditText(p.credits, "editor").map(n => `edit by ${n}`),
     ...creditText(p.credits, "voice_actor").map(n => `with ${n}`),
   ].join(", ");
-  const title = p.name
-    .replace(/\[[^\]]*\]/g, "")
-    .replace(/\s{2,}/g, " ")
-    .trim();
+  // The first text between tags only: "[F4M] Nurse [Tag] to [Tag] aka" -> "Nurse" (user, 2026-11-18).
+  const title =
+    p.name
+      .split(/\[[^\]]*\]/)
+      .map(s => s.replace(/\s+/g, " ").trim())
+      .find(Boolean) ?? "";
   const description = plainText(p.body);
   // A tag like [16:10], [1:02:03] or [85 Minutes].
   const duration = p.tags.find(t => lengthMinutes(t) !== undefined) ?? "";
