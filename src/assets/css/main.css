@@ -645,3 +645,9 @@ em-emoji-picker {
   color: var(--bs-secondary-color);
   pointer-events: none;
 }
+
+/* audioprn: the content warning's list reads left to right, its bullets next to the text */
+#adultConsentModal .modal-body ul {
+  display: inline-block;
+  text-align: start;
+}

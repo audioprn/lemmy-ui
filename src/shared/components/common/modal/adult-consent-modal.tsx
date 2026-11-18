@@ -6,7 +6,6 @@ import { I18NextService } from "../../../services";
 import { isHttps } from "@utils/env";
 import { IsoData } from "@utils/types";
 import { setIsoData } from "@utils/app";
-import { RouterContext } from "inferno-router";
 
 interface AdultConsentModalProps {
   contentWarning: string;
@@ -36,6 +35,8 @@ class AdultConsentModalInner extends Component<
         aria-hidden
         aria-label="Content warning"
         data-bs-backdrop="static"
+        // audioprn: Escape doesn't close it; only Continue or Go back (2026-11-18)
+        data-bs-keyboard="false"
         ref={this.modalDivRef}
       >
         <div
@@ -121,9 +122,12 @@ export default class AdultConsentModal extends Component<
   };
 
   componentDidUpdate() {
+    // audioprn: leave the site: back to the site they came from, else Google (user, 2026-11-18).
+    // Going back within audioprn showed it without the warning.
     if (this.state.redirectCountdown === 0) {
-      const context = this.context as RouterContext;
-      context.router.history.back();
+      const from = document.referrer;
+      const elsewhere = from && new URL(from).origin !== location.origin;
+      location.replace(elsewhere ? from : "https://www.google.com");
     }
   }
 
