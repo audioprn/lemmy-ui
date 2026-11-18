@@ -7,6 +7,7 @@ import { Component } from "inferno";
 import { Link, RouterContext } from "inferno-router";
 import { htmlTags } from "@components/common/html-tags";
 import { call } from "./creator-api";
+import { listCreators } from "./creators";
 
 /** The code, big, with a copy button. */
 function ShowCode({ code }: { code: string }) {
@@ -226,17 +227,23 @@ export class AccountRecovery extends Component<WithHead, RecoverState> {
   }
 }
 
-/** On a profile, for admins: a temporary password for someone who lost theirs. */
+/** On a verified creator's profile, for admins: a temporary password for a creator who lost
+ * their password and recovery code (the backup). */
 export class AdminResetPassword extends Component<
   { personId: number; name: string },
-  { password?: string }
+  { creator: boolean; password?: string }
 > {
-  state: { password?: string } = {};
+  state: { creator: boolean; password?: string } = { creator: false };
+
+  async componentDidMount() {
+    const [creator] = await listCreators(this.props.personId).catch(() => []);
+    this.setState({ creator: !!creator });
+  }
 
   async reset() {
     if (
       !confirm(
-        `Set a temporary password for ${this.props.name}? Their current password stops working and they're logged out everywhere. Only do this once you're sure it's really them asking.`,
+        `Set a temporary password for ${this.props.name}? Only for a creator who lost both their password and recovery code, once you're sure it's really them asking. Their current password stops working and they're logged out everywhere.`,
       )
     ) {
       return;
@@ -254,12 +261,14 @@ export class AdminResetPassword extends Component<
   }
 
   render() {
-    const { password } = this.state;
+    const { creator, password } = this.state;
+    if (!creator) return null;
     return password ? (
       <div className="alert alert-warning small mb-0 me-2">
         Temporary password for {this.props.name}:{" "}
         <code className="user-select-all">{password}</code>. Pass it on
-        privately; they should change it in Settings after logging in.
+        privately; they should change it in Settings after logging in, and make
+        a new recovery code.
       </div>
     ) : (
       <button

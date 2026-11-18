@@ -49,6 +49,8 @@ const ERROR_MESSAGES: Record<string, string> = {
     "Admins don't use recovery codes: a lost admin password is reset on the server.",
   invalid_password: "Passwords must be 10 to 60 characters long.",
   cant_reset_an_admin: "Admins' passwords can't be reset here.",
+  only_creators_get_a_reset:
+    "Only verified creators can have their password reset by an admin.",
   rate_limit_error: "Too many tries. Please wait a while and try again.",
   log_in_to_read_scripts: "Log in to read the script.",
   script_read_limit:
