@@ -5,12 +5,18 @@ import { Locale, setDefaultOptions } from "date-fns";
 import { isBrowser } from "@utils/browser";
 import { toast } from "@utils/app";
 
-// audioprn: the site says "cummunity" for "community" (English text, not {{placeholders}}).
+// audioprn: the site says "cummunity" for "community" (English text, not {{placeholders}}),
+// and "smutaversary" for "cake day" (user, 2026-11-18).
 function cummunity<T>(value: T): T {
   if (typeof value === "string") {
-    return value.replace(/(\{\{)?([Cc])ommunit/g, (match, brace, c) =>
-      brace ? match : `${c}ummunit`,
-    ) as T;
+    return value
+      .replace(/(\{\{)?([Cc])ommunit/g, (match, brace, c) =>
+        brace ? match : `${c}ummunit`,
+      )
+      .replace(
+        /([Cc])ake day/g,
+        (_, c) => `${c === "C" ? "S" : "s"}mutaversary`,
+      ) as T;
   }
   if (value && typeof value === "object") {
     return Object.fromEntries(
