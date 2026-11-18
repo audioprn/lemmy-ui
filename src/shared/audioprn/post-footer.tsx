@@ -51,6 +51,11 @@ export class PostFooter extends Component<{ creatorId: number }, object> {
   }
 }
 
+/** Recommended start of a cash box, shown in Settings while it's empty, which creators can
+ * change (user, 2026-11-18). */
+const CASH_BOX_START =
+  "This is a full and free audio/script! If you would like to voluntarily support me, here's how:\n\n";
+
 /** A creator's default cash box text (Settings), for the post form. */
 export const defaultCashBox = (creatorId: number) =>
   getFooters([creatorId]).then(r => r.footers[0]?.support ?? "");
@@ -85,8 +90,6 @@ export class CashBox extends Component<
     return (
       <div className="col-12">
         <div className="cash-box bg-success-subtle text-success-emphasis border border-success-subtle rounded p-2 my-2">
-          This is a full and free audio/script! If you would like to voluntarily
-          support me, here's how:
           <div
             className="md-div"
             dangerouslySetInnerHTML={mdToHtml(support, () => {})}
@@ -112,9 +115,10 @@ export class CreatorFooterSettings extends Component<
     const me = this.isoData.myUserInfo?.local_user_view.person.id;
     if (!me) return;
     const [footer] = (await getFooters([me])).footers;
-    if (footer) {
-      this.setState({ blurb: footer.blurb, support: footer.support });
-    }
+    this.setState({
+      blurb: footer?.blurb ?? "",
+      support: footer?.support || CASH_BOX_START,
+    });
   }
 
   async save() {
@@ -123,9 +127,16 @@ export class CreatorFooterSettings extends Component<
         blurb: this.state.blurb,
         // The cash box replaced the footer's social links.
         links: [],
-        support: this.state.support,
+        // The recommended text alone, with nothing added, is no cash box.
+        support:
+          this.state.support.trim() === CASH_BOX_START.trim()
+            ? ""
+            : this.state.support,
       });
-      this.setState({ blurb: footer.blurb, support: footer.support });
+      this.setState({
+        blurb: footer.blurb,
+        support: footer.support || CASH_BOX_START,
+      });
       footers.set(footer.person_id, footer);
       toast("Post footer and cash box saved.");
     } catch (e) {
@@ -153,15 +164,15 @@ export class CreatorFooterSettings extends Component<
             onInput={e => this.setState({ blurb: e.target.value })}
           />
           <label className="small text-muted mb-1" htmlFor="creator-cash-box">
-            Cash box: a pale green box inside your Content posts, at the bottom:
-            "This is a full and free audio/script! If you would like to
-            voluntarily support me, here's how:" followed by your text. Optional
-            (left empty, there's no box).
+            Cash box: a pale green box inside your Content posts, at the bottom,
+            with your text. It starts with our recommended wording: change it to
+            whatever you like. Optional (left empty, or with only the
+            recommended wording, there's no box).
           </label>
           <textarea
             id="creator-cash-box"
             className="form-control mb-2"
-            rows={2}
+            rows={4}
             maxLength={500}
             placeholder={
               "Your Throne, Ko-fi or Patreon links, e.g.\n[Ko-fi](https://ko-fi.com/…) · [Throne](https://throne.com/…)"
