@@ -46,6 +46,19 @@ export function savePostScript(postId: number, script: ScriptInput) {
   });
 }
 
+/** A post's script for its writer to edit (the writer's reads aren't limited). */
+export async function loadPostScript(postId: number): Promise<ScriptInput> {
+  const { script } = await call<{ script: Script | null }>(
+    "GET",
+    `/post_script?post_id=${postId}&text=true`,
+  );
+  return {
+    body: script?.body ?? "",
+    link: script?.link ?? "",
+    fill_terms: script?.fill_terms ?? "",
+  };
+}
+
 /** The script fields, on the post form and in the writer's update box. */
 export function ScriptFields({
   value,

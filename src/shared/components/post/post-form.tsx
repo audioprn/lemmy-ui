@@ -90,6 +90,7 @@ import {
   NO_SCRIPT,
   ScriptFields,
   ScriptInput,
+  loadPostScript,
   savePostScript,
 } from "../../audioprn/post-script";
 import { amAdmin } from "@utils/roles";
@@ -196,8 +197,9 @@ interface PostFormState {
   richText?: boolean;
   /** audioprn: an optional poll (creator page posts); `ends` is a datetime-local value */
   poll?: { question: string; options: string[]; ends: string };
-  /** audioprn: the script on a new Script Offer post */
+  /** audioprn: the script on a Script Offer post, and as loaded when editing */
   script?: ScriptInput;
+  scriptLoaded?: string;
   /** audioprn: a Script Fill's script (a link to its post here), and as loaded when editing */
   fillOf?: string;
   fillLoaded?: string;
@@ -335,6 +337,12 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
           ? `${location.origin}/post/${fill.script_post_id}`
           : "";
       this.setState({ fillOf, fillLoaded: fillOf });
+      if (this.editorType === "creator") {
+        const script = await loadPostScript(pv.post.id).catch(() => undefined);
+        if (script) {
+          this.setState({ script, scriptLoaded: JSON.stringify(script) });
+        }
+      }
     }
   }
 
@@ -464,21 +472,22 @@ export class PostForm extends Component<PostFormProps, PostFormState> {
           </div>
         )}
         {creatorPage && !this.props.post_view && this.pollInputs()}
-        {/* audioprn: the script, on new Script Offer posts (later: "Update script" on the post) */}
-        {!this.props.post_view && this.scriptOffer && (
-          <div className="mb-3 row">
-            <div className="col-sm-2 col-form-label">Script</div>
-            <div className="col-sm-10">
-              <ScriptFields
-                value={this.state.script ?? NO_SCRIPT}
-                onChange={script => this.setState({ script })}
-              />
-              <div className="small text-muted mt-1">
-                Only logged-in members can read the script here.
+        {/* audioprn: the script and fill terms on Script Offer posts (editing: once loaded) */}
+        {this.scriptOffer &&
+          (!this.props.post_view || this.state.scriptLoaded) && (
+            <div className="mb-3 row">
+              <div className="col-sm-2 col-form-label">Script</div>
+              <div className="col-sm-10">
+                <ScriptFields
+                  value={this.state.script ?? NO_SCRIPT}
+                  onChange={script => this.setState({ script })}
+                />
+                <div className="small text-muted mt-1">
+                  Only logged-in members can read the script here.
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
         {/* audioprn: the Script Offer a Script Fill is for (fills: in search) */}
         {this.scriptFill && (
           <div className="mb-3 row">
@@ -1358,48 +1367,63 @@ function handlePostSubmit(i: PostForm, event: FormEvent<HTMLFormElement>) {
 
   if (pv) {
     if (i.editorType === "creator") {
-      Promise.resolve(
-        i.props.onEdit?.(
-          {
-            post_id: pv.post.id,
-            name: pForm.name,
-            url: pForm.url,
-            body: pForm.body,
-            nsfw: pForm.nsfw,
-            language_id: pForm.language_id,
-            custom_thumbnail: pForm.custom_thumbnail,
-            alt_text: pForm.alt_text,
-            tags: pForm.tags,
-            scheduled_publish_time_at,
-          },
-          () => {
-            i.setState({ bypassNavWarning: true });
-          },
-        ),
-      ).then(res => {
-        if (res?.state === "failed") {
-          backendErrorPopup(res.err);
-        } else if (i.state.creditsLoaded) {
-          // Only once the edit went through, and never over credits that didn't load.
-          savePostCredits(
-            pv.post.id,
-            credits,
-            !!i.state.offContent,
-            i.noMen,
-            i.cashBoxToSave,
-          ).catch(e => toast(e.message, "danger"));
-        }
-        // audioprn: the script this fills, when changed
-        if (
-          res?.state !== "failed" &&
-          i.state.fillLoaded !== undefined &&
-          i.state.fillOf !== i.state.fillLoaded
-        ) {
-          saveScriptFill(pv.post.id, i.state.fillOf ?? "").catch(e =>
-            toast(e.message, "danger"),
-          );
-        }
-      });
+      // audioprn: the script and fill terms (when changed) first, so the post page shows them
+      const script = i.state.script;
+      const scriptSaved =
+        i.scriptOffer &&
+        script &&
+        i.state.scriptLoaded &&
+        JSON.stringify(script) !== i.state.scriptLoaded
+          ? savePostScript(pv.post.id, script).catch((e: Error) =>
+              toast(e.message, "danger"),
+            )
+          : undefined;
+      Promise.resolve(scriptSaved)
+        .then(() =>
+          Promise.resolve(
+            i.props.onEdit?.(
+              {
+                post_id: pv.post.id,
+                name: pForm.name,
+                url: pForm.url,
+                body: pForm.body,
+                nsfw: pForm.nsfw,
+                language_id: pForm.language_id,
+                custom_thumbnail: pForm.custom_thumbnail,
+                alt_text: pForm.alt_text,
+                tags: pForm.tags,
+                scheduled_publish_time_at,
+              },
+              () => {
+                i.setState({ bypassNavWarning: true });
+              },
+            ),
+          ),
+        )
+        .then(res => {
+          if (res?.state === "failed") {
+            backendErrorPopup(res.err);
+          } else if (i.state.creditsLoaded) {
+            // Only once the edit went through, and never over credits that didn't load.
+            savePostCredits(
+              pv.post.id,
+              credits,
+              !!i.state.offContent,
+              i.noMen,
+              i.cashBoxToSave,
+            ).catch(e => toast(e.message, "danger"));
+          }
+          // audioprn: the script this fills, when changed
+          if (
+            res?.state !== "failed" &&
+            i.state.fillLoaded !== undefined &&
+            i.state.fillOf !== i.state.fillLoaded
+          ) {
+            saveScriptFill(pv.post.id, i.state.fillOf ?? "").catch(e =>
+              toast(e.message, "danger"),
+            );
+          }
+        });
     } else if (i.editorType === "mod_or_admin") {
       i.props.onModEdit?.(
         {

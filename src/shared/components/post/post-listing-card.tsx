@@ -212,7 +212,10 @@ export class PostListingCard extends Component<
               )}
           </div>
           {/* audioprn: the script (Script Offer posts) and the creator's footer on the post page */}
-          {p.showBody === "full" && <ScriptBox postView={p.postView} />}
+          {p.showBody === "full" && (
+            // Loads again after an edit, which may have changed the script.
+            <ScriptBox key={p.postView.post.updated_at} postView={p.postView} />
+          )}
           {p.showBody === "full" && (
             <FillLine
               postId={p.postView.post.id}
